@@ -55,12 +55,12 @@ export default function Index() {
 
   // Render appropriate page based on authentication status
   return (
-    <>
+    <div className="max-w-2xl mx-auto">
       {isLoggedIn ? (
         <HomePage onLogout={handleLogout} />
       ) : (
         <LoginPage onLogin={handleLogin} />
       )}
-    </>
+    </div>
   );
 }
