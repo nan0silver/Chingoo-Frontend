@@ -189,8 +189,8 @@ export default function Index() {
                 selectedCategory === category.id ? 'border-orange-accent bg-orange-accent/5' : ''
               }`}
             >
-              <div className="text-4xl mb-2">{category.icon}</div>
-              <span className="text-grey-900 font-crimson text-lg font-bold">{category.name}</span>
+              <div className="mb-2">{category.icon}</div>
+              <span className="text-grey-900 font-crimson text-lg md:text-xl font-bold">{category.name}</span>
             </button>
           ))}
         </div>
