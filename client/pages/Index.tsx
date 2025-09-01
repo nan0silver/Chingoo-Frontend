@@ -103,7 +103,7 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-grey-50 flex flex-col">
+    <div className="min-h-screen bg-grey-50 flex flex-col max-w-2xl mx-auto">
       {/* Status Bar */}
       <div className="w-full flex justify-between items-center px-6 py-3 h-11 md:hidden">
         <span className="text-black text-lg font-medium">9:41</span>
@@ -128,7 +128,7 @@ export default function Index() {
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4">
+      <div className="flex items-center justify-between px-5 py-4 md:px-8">
         {/* Logo */}
         <div className="flex items-center">
           <svg width="90" height="28" viewBox="0 0 90 28" fill="none">
@@ -154,7 +154,7 @@ export default function Index() {
       </div>
 
       {/* User Info */}
-      <div className="px-5 mb-6">
+      <div className="px-5 md:px-8 mb-6">
         <div className="flex items-center gap-2">
           <div className="relative">
             <button 
@@ -172,20 +172,20 @@ export default function Index() {
       </div>
 
       {/* Description */}
-      <div className="px-5 mb-8">
-        <h2 className="text-grey-900 font-crimson text-lg font-bold">
+      <div className="px-5 md:px-8 mb-8">
+        <h2 className="text-grey-900 font-crimson text-lg md:text-xl font-bold">
           관심사를 선택해 통화를 시작해보세요!
         </h2>
       </div>
 
       {/* Categories Grid */}
-      <div className="flex-1 px-5">
-        <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="flex-1 px-5 md:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
-              className={`relative h-28 bg-white border border-grey-100 rounded-2xl flex flex-col items-center justify-center transition-colors ${
+              className={`relative h-28 md:h-32 bg-white border border-grey-100 rounded-2xl flex flex-col items-center justify-center transition-colors hover:shadow-md ${
                 selectedCategory === category.id ? 'border-orange-accent bg-orange-accent/5' : ''
               }`}
             >
