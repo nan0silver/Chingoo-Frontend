@@ -41,9 +41,21 @@ export default function Index() {
     try {
       localStorage.removeItem("isLoggedIn");
       setIsLoggedIn(false);
+      setCallState('home');
+      setSelectedCategory(null);
     } catch (error) {
       console.error("Error removing auth status:", error);
     }
+  };
+
+  const handleStartCall = (category: string) => {
+    setSelectedCategory(category);
+    setCallState('connecting');
+  };
+
+  const handleCancelCall = () => {
+    setCallState('home');
+    setSelectedCategory(null);
   };
 
   // Show loading spinner while checking authentication
