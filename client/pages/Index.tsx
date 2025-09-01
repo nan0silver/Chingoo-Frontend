@@ -72,13 +72,21 @@ export default function Index() {
     );
   }
 
-  // Render appropriate page based on authentication status
+  // Render appropriate page based on authentication status and call state
   return (
     <div className="max-w-2xl mx-auto">
-      {isLoggedIn ? (
-        <HomePage onLogout={handleLogout} />
-      ) : (
+      {!isLoggedIn ? (
         <LoginPage onLogin={handleLogin} />
+      ) : callState === 'connecting' ? (
+        <ConnectingCallPage
+          selectedCategory={selectedCategory}
+          onCancel={handleCancelCall}
+        />
+      ) : (
+        <HomePage
+          onLogout={handleLogout}
+          onStartCall={handleStartCall}
+        />
       )}
     </div>
   );
