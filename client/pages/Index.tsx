@@ -3,12 +3,12 @@ import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
 
-type CallState = 'home' | 'connecting' | 'inCall';
+type CallState = "home" | "connecting" | "inCall";
 
 export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [callState, setCallState] = useState<CallState>('home');
+  const [callState, setCallState] = useState<CallState>("home");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Check authentication status on component mount
@@ -41,7 +41,7 @@ export default function Index() {
     try {
       localStorage.removeItem("isLoggedIn");
       setIsLoggedIn(false);
-      setCallState('home');
+      setCallState("home");
       setSelectedCategory(null);
     } catch (error) {
       console.error("Error removing auth status:", error);
@@ -50,11 +50,11 @@ export default function Index() {
 
   const handleStartCall = (category: string) => {
     setSelectedCategory(category);
-    setCallState('connecting');
+    setCallState("connecting");
   };
 
   const handleCancelCall = () => {
-    setCallState('home');
+    setCallState("home");
     setSelectedCategory(null);
   };
 
@@ -77,16 +77,13 @@ export default function Index() {
     <div className="max-w-2xl mx-auto">
       {!isLoggedIn ? (
         <LoginPage onLogin={handleLogin} />
-      ) : callState === 'connecting' ? (
+      ) : callState === "connecting" ? (
         <ConnectingCallPage
           selectedCategory={selectedCategory}
           onCancel={handleCancelCall}
         />
       ) : (
-        <HomePage
-          onLogout={handleLogout}
-          onStartCall={handleStartCall}
-        />
+        <HomePage onLogout={handleLogout} onStartCall={handleStartCall} />
       )}
     </div>
   );
