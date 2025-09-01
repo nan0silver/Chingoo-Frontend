@@ -10,10 +10,10 @@ export default function Index() {
   useEffect(() => {
     const checkAuthStatus = () => {
       try {
-        const authStatus = localStorage.getItem('isLoggedIn');
-        setIsLoggedIn(authStatus === 'true');
+        const authStatus = localStorage.getItem("isLoggedIn");
+        setIsLoggedIn(authStatus === "true");
       } catch (error) {
-        console.error('Error checking auth status:', error);
+        console.error("Error checking auth status:", error);
         setIsLoggedIn(false);
       } finally {
         setIsLoading(false);
@@ -25,19 +25,19 @@ export default function Index() {
 
   const handleLogin = () => {
     try {
-      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem("isLoggedIn", "true");
       setIsLoggedIn(true);
     } catch (error) {
-      console.error('Error saving auth status:', error);
+      console.error("Error saving auth status:", error);
     }
   };
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem("isLoggedIn");
       setIsLoggedIn(false);
     } catch (error) {
-      console.error('Error removing auth status:', error);
+      console.error("Error removing auth status:", error);
     }
   };
 
