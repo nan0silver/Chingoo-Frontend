@@ -111,7 +111,7 @@ export default function HomePage({ onLogout }: HomePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-grey-50 flex flex-col max-w-2xl mx-auto">
+    <div className="min-h-screen bg-grey-50 flex flex-col">
       {/* Status Bar */}
       <div className="w-full flex justify-between items-center px-6 py-3 h-11 md:hidden">
         <span className="text-black text-lg font-medium">9:41</span>
