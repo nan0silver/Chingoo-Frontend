@@ -3,9 +3,13 @@ import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
 
+type CallState = 'home' | 'connecting' | 'inCall';
+
 export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [callState, setCallState] = useState<CallState>('home');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Check authentication status on component mount
   useEffect(() => {
