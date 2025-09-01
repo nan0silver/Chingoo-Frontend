@@ -15,9 +15,9 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
-      {/* Status Bar */}
-      <div className="w-full max-w-sm relative">
+    <div className="min-h-screen bg-white flex flex-col items-center px-4 sm:px-6 lg:px-8">
+      {/* Status Bar - only show on mobile */}
+      <div className="w-full max-w-sm relative md:hidden">
         <div className="flex justify-between items-center px-6 py-3 h-11">
           <span className="text-black text-lg font-medium">9:41</span>
           <div className="flex items-center gap-1">
