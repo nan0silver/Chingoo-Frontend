@@ -197,25 +197,25 @@ export default function Index() {
       </div>
 
       {/* Subscription Section */}
-      <div className="px-5 mb-4">
-        <div className="relative bg-orange-subscription rounded-2xl p-6 flex items-center justify-between">
+      <div className="px-5 md:px-8 mb-4">
+        <div className="relative bg-orange-subscription rounded-2xl p-6 md:p-8 flex items-center justify-between">
           <div>
-            <p className="text-white font-crimson text-base font-bold leading-6">
+            <p className="text-white font-crimson text-base md:text-lg font-bold leading-6">
               구독을 통해<br />
               무제한 통화를 시작해보세요
             </p>
           </div>
-          <div className="text-5xl">🔗</div>
+          <div className="text-4xl md:text-5xl">🔗</div>
         </div>
       </div>
 
       {/* Start Call Button */}
-      <div className="px-5 pb-8">
-        <div className="h-20 relative">
+      <div className="px-5 md:px-8 pb-8 md:pb-12">
+        <div className="h-20 md:h-24 relative">
           <button
             onClick={handleStartCall}
             disabled={!selectedCategory}
-            className={`w-full h-14 rounded-lg font-crimson text-xl font-semibold text-white transition-opacity ${
+            className={`w-full h-14 md:h-16 rounded-lg font-crimson text-xl md:text-2xl font-semibold text-white transition-opacity ${
               selectedCategory 
                 ? 'bg-gradient-to-r from-yellow-300 to-red-gradient' 
                 : 'bg-gray-400 opacity-50 cursor-not-allowed'
