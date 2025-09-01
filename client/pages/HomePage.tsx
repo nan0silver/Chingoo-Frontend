@@ -100,7 +100,9 @@ export default function HomePage({ onLogout, onStartCall }: HomePageProps) {
   ];
 
   const handleStartCall = () => {
-    console.log("Starting call with category:", selectedCategory);
+    if (selectedCategory) {
+      onStartCall(selectedCategory);
+    }
   };
 
   const handleCategorySelect = (categoryId: string) => {
