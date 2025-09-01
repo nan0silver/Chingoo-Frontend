@@ -180,7 +180,7 @@ export default function Index() {
 
       {/* Categories Grid */}
       <div className="flex-1 px-5 md:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
           {categories.map((category) => (
             <button
               key={category.id}
