@@ -44,10 +44,12 @@ export default function Index() {
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-grey-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-orange-accent border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-grey-900 font-crimson text-lg">로딩 중...</p>
+      <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-grey-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-orange-accent border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-grey-900 font-crimson text-lg">로딩 중...</p>
+          </div>
         </div>
       </div>
     );
