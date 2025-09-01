@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
+import ConnectingCallPage from "./ConnectingCallPage";
 
 export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
