@@ -2,9 +2,10 @@ import { useState } from "react";
 
 interface HomePageProps {
   onLogout: () => void;
+  onStartCall: (category: string) => void;
 }
 
-export default function HomePage({ onLogout }: HomePageProps) {
+export default function HomePage({ onLogout, onStartCall }: HomePageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
