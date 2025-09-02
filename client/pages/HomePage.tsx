@@ -235,13 +235,13 @@ export default function HomePage({
             <button
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
-              className={`relative h-28 md:h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-start px-6 gap-8 transition-colors hover:shadow-md ${
+              className={`relative h-28 md:h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-center px-4 gap-6 transition-colors hover:shadow-md ${
                 selectedCategory === category.id
                   ? "border-orange-accent bg-orange-accent/5"
                   : ""
               }`}
             >
-              <span className="text-grey-900 font-crimson text-xl md:text-2xl font-bold">
+              <span className="text-grey-900 font-crimson text-xl md:text-2xl font-bold whitespace-nowrap">
                 {category.name}
               </span>
               <div>{category.icon}</div>
