@@ -5,7 +5,7 @@ interface LoginPageProps {
   onSignUp: () => void;
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
+export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -101,7 +101,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호를 입력해주세요"
+            placeholder="비밀번호를 입��해주세요"
             className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
           />
         </div>
