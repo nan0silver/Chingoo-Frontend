@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 interface ConnectingCallPageProps {
   selectedCategory: string | null;
   onCancel: () => void;
+  onConnected: () => void;
 }
 
 export default function ConnectingCallPage({
