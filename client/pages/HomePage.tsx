@@ -3,6 +3,7 @@ import { useState } from "react";
 interface HomePageProps {
   onLogout: () => void;
   onStartCall: (category: string) => void;
+  onOpenSettings: () => void;
 }
 
 export default function HomePage({ onLogout, onStartCall }: HomePageProps) {
@@ -206,7 +207,7 @@ export default function HomePage({ onLogout, onStartCall }: HomePageProps) {
               className="flex items-center gap-1 px-3 py-1 bg-white border border-grey-100 rounded"
             >
               <span className="text-orange-accent font-crimson text-lg font-semibold">
-                따뜻한 햇살
+                따��한 햇살
               </span>
               <svg
                 width="16"
