@@ -9,6 +9,7 @@ interface ConnectingCallPageProps {
 export default function ConnectingCallPage({
   selectedCategory,
   onCancel,
+  onConnected,
 }: ConnectingCallPageProps) {
   const [dots, setDots] = useState("");
 
@@ -23,6 +24,15 @@ export default function ConnectingCallPage({
 
     return () => clearInterval(interval);
   }, []);
+
+  // Auto-connect after 5 seconds
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onConnected();
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [onConnected]);
 
   const getCategoryDisplayName = (category: string | null) => {
     const categoryMap: Record<string, string> = {
