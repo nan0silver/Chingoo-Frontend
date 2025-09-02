@@ -11,7 +11,9 @@ export default function CallEvaluationPage({
   onCallAgain,
   onSelectInterests,
 }: CallEvaluationPageProps) {
-  const [selectedRating, setSelectedRating] = useState<"good" | "bad" | null>(null);
+  const [selectedRating, setSelectedRating] = useState<"good" | "bad" | null>(
+    null,
+  );
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
