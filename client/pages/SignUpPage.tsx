@@ -33,7 +33,9 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
             />
           </svg>
         </button>
-        <h1 className="text-gray-800 font-crimson text-lg font-bold">회원가입</h1>
+        <h1 className="text-gray-800 font-crimson text-lg font-bold">
+          회원가입
+        </h1>
         <div className="w-6" />
       </div>
 

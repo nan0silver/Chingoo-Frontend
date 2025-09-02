@@ -38,7 +38,8 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
           <div
             className="flex flex-col items-center justify-center gap-1 px-10 py-3 rounded-xl border-2 border-white/50"
             style={{
-              background: "linear-gradient(93deg, #F4BC41 0.31%, #E26155 100.05%)",
+              background:
+                "linear-gradient(93deg, #F4BC41 0.31%, #E26155 100.05%)",
             }}
           >
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -58,7 +59,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
           <h3 className="text-orange-500 font-crimson text-2xl font-bold mb-4">
             주간 활동 요약
           </h3>
-          
+
           <div className="space-y-4">
             {/* Call Count */}
             <div className="flex items-center justify-between p-5 bg-gray-100 rounded-lg">
@@ -101,7 +102,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
           <h3 className="text-orange-500 font-crimson text-2xl font-bold mb-4">
             분기 활동 요약
           </h3>
-          
+
           <div className="space-y-4">
             {/* Call Count */}
             <div className="flex items-center justify-between p-5 bg-gray-100 rounded-lg">
