@@ -9,7 +9,7 @@ export default function CallConnectedPage({
   selectedCategory,
   onEndCall,
 }: CallConnectedPageProps) {
-  const [callDuration, setCallDuration] = useState(155); // Start at 02:35 (155 seconds)
+  const [callDuration, setCallDuration] = useState(0);
   const [audioWaveAnimation, setAudioWaveAnimation] = useState(0);
 
   // Format seconds to MM:SS
