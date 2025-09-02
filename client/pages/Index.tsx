@@ -5,6 +5,7 @@ import ConnectingCallPage from "./ConnectingCallPage";
 import CallConnectedPage from "./CallConnectedPage";
 import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
+import MyActivityPage from "./MyActivityPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -14,6 +15,7 @@ export default function Index() {
   const [callState, setCallState] = useState<CallState>("home");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showActivity, setShowActivity] = useState<boolean>(false);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -87,6 +89,14 @@ export default function Index() {
     setShowSettings(false);
   };
 
+  const handleNavigateToActivity = () => {
+    setShowActivity(true);
+  };
+
+  const handleBackFromActivity = () => {
+    setShowActivity(false);
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -106,8 +116,13 @@ export default function Index() {
     <div className="max-w-2xl mx-auto">
       {!isLoggedIn ? (
         <LoginPage onLogin={handleLogin} />
+      ) : showActivity ? (
+        <MyActivityPage onBack={handleBackFromActivity} />
       ) : showSettings ? (
-        <SettingsPage onBack={handleCloseSettings} />
+        <SettingsPage
+          onBack={handleCloseSettings}
+          onNavigateToActivity={handleNavigateToActivity}
+        />
       ) : callState === "connecting" ? (
         <ConnectingCallPage
           selectedCategory={selectedCategory}
