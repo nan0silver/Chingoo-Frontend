@@ -2,6 +2,7 @@ import { useState } from "react";
 
 interface LoginPageProps {
   onLogin: () => void;
+  onSignUp: () => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
