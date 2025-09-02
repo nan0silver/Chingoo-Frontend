@@ -1,5 +1,6 @@
 interface SettingsPageProps {
   onBack: () => void;
+  onNavigateToActivity: () => void;
 }
 
 export default function SettingsPage({ onBack }: SettingsPageProps) {
