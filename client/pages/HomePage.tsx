@@ -20,13 +20,7 @@ export default function HomePage({
       name: "취미",
       icon: (
         <div className="w-20 h-20 flex items-center justify-center">
-          <div className="relative">
-            <div className="w-12 h-8 bg-amber-600 rounded-lg"></div>
-            <div className="absolute -top-2 left-3 w-6 h-6 bg-green-400 rounded-full"></div>
-            <div className="absolute -top-4 left-4 w-4 h-6 bg-green-500 rounded-t-full"></div>
-            <div className="absolute -top-3 left-6 w-3 h-4 bg-green-600 rounded-t-full"></div>
-            <div className="absolute top-2 right-1 w-6 h-6 bg-gray-400 rounded-full"></div>
-          </div>
+          <img src="/icons/hobby.png" alt="취미" className="w-16 h-16" />
         </div>
       ),
     },
@@ -35,12 +29,7 @@ export default function HomePage({
       name: "자녀",
       icon: (
         <div className="w-20 h-20 flex items-center justify-center">
-          <div className="relative">
-            <div className="w-6 h-6 bg-blue-400 rounded-full absolute top-0 left-0"></div>
-            <div className="w-6 h-6 bg-blue-300 rounded-full absolute top-0 right-0"></div>
-            <div className="w-6 h-6 bg-red-400 rounded-full absolute bottom-0 left-2"></div>
-            <div className="w-6 h-6 bg-red-300 rounded-full absolute bottom-0 right-2"></div>
-          </div>
+          <img src="/icons/children.png" alt="자녀" className="w-16 h-16" />
         </div>
       ),
     },
@@ -49,13 +38,7 @@ export default function HomePage({
       name: "요리",
       icon: (
         <div className="w-20 h-20 flex items-center justify-center">
-          <div className="relative">
-            <div className="w-16 h-10 bg-gray-300 rounded-full"></div>
-            <div className="absolute top-2 left-2 w-12 h-6 bg-green-400 rounded-full"></div>
-            <div className="absolute top-1 left-6 w-3 h-3 bg-red-500 rounded-full"></div>
-            <div className="absolute top-3 right-2 w-2 h-2 bg-yellow-400 rounded-full"></div>
-            <div className="absolute -right-2 top-4 w-8 h-2 bg-gray-600 rounded"></div>
-          </div>
+          <img src="/icons/cooking.png" alt="요리" className="w-16 h-16" />
         </div>
       ),
     },
@@ -64,13 +47,7 @@ export default function HomePage({
       name: "추억",
       icon: (
         <div className="w-20 h-20 flex items-center justify-center">
-          <div className="relative">
-            <div className="w-14 h-10 bg-gray-600 rounded-lg"></div>
-            <div className="absolute top-1 left-1 w-12 h-8 bg-gray-300 rounded"></div>
-            <div className="absolute top-3 left-3 w-8 h-4 bg-gray-700 rounded"></div>
-            <div className="absolute -top-1 right-2 w-3 h-3 bg-yellow-400 rounded-full"></div>
-            <div className="absolute -right-2 top-2 w-6 h-4 bg-gray-800 rounded"></div>
-          </div>
+          <img src="/icons/memories.png" alt="추억" className="w-16 h-16" />
         </div>
       ),
     },
@@ -79,13 +56,7 @@ export default function HomePage({
       name: "음악",
       icon: (
         <div className="w-20 h-20 flex items-center justify-center">
-          <div className="relative">
-            <div className="w-12 h-16 bg-orange-400 rounded-full"></div>
-            <div className="absolute top-2 left-2 w-8 h-12 bg-orange-300 rounded-full"></div>
-            <div className="absolute top-0 right-1 w-2 h-8 bg-amber-800 rounded"></div>
-            <div className="absolute -bottom-2 -right-1 w-4 h-3 bg-gray-800 rounded"></div>
-            <div className="absolute -bottom-2 right-2 w-3 h-2 bg-gray-800 rounded"></div>
-          </div>
+          <img src="/icons/music.png" alt="음악" className="w-16 h-16" />
         </div>
       ),
     },
@@ -94,11 +65,7 @@ export default function HomePage({
       name: "여행",
       icon: (
         <div className="w-20 h-20 flex items-center justify-center">
-          <div className="relative">
-            <div className="w-16 h-12 bg-blue-400 rounded-lg transform rotate-45 origin-center"></div>
-            <div className="absolute top-4 left-4 w-8 h-4 bg-blue-300 rounded transform rotate-45"></div>
-            <div className="absolute top-6 left-6 w-4 h-2 bg-blue-200 rounded transform rotate-45"></div>
-          </div>
+          <img src="/icons/travel.png" alt="여행" className="w-16 h-16" />
         </div>
       ),
     },
