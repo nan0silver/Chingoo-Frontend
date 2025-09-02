@@ -3,7 +3,7 @@ interface SettingsPageProps {
   onNavigateToActivity: () => void;
 }
 
-export default function SettingsPage({ onBack }: SettingsPageProps) {
+export default function SettingsPage({ onBack, onNavigateToActivity }: SettingsPageProps) {
   const settingsOptions = [
     {
       id: "subscription",
