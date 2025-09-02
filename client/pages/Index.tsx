@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
+import CallConnectedPage from "./CallConnectedPage";
 
 type CallState = "home" | "connecting" | "inCall";
 
@@ -58,6 +59,15 @@ export default function Index() {
     setSelectedCategory(null);
   };
 
+  const handleCallConnected = () => {
+    setCallState("inCall");
+  };
+
+  const handleEndCall = () => {
+    setCallState("home");
+    setSelectedCategory(null);
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -81,6 +91,12 @@ export default function Index() {
         <ConnectingCallPage
           selectedCategory={selectedCategory}
           onCancel={handleCancelCall}
+          onConnected={handleCallConnected}
+        />
+      ) : callState === "inCall" ? (
+        <CallConnectedPage
+          selectedCategory={selectedCategory}
+          onEndCall={handleEndCall}
         />
       ) : (
         <HomePage onLogout={handleLogout} onStartCall={handleStartCall} />
