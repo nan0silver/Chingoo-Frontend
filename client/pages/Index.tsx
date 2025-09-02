@@ -6,6 +6,7 @@ import CallConnectedPage from "./CallConnectedPage";
 import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
 import MyActivityPage from "./MyActivityPage";
+import SignUpPage from "./SignUpPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -16,6 +17,7 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
+  const [showSignUp, setShowSignUp] = useState<boolean>(false);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -97,6 +99,21 @@ export default function Index() {
     setShowActivity(false);
   };
 
+  const handleShowSignUp = () => {
+    setShowSignUp(true);
+  };
+
+  const handleBackFromSignUp = () => {
+    setShowSignUp(false);
+  };
+
+  const handleSignUp = () => {
+    // For demo purposes, signing up logs the user in
+    setShowSignUp(false);
+    setIsLoggedIn(true);
+    localStorage.setItem("isLoggedIn", "true");
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -115,7 +132,11 @@ export default function Index() {
   return (
     <div className="max-w-2xl mx-auto">
       {!isLoggedIn ? (
-        <LoginPage onLogin={handleLogin} />
+        showSignUp ? (
+          <SignUpPage onBack={handleBackFromSignUp} onSignUp={handleSignUp} />
+        ) : (
+          <LoginPage onLogin={handleLogin} onSignUp={handleShowSignUp} />
+        )
       ) : showActivity ? (
         <MyActivityPage onBack={handleBackFromActivity} />
       ) : showSettings ? (
