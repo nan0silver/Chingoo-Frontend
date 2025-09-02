@@ -6,7 +6,11 @@ interface HomePageProps {
   onOpenSettings: () => void;
 }
 
-export default function HomePage({ onLogout, onStartCall, onOpenSettings }: HomePageProps) {
+export default function HomePage({
+  onLogout,
+  onStartCall,
+  onOpenSettings,
+}: HomePageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
