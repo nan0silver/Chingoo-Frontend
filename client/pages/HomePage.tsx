@@ -6,7 +6,7 @@ interface HomePageProps {
   onOpenSettings: () => void;
 }
 
-export default function HomePage({ onLogout, onStartCall }: HomePageProps) {
+export default function HomePage({ onLogout, onStartCall, onOpenSettings }: HomePageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
@@ -207,7 +207,7 @@ export default function HomePage({ onLogout, onStartCall }: HomePageProps) {
               className="flex items-center gap-1 px-3 py-1 bg-white border border-grey-100 rounded"
             >
               <span className="text-orange-accent font-crimson text-lg font-semibold">
-                따��한 햇살
+                따뜻한 햇살
               </span>
               <svg
                 width="16"
