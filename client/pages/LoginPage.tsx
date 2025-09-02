@@ -101,7 +101,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호를 입��해주세요"
+            placeholder="비밀번호를 입력해주세요"
             className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
           />
         </div>
@@ -118,7 +118,10 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
 
         {/* Links */}
         <div className="flex items-center justify-center gap-4 pt-4">
-          <button className="text-text-gray font-pretendard text-lg md:text-xl underline hover:text-gray-600">
+          <button
+            onClick={onSignUp}
+            className="text-text-gray font-pretendard text-lg md:text-xl underline hover:text-gray-600"
+          >
             회원가입
           </button>
           <div className="w-px h-4 bg-divider"></div>
@@ -193,7 +196,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
               />
             </svg>
             <span className="text-gray-800 font-crimson text-base md:text-lg font-bold">
-              구글로 로그인
+              구글��� 로그인
             </span>
           </button>
         </div>
