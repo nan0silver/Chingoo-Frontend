@@ -56,9 +56,12 @@ export default function SettingsPage({ onBack, onNavigateToActivity }: SettingsP
   ];
 
   const handleOptionClick = (optionId: string) => {
-    // For now, just log the option clicked
-    // In a real app, you would navigate to the appropriate sub-page
-    console.log(`Clicked: ${optionId}`);
+    if (optionId === "activity") {
+      onNavigateToActivity();
+    } else {
+      // For other options, just log for now
+      console.log(`Clicked: ${optionId}`);
+    }
   };
 
   return (
