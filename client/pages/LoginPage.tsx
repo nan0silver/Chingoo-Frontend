@@ -196,7 +196,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
               />
             </svg>
             <span className="text-gray-800 font-crimson text-base md:text-lg font-bold">
-              구글��� 로그인
+              구글로 로그인
             </span>
           </button>
         </div>

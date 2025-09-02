@@ -98,7 +98,7 @@ export default function ConnectingCallPage({
       {/* Call Status */}
       <div className="flex justify-center mt-16">
         <h1 className="text-white font-pretendard text-4xl font-medium">
-          통화 연��� 중
+          통화 연결 중
         </h1>
       </div>
 
