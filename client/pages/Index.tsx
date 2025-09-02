@@ -3,8 +3,9 @@ import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
 import CallConnectedPage from "./CallConnectedPage";
+import CallEvaluationPage from "./CallEvaluationPage";
 
-type CallState = "home" | "connecting" | "inCall";
+type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
 export default function Index() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -64,6 +65,14 @@ export default function Index() {
   };
 
   const handleEndCall = () => {
+    setCallState("evaluation");
+  };
+
+  const handleCallAgain = () => {
+    setCallState("connecting");
+  };
+
+  const handleSelectInterests = () => {
     setCallState("home");
     setSelectedCategory(null);
   };
@@ -97,6 +106,12 @@ export default function Index() {
         <CallConnectedPage
           selectedCategory={selectedCategory}
           onEndCall={handleEndCall}
+        />
+      ) : callState === "evaluation" ? (
+        <CallEvaluationPage
+          selectedCategory={selectedCategory}
+          onCallAgain={handleCallAgain}
+          onSelectInterests={handleSelectInterests}
         />
       ) : (
         <HomePage onLogout={handleLogout} onStartCall={handleStartCall} />
