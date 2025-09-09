@@ -11,7 +11,6 @@ import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import ProfileSetupPage from "./pages/ProfileSetupPage";
-import DashboardPage from "./pages/DashboardPage";
 import AuthGuard from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -34,14 +33,6 @@ const App = () => (
             element={
               <AuthGuard>
                 <ProfileSetupPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <AuthGuard requireProfileComplete={true}>
-                <DashboardPage />
               </AuthGuard>
             }
           />
