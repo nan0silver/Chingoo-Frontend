@@ -97,6 +97,23 @@ export interface UserProfileResponse {
 }
 
 /**
+ * Update Profile Request
+ */
+export interface UpdateProfileRequest {
+  nickname: string;
+}
+
+/**
+ * Update Profile Response
+ */
+export interface UpdateProfileResponse {
+  message: string;
+  data?: {
+    nickname: string;
+  };
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {

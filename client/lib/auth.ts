@@ -6,6 +6,8 @@ import {
   LogoutRequest,
   LogoutResponse,
   UserProfileResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
   ApiErrorResponse,
   UserInfo,
 } from "@shared/api";
@@ -461,6 +463,52 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
     return data;
   } catch (error) {
     console.error("사용자 프로필 조회 중 오류 발생:", error);
+    throw error;
+  }
+};
+
+/**
+ * 사용자 프로필을 업데이트하는 함수
+ */
+export const updateUserProfile = async (
+  nickname: string,
+): Promise<UpdateProfileResponse> => {
+  try {
+    const accessToken = getStoredToken("access_token");
+
+    if (!accessToken) {
+      throw new Error("액세스 토큰이 없습니다.");
+    }
+
+    const requestBody: UpdateProfileRequest = {
+      nickname: nickname,
+    };
+
+    console.log("프로필 업데이트 요청 데이터:", requestBody);
+
+    const response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorData: ApiErrorResponse = await response.json();
+      console.error("프로필 업데이트 API 오류:", errorData);
+      throw new Error(
+        `프로필 업데이트 실패: ${errorData.message || response.statusText}`,
+      );
+    }
+
+    const data: UpdateProfileResponse = await response.json();
+    console.log("프로필 업데이트 성공:", data);
+
+    return data;
+  } catch (error) {
+    console.error("프로필 업데이트 중 오류 발생:", error);
     throw error;
   }
 };

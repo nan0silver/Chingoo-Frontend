@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredUserInfo, getUserProfile, logout } from "@/lib/auth";
+import {
+  getStoredUserInfo,
+  getUserProfile,
+  updateUserProfile,
+  logout,
+} from "@/lib/auth";
 import { UserInfo } from "@shared/api";
 
 export default function ProfileSetupPage() {
@@ -42,39 +47,34 @@ export default function ProfileSetupPage() {
       return;
     }
 
+    // 기존 닉네임과 동일한지 확인
+    if (userInfo && nickname === userInfo.nickname) {
+      alert("기존 닉네임과 동일합니다. 변경사항이 없습니다.");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // TODO: 프로필 업데이트 API 호출
-      // const response = await fetch('/api/v1/user/profile', {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${getStoredToken()}`
-      //   },
-      //   body: JSON.stringify({ nickname })
-      // });
+      // 실제 API 호출
+      await updateUserProfile(nickname);
 
-      // 임시로 성공 처리
-      setTimeout(() => {
-        setIsLoading(false);
+      // 사용자 정보 업데이트
+      const updatedUserInfo = {
+        ...userInfo,
+        nickname: nickname,
+        is_profile_complete: true,
+        is_new_user: false,
+      };
+      localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
 
-        // 사용자 정보 업데이트 (프로필 완성으로 표시)
-        const updatedUserInfo = {
-          ...userInfo,
-          nickname: nickname,
-          is_profile_complete: true,
-          is_new_user: false,
-        };
-        localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
-
-        alert("프로필이 저장되었습니다!");
-        navigate("/"); // 메인 페이지로 이동
-      }, 1000);
+      alert("프로필이 저장되었습니다!");
+      navigate("/"); // 메인 페이지로 이동
     } catch (error) {
       console.error("프로필 저장 실패:", error);
-      setIsLoading(false);
       alert("프로필 저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
