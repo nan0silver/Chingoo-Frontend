@@ -3,6 +3,8 @@ import {
   OAuthConfigResponse,
   OAuthLoginRequest,
   OAuthLoginResponse,
+  LogoutRequest,
+  LogoutResponse,
   ApiErrorResponse,
   UserInfo,
 } from "@shared/api";
@@ -13,6 +15,41 @@ import {
 // 백엔드 서버 포트를 실제 포트로 변경해주세요
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+
+// 디버깅 함수를 전역으로 등록
+if (typeof window !== "undefined") {
+  (window as any).debugTokens = () => {
+    const accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+
+    console.log("=== 토큰 디버깅 정보 ===");
+    console.log(
+      "Access Token 앞부분:",
+      accessToken ? `${accessToken.substring(0, 20)}...` : "없음",
+    );
+    console.log(
+      "Access Token 뒷부분:",
+      accessToken
+        ? `...${accessToken.substring(accessToken.length - 20)}`
+        : "없음",
+    );
+    console.log("Access Token 전체:", accessToken || "없음");
+    console.log(
+      "Refresh Token 앞부분:",
+      refreshToken ? `${refreshToken.substring(0, 20)}...` : "없음",
+    );
+    console.log(
+      "Refresh Token 뒷부분:",
+      refreshToken
+        ? `...${refreshToken.substring(refreshToken.length - 20)}`
+        : "없음",
+    );
+    console.log("Refresh Token 전체:", refreshToken || "없음");
+    console.log("Access Token 길이:", accessToken?.length || 0);
+    console.log("Refresh Token 길이:", refreshToken?.length || 0);
+    console.log("========================");
+  };
+}
 
 /**
  * OAuth 관련 상수
@@ -234,8 +271,14 @@ export const processSocialLogin = async (
 /**
  * 저장된 토큰을 가져오는 함수
  */
-export const getStoredToken = (): string | null => {
-  return localStorage.getItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+export const getStoredToken = (
+  tokenType: "access_token" | "refresh_token" = "access_token",
+): string | null => {
+  const key =
+    tokenType === "access_token"
+      ? OAUTH_STORAGE_KEYS.ACCESS_TOKEN
+      : OAUTH_STORAGE_KEYS.REFRESH_TOKEN;
+  return localStorage.getItem(key);
 };
 
 /**
@@ -254,15 +297,127 @@ export const getStoredUserInfo = (): UserInfo | null => {
 };
 
 /**
- * 로그아웃 함수
+ * 저장된 토큰들을 확인하는 디버깅 함수
  */
-export const logout = (): void => {
-  localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
-  localStorage.removeItem(OAUTH_STORAGE_KEYS.REFRESH_TOKEN);
-  localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
+export const debugTokens = (): void => {
+  const accessToken = getStoredToken("access_token");
+  const refreshToken = getStoredToken("refresh_token");
 
-  // 메인 페이지로 리다이렉트
-  window.location.href = "/";
+  console.log("=== 토큰 디버깅 정보 ===");
+  console.log(
+    "Access Token 앞부분:",
+    accessToken ? `${accessToken.substring(0, 20)}...` : "없음",
+  );
+  console.log(
+    "Access Token 뒷부분:",
+    accessToken
+      ? `...${accessToken.substring(accessToken.length - 20)}`
+      : "없음",
+  );
+  console.log("Access Token 전체:", accessToken || "없음");
+  console.log(
+    "Refresh Token 앞부분:",
+    refreshToken ? `${refreshToken.substring(0, 20)}...` : "없음",
+  );
+  console.log(
+    "Refresh Token 뒷부분:",
+    refreshToken
+      ? `...${refreshToken.substring(refreshToken.length - 20)}`
+      : "없음",
+  );
+  console.log("Refresh Token 전체:", refreshToken || "없음");
+  console.log("Access Token 길이:", accessToken?.length || 0);
+  console.log("Refresh Token 길이:", refreshToken?.length || 0);
+  console.log("========================");
+
+  // 전역 함수로 등록하여 브라우저 콘솔에서 직접 호출 가능하게 함
+  (window as any).debugTokens = debugTokens;
+  (window as any).getAccessToken = () => getStoredToken("access_token");
+  (window as any).getRefreshToken = () => getStoredToken("refresh_token");
+};
+
+/**
+ * 서버에 로그아웃 요청을 보내는 함수
+ */
+export const logoutFromServer = async (): Promise<void> => {
+  try {
+    // 토큰 디버깅 정보 출력
+    debugTokens();
+
+    const refreshToken = getStoredToken("refresh_token");
+
+    if (!refreshToken) {
+      console.warn("리프레시 토큰이 없습니다. 로컬 로그아웃만 수행합니다.");
+      return;
+    }
+
+    const requestBody: LogoutRequest = {
+      refresh_token: refreshToken,
+      logout_all: true,
+    };
+
+    console.log("로그아웃 요청 데이터:", requestBody);
+
+    const accessToken = getStoredToken("access_token");
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorData: ApiErrorResponse = await response.json();
+      console.error("로그아웃 API 오류:", errorData);
+      throw new Error(
+        `로그아웃 실패: ${errorData.message || response.statusText}`,
+      );
+    }
+
+    const data: LogoutResponse = await response.json();
+    console.log("로그아웃 성공:", data);
+  } catch (error) {
+    console.error("서버 로그아웃 중 오류 발생:", error);
+    // 서버 로그아웃이 실패해도 로컬 로그아웃은 진행
+    throw error;
+  }
+};
+
+/**
+ * 로그아웃 함수 (서버 API 호출 + 로컬 정리)
+ */
+export const logout = async (): Promise<void> => {
+  try {
+    // 서버에 로그아웃 요청
+    await logoutFromServer();
+  } catch (error) {
+    console.error("서버 로그아웃 실패, 로컬 로그아웃만 진행:", error);
+  } finally {
+    // 서버 로그아웃 성공/실패와 관계없이 로컬 정리는 항상 수행
+    try {
+      // 토큰과 사용자 정보 삭제
+      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(OAUTH_STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
+
+      // 세션 스토리지도 정리
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
+
+      console.log("로컬 로그아웃 완료");
+    } catch (error) {
+      console.error("로컬 로그아웃 중 오류 발생:", error);
+    }
+  }
 };
 
 /**

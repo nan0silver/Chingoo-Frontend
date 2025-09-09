@@ -67,6 +67,21 @@ export interface OAuthLoginResponse {
 }
 
 /**
+ * Logout Request
+ */
+export interface LogoutRequest {
+  refresh_token: string;
+  logout_all: boolean;
+}
+
+/**
+ * Logout Response
+ */
+export interface LogoutResponse {
+  message: string;
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {

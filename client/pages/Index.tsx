@@ -70,10 +70,10 @@ export default function Index() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
       // OAuth 로그아웃 함수 호출
-      logout();
+      await logout();
 
       // 로컬 상태 초기화
       setIsLoggedIn(false);
@@ -87,6 +87,14 @@ export default function Index() {
       navigate("/login");
     } catch (error) {
       console.error("로그아웃 중 오류 발생:", error);
+      // 에러가 발생해도 로컬 상태는 초기화하고 로그인 페이지로 이동
+      setIsLoggedIn(false);
+      setCallState("home");
+      setSelectedCategory(null);
+      setShowSettings(false);
+      setShowActivity(false);
+      setShowSignUp(false);
+      navigate("/login");
     }
   };
 
