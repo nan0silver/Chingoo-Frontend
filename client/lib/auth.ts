@@ -130,12 +130,13 @@ export const processOAuthCallback =
     const state = urlParams.get("state");
     const error = urlParams.get("error");
 
-    console.log("OAuth 콜백 파라미터:", {
-      code: code ? code.substring(0, 20) + "..." : null,
-      state: state ? state.substring(0, 20) + "..." : null,
-      error,
-      currentUrl: window.location.href,
-    });
+    if (import.meta.env.DEV) {
+      console.log("OAuth 콜백 파라미터(DEV):", {
+        code_length: code?.length ?? 0,
+        state_length: state?.length ?? 0,
+        error,
+      });
+    }
 
     // 에러가 있는 경우
     if (error) {
