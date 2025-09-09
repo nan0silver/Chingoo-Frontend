@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated, getStoredUserInfo } from "@/lib/auth";
+import { isAuthenticated, getStoredUserInfo, logout } from "@/lib/auth";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
@@ -72,12 +72,21 @@ export default function Index() {
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem("isLoggedIn");
+      // OAuth 로그아웃 함수 호출
+      logout();
+
+      // 로컬 상태 초기화
       setIsLoggedIn(false);
       setCallState("home");
       setSelectedCategory(null);
+      setShowSettings(false);
+      setShowActivity(false);
+      setShowSignUp(false);
+
+      // 로그인 페이지로 리다이렉트
+      navigate("/login");
     } catch (error) {
-      console.error("Error removing auth status:", error);
+      console.error("로그아웃 중 오류 발생:", error);
     }
   };
 
@@ -168,6 +177,7 @@ export default function Index() {
         <SettingsPage
           onBack={handleCloseSettings}
           onNavigateToActivity={handleNavigateToActivity}
+          onLogout={handleLogout}
         />
       ) : callState === "connecting" ? (
         <ConnectingCallPage
@@ -188,7 +198,6 @@ export default function Index() {
         />
       ) : (
         <HomePage
-          onLogout={handleLogout}
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
         />
