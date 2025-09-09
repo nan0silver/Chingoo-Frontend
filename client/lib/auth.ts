@@ -331,8 +331,7 @@ export const logoutFromServer = async (): Promise<void> => {
 
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
     // logout_all: true로 모든 세션에서 로그아웃
-    const requestBody: LogoutRequest = {
-      refresh_token: "", // 서버에서 쿠키의 refresh_token을 사용
+    const requestBody = {
       logout_all: true,
     };
 

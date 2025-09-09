@@ -78,9 +78,9 @@ export interface OAuthLoginResponse {
 
 /**
  * Logout Request
+ * refresh_token은 HttpOnly 쿠키로 전송되므로 body에서 제거
  */
 export interface LogoutRequest {
-  refresh_token: string;
   logout_all: boolean;
 }
 
