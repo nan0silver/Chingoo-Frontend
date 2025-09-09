@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getStoredUserInfo, logout } from "@/lib/auth";
+import { getStoredUserInfo, getUserProfile, logout } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
 
 export default function ProfileSetupPage() {
@@ -10,15 +10,30 @@ export default function ProfileSetupPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUserInfo = getStoredUserInfo();
-    if (!storedUserInfo) {
-      // 사용자 정보가 없으면 로그인 페이지로 이동
-      navigate("/login");
-      return;
-    }
+    const fetchUserProfile = async () => {
+      try {
+        // API에서 최신 사용자 정보 가져오기
+        const profileResponse = await getUserProfile();
+        const latestUserInfo = profileResponse.data;
 
-    setUserInfo(storedUserInfo);
-    setNickname(storedUserInfo.nickname || "");
+        setUserInfo(latestUserInfo);
+        setNickname(latestUserInfo.nickname || "");
+      } catch (error) {
+        console.error("사용자 프로필 가져오기 실패:", error);
+
+        // API 실패 시 로컬 저장된 정보 사용
+        const storedUserInfo = getStoredUserInfo();
+        if (!storedUserInfo) {
+          navigate("/login");
+          return;
+        }
+
+        setUserInfo(storedUserInfo);
+        setNickname(storedUserInfo.nickname || "");
+      }
+    };
+
+    fetchUserProfile();
   }, [navigate]);
 
   const handleSaveProfile = async () => {
@@ -47,6 +62,7 @@ export default function ProfileSetupPage() {
         // 사용자 정보 업데이트 (프로필 완성으로 표시)
         const updatedUserInfo = {
           ...userInfo,
+          nickname: nickname,
           is_profile_complete: true,
           is_new_user: false,
         };

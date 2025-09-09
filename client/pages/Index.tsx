@@ -137,6 +137,11 @@ export default function Index() {
     setShowActivity(true);
   };
 
+  const handleNavigateToProfileEdit = () => {
+    setShowSettings(false);
+    navigate("/profile-setup");
+  };
+
   const handleBackFromActivity = () => {
     setShowActivity(false);
   };
@@ -185,6 +190,7 @@ export default function Index() {
         <SettingsPage
           onBack={handleCloseSettings}
           onNavigateToActivity={handleNavigateToActivity}
+          onNavigateToProfileEdit={handleNavigateToProfileEdit}
           onLogout={handleLogout}
         />
       ) : callState === "connecting" ? (
