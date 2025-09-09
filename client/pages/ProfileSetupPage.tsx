@@ -4,7 +4,6 @@ import {
   getStoredUserInfo,
   getUserProfile,
   updateUserProfile,
-  logout,
 } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
 
@@ -78,12 +77,6 @@ export default function ProfileSetupPage() {
     }
   };
 
-  const handleLogout = () => {
-    if (confirm("로그아웃하시겠습니까?")) {
-      logout();
-    }
-  };
-
   if (!userInfo) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -145,12 +138,7 @@ export default function ProfileSetupPage() {
           <h1 className="text-lg font-crimson font-bold text-gray-900">
             프로필 설정
           </h1>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-gray-600 underline"
-          >
-            로그아웃
-          </button>
+          <div className="w-10" />
         </div>
       </div>
 
