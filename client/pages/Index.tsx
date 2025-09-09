@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated, getStoredUserInfo } from "@/lib/auth";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
@@ -18,13 +20,27 @@ export default function Index() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
   const [showSignUp, setShowSignUp] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // Check authentication status on component mount
   useEffect(() => {
     const checkAuthStatus = () => {
       try {
-        const authStatus = localStorage.getItem("isLoggedIn");
-        setIsLoggedIn(authStatus === "true");
+        const authenticated = isAuthenticated();
+        const userInfo = getStoredUserInfo();
+
+        setIsLoggedIn(authenticated);
+
+        // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
+        if (authenticated && userInfo) {
+          if (userInfo.is_new_user || !userInfo.is_profile_complete) {
+            navigate("/profile-setup");
+            return;
+          } else {
+            navigate("/dashboard");
+            return;
+          }
+        }
       } catch (error) {
         console.error("Error checking auth status:", error);
         setIsLoggedIn(false);
@@ -34,9 +50,10 @@ export default function Index() {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [navigate]);
 
   const handleLogin = () => {
+    // OAuth 로그인은 별도 페이지에서 처리되므로 여기서는 기본 로그인만 처리
     try {
       localStorage.setItem("isLoggedIn", "true");
       setIsLoggedIn(true);

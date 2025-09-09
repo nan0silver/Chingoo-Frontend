@@ -93,11 +93,20 @@ VITE_APP_NAME=로그인 앱
 
 ## 📱 주요 기능
 
+### OAuth 소셜 로그인
+
+- **카카오 로그인**: 카카오 계정으로 간편 로그인
+- **구글 로그인**: 구글 계정으로 간편 로그인
+- **PKCE 보안**: OAuth 2.0 PKCE 방식으로 안전한 인증
+- **자동 리다이렉트**: 로그인 상태에 따른 자동 페이지 이동
+- **프로필 설정**: 신규 사용자 프로필 완성 플로우
+
 ### UI/UX 특징
 
 - 모바일 상태바 시뮬레이션 (모바일 뷰)
 - 한국 서비스에 최적화된 디자인
 - 접근성을 고려한 컴포넌트 설계
+- OAuth 콜백 처리 및 로딩 상태 표시
 
 ## 🔌 Spring Boot 연동
 
@@ -117,12 +126,21 @@ Spring Boot 서버와 연동하려면:
      import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
    ```
 
-### 인증 플로우
+### OAuth 소셜 로그인 플로우
 
-1. 로그인 요청 → Spring Boot `/auth/login`
-2. JWT 토큰 수신 및 저장
-3. 인증이 필요한 API 요청 시 Header에 토큰 포함
-4. 소셜 로그인: OAuth2 플로우 처리
+1. **OAuth 설정 조회**: `GET /api/v1/auth/oauth/{provider}/config`
+2. **소셜 로그인 시작**: 사용자가 소셜 로그인 버튼 클릭
+3. **인증 페이지 리다이렉트**: 카카오/구글 인증 페이지로 이동
+4. **콜백 처리**: `POST /api/v1/auth/oauth/{provider}`로 인가 코드 전송
+5. **토큰 저장**: JWT 액세스/리프레시 토큰을 localStorage에 저장
+6. **페이지 이동**: 사용자 상태에 따라 프로필 설정 또는 대시보드로 이동
+
+### 보안 특징
+
+- **PKCE (Proof Key for Code Exchange)**: OAuth 2.0 보안 강화
+- **State 검증**: CSRF 공격 방지
+- **SessionStorage 활용**: 임시 OAuth 데이터 보안 저장
+- **토큰 자동 갱신**: 리프레시 토큰을 통한 자동 토큰 갱신
 
 ## 🚀 배포
 

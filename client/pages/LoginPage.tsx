@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { startSocialLogin } from "@/lib/auth";
+import { OAuthProvider } from "@shared/api";
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -18,10 +20,13 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    // Handle social login
-    console.log(`Login with ${provider}`);
-    onLogin(); // For demo purposes, social login also logs in
+  const handleSocialLogin = async (provider: OAuthProvider) => {
+    try {
+      await startSocialLogin(provider);
+    } catch (error) {
+      console.error("소셜 로그인 시작 실패:", error);
+      alert("소셜 로그인에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
   return (
@@ -153,22 +158,6 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
             />
             <span className="text-gray-800 font-crimson text-base md:text-lg font-bold">
               카카오로 로그인
-            </span>
-          </button>
-
-          {/* Naver Button */}
-          <button
-            onClick={() => handleSocialLogin("naver")}
-            className="w-full h-12 md:h-14 bg-naver border border-border-gray rounded-lg flex items-center justify-center gap-2 hover:bg-opacity-90 transition-colors"
-          >
-            <svg width="24" height="24" viewBox="0 0 25 24" fill="none">
-              <path
-                d="M19.5 5V19H14.4664L9.53356 11.9517V19H4.5V5H9.53356L14.4664 12.33V5H19.5Z"
-                fill="white"
-              />
-            </svg>
-            <span className="text-gray-800 font-crimson text-base md:text-lg font-bold">
-              네이버로 로그인
             </span>
           </button>
 
