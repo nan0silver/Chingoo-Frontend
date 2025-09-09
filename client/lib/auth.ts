@@ -19,41 +19,6 @@ import {
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
-// 디버깅 함수를 전역으로 등록
-if (typeof window !== "undefined") {
-  (window as any).debugTokens = () => {
-    const accessToken = localStorage.getItem("access_token");
-    const refreshToken = localStorage.getItem("refresh_token");
-
-    console.log("=== 토큰 디버깅 정보 ===");
-    console.log(
-      "Access Token 앞부분:",
-      accessToken ? `${accessToken.substring(0, 20)}...` : "없음",
-    );
-    console.log(
-      "Access Token 뒷부분:",
-      accessToken
-        ? `...${accessToken.substring(accessToken.length - 20)}`
-        : "없음",
-    );
-    console.log("Access Token 전체:", accessToken || "없음");
-    console.log(
-      "Refresh Token 앞부분:",
-      refreshToken ? `${refreshToken.substring(0, 20)}...` : "없음",
-    );
-    console.log(
-      "Refresh Token 뒷부분:",
-      refreshToken
-        ? `...${refreshToken.substring(refreshToken.length - 20)}`
-        : "없음",
-    );
-    console.log("Refresh Token 전체:", refreshToken || "없음");
-    console.log("Access Token 길이:", accessToken?.length || 0);
-    console.log("Refresh Token 길이:", refreshToken?.length || 0);
-    console.log("========================");
-  };
-}
-
 /**
  * OAuth 관련 상수
  */
@@ -300,53 +265,10 @@ export const getStoredUserInfo = (): UserInfo | null => {
 };
 
 /**
- * 저장된 토큰들을 확인하는 디버깅 함수
- */
-export const debugTokens = (): void => {
-  const accessToken = getStoredToken("access_token");
-  const refreshToken = getStoredToken("refresh_token");
-
-  console.log("=== 토큰 디버깅 정보 ===");
-  console.log(
-    "Access Token 앞부분:",
-    accessToken ? `${accessToken.substring(0, 20)}...` : "없음",
-  );
-  console.log(
-    "Access Token 뒷부분:",
-    accessToken
-      ? `...${accessToken.substring(accessToken.length - 20)}`
-      : "없음",
-  );
-  console.log("Access Token 전체:", accessToken || "없음");
-  console.log(
-    "Refresh Token 앞부분:",
-    refreshToken ? `${refreshToken.substring(0, 20)}...` : "없음",
-  );
-  console.log(
-    "Refresh Token 뒷부분:",
-    refreshToken
-      ? `...${refreshToken.substring(refreshToken.length - 20)}`
-      : "없음",
-  );
-  console.log("Refresh Token 전체:", refreshToken || "없음");
-  console.log("Access Token 길이:", accessToken?.length || 0);
-  console.log("Refresh Token 길이:", refreshToken?.length || 0);
-  console.log("========================");
-
-  // 전역 함수로 등록하여 브라우저 콘솔에서 직접 호출 가능하게 함
-  (window as any).debugTokens = debugTokens;
-  (window as any).getAccessToken = () => getStoredToken("access_token");
-  (window as any).getRefreshToken = () => getStoredToken("refresh_token");
-};
-
-/**
  * 서버에 로그아웃 요청을 보내는 함수
  */
 export const logoutFromServer = async (): Promise<void> => {
   try {
-    // 토큰 디버깅 정보 출력
-    debugTokens();
-
     const refreshToken = getStoredToken("refresh_token");
 
     if (!refreshToken) {
