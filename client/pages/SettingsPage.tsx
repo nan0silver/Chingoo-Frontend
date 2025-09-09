@@ -1,11 +1,15 @@
 interface SettingsPageProps {
   onBack: () => void;
   onNavigateToActivity: () => void;
+  onNavigateToProfileEdit: () => void;
+  onLogout: () => void;
 }
 
 export default function SettingsPage({
   onBack,
   onNavigateToActivity,
+  onNavigateToProfileEdit,
+  onLogout,
 }: SettingsPageProps) {
   const settingsOptions = [
     {
@@ -56,11 +60,25 @@ export default function SettingsPage({
         </svg>
       ),
     },
+    {
+      id: "profile-edit",
+      title: "프로필 수정",
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"
+            fill="#EA8C4B"
+          />
+        </svg>
+      ),
+    },
   ];
 
   const handleOptionClick = (optionId: string) => {
     if (optionId === "activity") {
       onNavigateToActivity();
+    } else if (optionId === "profile-edit") {
+      onNavigateToProfileEdit();
     } else {
       // For other options, just log for now
       console.log(`Clicked: ${optionId}`);
@@ -112,6 +130,41 @@ export default function SettingsPage({
               </svg>
             </button>
           ))}
+        </div>
+
+        {/* Logout Button */}
+        <div className="mt-8">
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 p-4 border border-red-200 rounded-2xl bg-red-50 hover:bg-red-100 transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"
+                stroke="#DC2626"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M16 17L21 12L16 7"
+                stroke="#DC2626"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M21 12H9"
+                stroke="#DC2626"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="text-red-600 font-crimson text-lg font-semibold">
+              로그아웃
+            </span>
+          </button>
         </div>
       </div>
     </div>

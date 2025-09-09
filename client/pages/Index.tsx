@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { isAuthenticated, getStoredUserInfo, logout } from "@/lib/auth";
 import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
@@ -18,13 +20,34 @@ export default function Index() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
   const [showSignUp, setShowSignUp] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // Check authentication status on component mount
   useEffect(() => {
     const checkAuthStatus = () => {
       try {
-        const authStatus = localStorage.getItem("isLoggedIn");
-        setIsLoggedIn(authStatus === "true");
+        const authenticated = isAuthenticated();
+        const userInfo = getStoredUserInfo();
+
+        setIsLoggedIn(authenticated);
+
+        // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
+        if (authenticated && userInfo) {
+          console.log("인증된 사용자 정보:", {
+            is_new_user: userInfo.is_new_user,
+            is_profile_complete: userInfo.is_profile_complete,
+          });
+
+          if (userInfo.is_new_user || !userInfo.is_profile_complete) {
+            console.log("프로필 설정 페이지로 리다이렉트");
+            navigate("/profile-setup");
+            return;
+          } else {
+            console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
+            // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
+            return;
+          }
+        }
       } catch (error) {
         console.error("Error checking auth status:", error);
         setIsLoggedIn(false);
@@ -34,9 +57,10 @@ export default function Index() {
     };
 
     checkAuthStatus();
-  }, []);
+  }, [navigate]);
 
   const handleLogin = () => {
+    // OAuth 로그인은 별도 페이지에서 처리되므로 여기서는 기본 로그인만 처리
     try {
       localStorage.setItem("isLoggedIn", "true");
       setIsLoggedIn(true);
@@ -45,14 +69,31 @@ export default function Index() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      localStorage.removeItem("isLoggedIn");
+      // OAuth 로그아웃 함수 호출
+      await logout();
+
+      // 로컬 상태 초기화
       setIsLoggedIn(false);
       setCallState("home");
       setSelectedCategory(null);
+      setShowSettings(false);
+      setShowActivity(false);
+      setShowSignUp(false);
+
+      // 로그인 페이지로 리다이렉트
+      navigate("/login");
     } catch (error) {
-      console.error("Error removing auth status:", error);
+      console.error("로그아웃 중 오류 발생:", error);
+      // 에러가 발생해도 로컬 상태는 초기화하고 로그인 페이지로 이동
+      setIsLoggedIn(false);
+      setCallState("home");
+      setSelectedCategory(null);
+      setShowSettings(false);
+      setShowActivity(false);
+      setShowSignUp(false);
+      navigate("/login");
     }
   };
 
@@ -93,6 +134,11 @@ export default function Index() {
 
   const handleNavigateToActivity = () => {
     setShowActivity(true);
+  };
+
+  const handleNavigateToProfileEdit = () => {
+    setShowSettings(false);
+    navigate("/profile-setup");
   };
 
   const handleBackFromActivity = () => {
@@ -143,6 +189,8 @@ export default function Index() {
         <SettingsPage
           onBack={handleCloseSettings}
           onNavigateToActivity={handleNavigateToActivity}
+          onNavigateToProfileEdit={handleNavigateToProfileEdit}
+          onLogout={handleLogout}
         />
       ) : callState === "connecting" ? (
         <ConnectingCallPage
@@ -163,7 +211,6 @@ export default function Index() {
         />
       ) : (
         <HomePage
-          onLogout={handleLogout}
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
         />

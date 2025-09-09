@@ -8,6 +8,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import LoginPage from "./pages/LoginPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import ProfileSetupPage from "./pages/ProfileSetupPage";
+import AuthGuard from "./components/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +23,19 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route
+            path="/login"
+            element={<LoginPage onLogin={() => {}} onSignUp={() => {}} />}
+          />
+          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+          <Route
+            path="/profile-setup"
+            element={
+              <AuthGuard>
+                <ProfileSetupPage />
+              </AuthGuard>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
