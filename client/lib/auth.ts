@@ -5,6 +5,7 @@ import {
   OAuthLoginResponse,
   LogoutRequest,
   LogoutResponse,
+  UserProfileResponse,
   ApiErrorResponse,
   UserInfo,
 } from "@shared/api";
@@ -425,6 +426,43 @@ export const logout = async (): Promise<void> => {
  */
 export const isAuthenticated = (): boolean => {
   return !!getStoredToken();
+};
+
+/**
+ * 사용자 프로필 정보를 가져오는 함수
+ */
+export const getUserProfile = async (): Promise<UserProfileResponse> => {
+  try {
+    const accessToken = getStoredToken("access_token");
+
+    if (!accessToken) {
+      throw new Error("액세스 토큰이 없습니다.");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData: ApiErrorResponse = await response.json();
+      console.error("프로필 조회 API 오류:", errorData);
+      throw new Error(
+        `프로필 조회 실패: ${errorData.message || response.statusText}`,
+      );
+    }
+
+    const data: UserProfileResponse = await response.json();
+    console.log("사용자 프로필 조회 성공:", data);
+
+    return data;
+  } catch (error) {
+    console.error("사용자 프로필 조회 중 오류 발생:", error);
+    throw error;
+  }
 };
 
 /**

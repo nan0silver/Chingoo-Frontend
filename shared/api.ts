@@ -82,6 +82,21 @@ export interface LogoutResponse {
 }
 
 /**
+ * User Profile Response
+ */
+export interface UserProfileResponse {
+  data: {
+    id: number;
+    email: string;
+    nickname: string;
+    is_new_user: boolean;
+    is_profile_complete: boolean;
+  };
+  message: string;
+  timestamp: string;
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {

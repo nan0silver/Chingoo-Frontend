@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getUserProfile } from "@/lib/auth";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
@@ -11,6 +12,26 @@ export default function HomePage({
 }: HomePageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [userNickname, setUserNickname] = useState<string>("따뜻한 햇살"); // 기본값
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
+
+  // 사용자 프로필 정보 가져오기
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setIsLoadingProfile(true);
+        const profile = await getUserProfile();
+        setUserNickname(profile.data.nickname);
+      } catch (error) {
+        console.error("사용자 프로필 가져오기 실패:", error);
+        // 에러가 발생해도 기본 닉네임 유지
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const categories = [
     {
@@ -172,7 +193,7 @@ export default function HomePage({
               className="flex items-center gap-1 px-3 py-1 bg-white border border-grey-100 rounded"
             >
               <span className="text-orange-accent font-crimson text-lg font-semibold">
-                따뜻한 햇살
+                {isLoadingProfile ? "로딩 중..." : userNickname}
               </span>
               <svg
                 width="16"
