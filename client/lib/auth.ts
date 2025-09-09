@@ -409,7 +409,7 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
       throw new Error("액세스 토큰이 없습니다.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+    let response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -418,6 +418,19 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
       credentials: "include", // 쿠키를 포함하여 요청
     });
 
+    if (response.status === 401) {
+      const newToken = await refreshToken();
+      if (newToken) {
+        response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${newToken}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // 쿠키를 포함하여 요청
+        });
+      }
+    }
     if (!response.ok) {
       const errorData: ApiErrorResponse = await response.json();
       console.error("프로필 조회 API 오류:", errorData);
