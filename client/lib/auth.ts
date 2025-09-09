@@ -20,6 +20,32 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 /**
+ * 보안 설정 안내:
+ *
+ * 1. access_token: sessionStorage에 저장 (XSS 보호)
+ * 2. refresh_token: HttpOnly Secure SameSite=Strict 쿠키로 서버에서 설정 필요
+ *
+ * 백엔드에서 refresh_token을 HttpOnly 쿠키로 설정하는 예시:
+ *
+ * // Express.js 예시
+ * res.cookie('refresh_token', refreshToken, {
+ *   httpOnly: true,
+ *   secure: true, // HTTPS에서만
+ *   sameSite: 'strict',
+ *   maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+ * });
+ *
+ * // Spring Boot 예시
+ * ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+ *   .httpOnly(true)
+ *   .secure(true)
+ *   .sameSite("Strict")
+ *   .maxAge(Duration.ofDays(7))
+ *   .build();
+ * response.addHeader("Set-Cookie", cookie.toString());
+ */
+
+/**
  * OAuth 관련 상수
  */
 const OAUTH_STORAGE_KEYS = {
@@ -183,6 +209,7 @@ export const processSocialLogin = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
+      credentials: "include", // 쿠키를 포함하여 요청
     });
 
     if (!response.ok) {
@@ -217,14 +244,13 @@ export const processSocialLogin = async (
     const result: OAuthLoginResponse = await response.json();
 
     // 토큰 저장
-    localStorage.setItem(
+    // access_token은 sessionStorage에 저장 (XSS 보호)
+    sessionStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
-    localStorage.setItem(
-      OAUTH_STORAGE_KEYS.REFRESH_TOKEN,
-      result.data.refresh_token,
-    );
+    // refresh_token은 서버에서 HttpOnly 쿠키로 설정됨
+    // 프론트엔드에서는 저장하지 않음
     localStorage.setItem(
       OAUTH_STORAGE_KEYS.USER_INFO,
       JSON.stringify(result.data.user_info),
@@ -244,15 +270,20 @@ export const processSocialLogin = async (
 
 /**
  * 저장된 토큰을 가져오는 함수
+ * access_token: sessionStorage에서 조회
+ * refresh_token: HttpOnly 쿠키에서 조회 (서버에서 설정됨)
  */
 export const getStoredToken = (
   tokenType: "access_token" | "refresh_token" = "access_token",
 ): string | null => {
-  const key =
-    tokenType === "access_token"
-      ? OAUTH_STORAGE_KEYS.ACCESS_TOKEN
-      : OAUTH_STORAGE_KEYS.REFRESH_TOKEN;
-  return localStorage.getItem(key);
+  if (tokenType === "access_token") {
+    return sessionStorage.getItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+  } else {
+    // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로
+    // 프론트엔드에서는 직접 접근할 수 없음
+    // 서버 API 호출 시 자동으로 쿠키가 전송됨
+    return null;
+  }
 };
 
 /**
@@ -275,20 +306,6 @@ export const getStoredUserInfo = (): UserInfo | null => {
  */
 export const logoutFromServer = async (): Promise<void> => {
   try {
-    const refreshToken = getStoredToken("refresh_token");
-
-    if (!refreshToken) {
-      console.warn("리프레시 토큰이 없습니다. 로컬 로그아웃만 수행합니다.");
-      return;
-    }
-
-    const requestBody: LogoutRequest = {
-      refresh_token: refreshToken,
-      logout_all: true,
-    };
-
-    console.log("로그아웃 요청 데이터:", requestBody);
-
     const accessToken = getStoredToken("access_token");
 
     const headers: Record<string, string> = {
@@ -299,10 +316,20 @@ export const logoutFromServer = async (): Promise<void> => {
       headers.Authorization = `Bearer ${accessToken}`;
     }
 
+    // refresh_token은 HttpOnly 쿠키로 자동 전송됨
+    // logout_all: true로 모든 세션에서 로그아웃
+    const requestBody: LogoutRequest = {
+      refresh_token: "", // 서버에서 쿠키의 refresh_token을 사용
+      logout_all: true,
+    };
+
+    console.log("로그아웃 요청 데이터:", requestBody);
+
     const response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
+      credentials: "include", // 쿠키를 포함하여 요청
     });
 
     if (!response.ok) {
@@ -335,8 +362,8 @@ export const logout = async (): Promise<void> => {
     // 서버 로그아웃 성공/실패와 관계없이 로컬 정리는 항상 수행
     try {
       // 토큰과 사용자 정보 삭제
-      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(OAUTH_STORAGE_KEYS.REFRESH_TOKEN);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+      // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로 프론트엔드에서 삭제 불가
       localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
 
       // 세션 스토리지도 정리
@@ -375,6 +402,7 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
+      credentials: "include", // 쿠키를 포함하여 요청
     });
 
     if (!response.ok) {
@@ -421,6 +449,7 @@ export const updateUserProfile = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
+      credentials: "include", // 쿠키를 포함하여 요청
     });
 
     if (!response.ok) {
@@ -445,21 +474,15 @@ export const updateUserProfile = async (
  * 토큰 갱신 함수 (향후 구현 예정)
  */
 export const refreshToken = async (): Promise<string | null> => {
-  const refreshTokenValue = localStorage.getItem(
-    OAUTH_STORAGE_KEYS.REFRESH_TOKEN,
-  );
-
-  if (!refreshTokenValue) {
-    return null;
-  }
-
   try {
+    // refresh_token은 HttpOnly 쿠키로 자동 전송됨
     const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ refresh_token: refreshTokenValue }),
+      body: JSON.stringify({ refresh_token: "" }), // 서버에서 쿠키의 refresh_token을 사용
+      credentials: "include", // 쿠키를 포함하여 요청
     });
 
     if (!response.ok) {
@@ -467,7 +490,8 @@ export const refreshToken = async (): Promise<string | null> => {
     }
 
     const result = await response.json();
-    localStorage.setItem(
+    // 새로운 access_token을 sessionStorage에 저장
+    sessionStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
