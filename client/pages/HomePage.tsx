@@ -195,21 +195,6 @@ export default function HomePage({
               <span className="text-orange-accent font-crimson text-lg font-semibold">
                 {isLoadingProfile ? "로딩 중..." : userNickname}
               </span>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 20 20"
-                fill="none"
-                className="transform rotate-180"
-              >
-                <path
-                  d="M15 7.5L10 12.5L5 7.5"
-                  stroke="#EA8C4B"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
             </button>
           </div>
           <span className="text-grey-900 font-crimson text-lg font-bold">
