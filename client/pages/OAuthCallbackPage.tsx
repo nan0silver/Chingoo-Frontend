@@ -32,7 +32,7 @@ export default function OAuthCallbackPage() {
           } else {
             // 메인 페이지로 이동
             setTimeout(() => {
-              navigate("/dashboard");
+              navigate("/");
             }, 2000);
           }
         } else {
@@ -138,4 +138,3 @@ export default function OAuthCallbackPage() {
 
   return null;
 }
-

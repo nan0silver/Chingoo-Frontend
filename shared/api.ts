@@ -26,6 +26,7 @@ export interface OAuthConfigResponse {
     scope: string;
     state: string;
     code_challenge: string;
+    code_verifier: string;
     code_challenge_method: string;
     authorization_url: string;
   };

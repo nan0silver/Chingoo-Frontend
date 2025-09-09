@@ -33,11 +33,19 @@ export default function Index() {
 
         // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
         if (authenticated && userInfo) {
+          console.log("인증된 사용자 정보:", {
+            is_new_user: userInfo.is_new_user,
+            is_profile_complete: userInfo.is_profile_complete,
+            nickname: userInfo.nickname,
+          });
+
           if (userInfo.is_new_user || !userInfo.is_profile_complete) {
+            console.log("프로필 설정 페이지로 리다이렉트");
             navigate("/profile-setup");
             return;
           } else {
-            navigate("/dashboard");
+            console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
+            // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
             return;
           }
         }

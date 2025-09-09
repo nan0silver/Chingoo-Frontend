@@ -43,8 +43,17 @@ export default function ProfileSetupPage() {
       // 임시로 성공 처리
       setTimeout(() => {
         setIsLoading(false);
+
+        // 사용자 정보 업데이트 (프로필 완성으로 표시)
+        const updatedUserInfo = {
+          ...userInfo,
+          is_profile_complete: true,
+          is_new_user: false,
+        };
+        localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
+
         alert("프로필이 저장되었습니다!");
-        navigate("/dashboard");
+        navigate("/"); // 메인 페이지로 이동
       }, 1000);
     } catch (error) {
       console.error("프로필 저장 실패:", error);
@@ -180,7 +189,7 @@ export default function ProfileSetupPage() {
         {!userInfo.is_new_user && (
           <div className="text-center">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")}
               className="text-gray-600 underline hover:text-gray-800"
             >
               나중에 설정하기
@@ -191,4 +200,3 @@ export default function ProfileSetupPage() {
     </div>
   );
 }
-
