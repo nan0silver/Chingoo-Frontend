@@ -126,9 +126,17 @@ export const processOAuthCallback =
     const codeVerifier = sessionStorage.getItem(
       OAUTH_STORAGE_KEYS.CODE_VERIFIER,
     );
-    const provider = sessionStorage.getItem(
-      OAUTH_STORAGE_KEYS.PROVIDER,
-    ) as OAuthProvider;
+    const providerStr = sessionStorage.getItem(OAUTH_STORAGE_KEYS.PROVIDER);
+    const provider = (["google", "kakao", "naver"] as const).find(
+      (p) => p === providerStr,
+    );
+
+    if (!provider) {
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
+      throw new Error("지원하지 않는 OAuth 공급자입니다. 다시 로그인해주세요.");
+    }
 
     if (!savedState || !codeVerifier || !provider) {
       throw new Error("OAuth 세션 정보가 없습니다. 다시 로그인해주세요.");
