@@ -55,6 +55,7 @@ const OAUTH_STORAGE_KEYS = {
   ACCESS_TOKEN: "access_token",
   REFRESH_TOKEN: "refresh_token",
   USER_INFO: "user_info",
+  ACCESS_TOKEN_EXPIRES_AT: "expires_in",
 } as const;
 
 /**
@@ -382,7 +383,14 @@ export const logout = async (): Promise<void> => {
  * 인증 상태를 확인하는 함수
  */
 export const isAuthenticated = (): boolean => {
-  return !!getStoredToken();
+  const token = getStoredToken();
+  if (!token) return false;
+  const expStr = localStorage.getItem(
+    OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
+  );
+  if (!expStr) return true;
+  const now = Date.now();
+  return now < Number(expStr);
 };
 
 /**
