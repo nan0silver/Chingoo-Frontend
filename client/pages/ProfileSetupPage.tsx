@@ -5,10 +5,10 @@ import {
   getUserProfile,
   updateUserProfile,
 } from "@/lib/auth";
-import { UserInfo } from "@shared/api";
+import { UserInfo, UserProfile } from "@shared/api";
 
 export default function ProfileSetupPage() {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,22 +18,30 @@ export default function ProfileSetupPage() {
       try {
         // API에서 최신 사용자 정보 가져오기
         const profileResponse = await getUserProfile();
-        const latestUserInfo = profileResponse.data;
+        const latestUserProfile = profileResponse.data;
 
-        setUserInfo(latestUserInfo);
-        setNickname(latestUserInfo.nickname || "");
+        setUserProfile(latestUserProfile);
+        setNickname(latestUserProfile.nickname || "");
       } catch (error) {
         console.error("사용자 프로필 가져오기 실패:", error);
 
-        // API 실패 시 로컬 저장된 정보 사용
+        // API 실패 시 로컬 저장된 최소 정보로 기본값 설정
         const storedUserInfo = getStoredUserInfo();
         if (!storedUserInfo) {
           navigate("/login");
           return;
         }
 
-        setUserInfo(storedUserInfo);
-        setNickname(storedUserInfo.nickname || "");
+        // 최소한의 정보로 기본 프로필 생성
+        const fallbackProfile: UserProfile = {
+          id: storedUserInfo.id,
+          email: "", // API에서만 조회
+          nickname: "", // API에서만 조회
+          is_new_user: storedUserInfo.is_new_user,
+          is_profile_complete: storedUserInfo.is_profile_complete,
+        };
+        setUserProfile(fallbackProfile);
+        setNickname("");
       }
     };
 
@@ -47,7 +55,7 @@ export default function ProfileSetupPage() {
     }
 
     // 기존 닉네임과 동일한지 확인
-    if (userInfo && nickname === userInfo.nickname) {
+    if (userProfile && nickname === userProfile.nickname) {
       alert("기존 닉네임과 동일합니다. 변경사항이 없습니다.");
       return;
     }
@@ -58,10 +66,9 @@ export default function ProfileSetupPage() {
       // 실제 API 호출
       await updateUserProfile(nickname);
 
-      // 사용자 정보 업데이트
-      const updatedUserInfo = {
-        ...userInfo,
-        nickname: nickname,
+      // PII 보안: 최소한의 정보만 localStorage에 저장
+      const updatedUserInfo: UserInfo = {
+        id: userProfile!.id,
         is_profile_complete: true,
         is_new_user: false,
       };
@@ -77,7 +84,7 @@ export default function ProfileSetupPage() {
     }
   };
 
-  if (!userInfo) {
+  if (!userProfile) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-login-button"></div>
@@ -147,10 +154,10 @@ export default function ProfileSetupPage() {
         {/* Welcome Message */}
         <div className="text-center py-4">
           <h2 className="text-xl font-crimson text-gray-900 mb-2">
-            {userInfo.is_new_user ? "환영합니다!" : "프로필을 완성해주세요"}
+            {userProfile.is_new_user ? "환영합니다!" : "프로필을 완성해주세요"}
           </h2>
           <p className="text-gray-600">
-            {userInfo.is_new_user
+            {userProfile.is_new_user
               ? "서비스를 이용하기 위해 프로필을 설정해주세요."
               : "추가 정보를 입력해주세요."}
           </p>
@@ -161,7 +168,7 @@ export default function ProfileSetupPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             이메일
           </label>
-          <p className="text-gray-900">{userInfo.email}</p>
+          <p className="text-gray-900">{userProfile.email}</p>
         </div>
 
         {/* Nickname Input */}
@@ -190,7 +197,7 @@ export default function ProfileSetupPage() {
         </div>
 
         {/* Skip Button for existing users */}
-        {!userInfo.is_new_user && (
+        {!userProfile.is_new_user && (
           <div className="text-center">
             <button
               onClick={() => navigate("/")}

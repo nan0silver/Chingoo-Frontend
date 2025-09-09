@@ -33,9 +33,19 @@ export interface OAuthConfigResponse {
 }
 
 /**
- * User Information
+ * User Information (최소한의 정보만 저장)
+ * PII(이메일, 닉네임)는 API에서 조회
  */
 export interface UserInfo {
+  id: number;
+  is_new_user: boolean;
+  is_profile_complete: boolean;
+}
+
+/**
+ * User Profile Information (API에서 조회하는 전체 정보)
+ */
+export interface UserProfile {
   id: number;
   email: string;
   nickname: string;
@@ -85,13 +95,7 @@ export interface LogoutResponse {
  * User Profile Response
  */
 export interface UserProfileResponse {
-  data: {
-    id: number;
-    email: string;
-    nickname: string;
-    is_new_user: boolean;
-    is_profile_complete: boolean;
-  };
+  data: UserProfile;
   message: string;
   timestamp: string;
 }

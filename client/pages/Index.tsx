@@ -36,7 +36,6 @@ export default function Index() {
           console.log("인증된 사용자 정보:", {
             is_new_user: userInfo.is_new_user,
             is_profile_complete: userInfo.is_profile_complete,
-            nickname: userInfo.nickname,
           });
 
           if (userInfo.is_new_user || !userInfo.is_profile_complete) {

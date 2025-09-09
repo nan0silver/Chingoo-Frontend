@@ -252,9 +252,16 @@ export const processSocialLogin = async (
     );
     // refresh_token은 서버에서 HttpOnly 쿠키로 설정됨
     // 프론트엔드에서는 저장하지 않음
+
+    // PII 보안: 최소한의 정보만 저장 (이메일, 닉네임 제외)
+    const minimalUserInfo: UserInfo = {
+      id: result.data.user_info.id,
+      is_new_user: result.data.user_info.is_new_user,
+      is_profile_complete: result.data.user_info.is_profile_complete,
+    };
     localStorage.setItem(
       OAUTH_STORAGE_KEYS.USER_INFO,
-      JSON.stringify(result.data.user_info),
+      JSON.stringify(minimalUserInfo),
     );
     const expiresAt = Date.now() + (result.data.expires_in - 30) * 1000;
     localStorage.setItem(
