@@ -55,7 +55,7 @@ const OAUTH_STORAGE_KEYS = {
   ACCESS_TOKEN: "access_token",
   REFRESH_TOKEN: "refresh_token",
   USER_INFO: "user_info",
-  ACCESS_TOKEN_EXPIRES_AT: "expires_in",
+  ACCESS_TOKEN_EXPIRES_AT: "access_token_expires_at",
 } as const;
 
 /**
@@ -263,7 +263,9 @@ export const processSocialLogin = async (
       OAUTH_STORAGE_KEYS.USER_INFO,
       JSON.stringify(minimalUserInfo),
     );
-    const expiresAt = Date.now() + (result.data.expires_in - 30) * 1000;
+
+    const skewed = Math.max(0, (result.data.expires_in ?? 0) - 30);
+    const expiresAt = Date.now() + skewed * 1000;
     localStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
       String(expiresAt),
