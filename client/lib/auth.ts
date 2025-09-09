@@ -256,6 +256,11 @@ export const processSocialLogin = async (
       OAUTH_STORAGE_KEYS.USER_INFO,
       JSON.stringify(result.data.user_info),
     );
+    const expiresAt = Date.now() + (result.data.expires_in - 30) * 1000;
+    localStorage.setItem(
+      OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
+      String(expiresAt),
+    );
 
     // sessionStorage 정리
     sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
