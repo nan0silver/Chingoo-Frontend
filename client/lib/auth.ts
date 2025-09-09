@@ -168,16 +168,14 @@ export const processSocialLogin = async (
       device_info: `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
     };
 
-    console.log("OAuth 로그인 요청 데이터:", {
-      provider,
-      code: code.substring(0, 20) + "...", // 코드는 일부만 로그
-      state,
-      code_verifier: codeVerifier.substring(0, 20) + "...", // code_verifier도 일부만 로그
-      device_info: requestBody.device_info,
-      code_length: code.length,
-      state_length: state.length,
-      code_verifier_length: codeVerifier.length,
-    });
+    if (import.meta.env.DEV) {
+      console.log("OAuth 로그인 요청(DEV):", {
+        provider,
+        code_length: code.length,
+        state_length: state.length,
+        code_verifier_length: codeVerifier.length,
+      });
+    }
 
     const response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
       method: "POST",
