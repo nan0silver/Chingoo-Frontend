@@ -24,6 +24,14 @@ export default function HomePage({
         setUserNickname(profile.data.nickname);
       } catch (error) {
         console.error("사용자 프로필 가져오기 실패:", error);
+
+        // 인증 만료 오류인 경우 기본값 유지 (로그인 페이지로 이동하지 않음)
+        if (
+          error instanceof Error &&
+          error.message.includes("인증이 만료되었습니다")
+        ) {
+          console.warn("세션이 만료되었지만 기본 닉네임 유지");
+        }
         // 에러가 발생해도 기본 닉네임 유지
       } finally {
         setIsLoadingProfile(false);

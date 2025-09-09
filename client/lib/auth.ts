@@ -395,19 +395,38 @@ export const logout = async (): Promise<void> => {
 
 /**
  * 인증 상태를 확인하는 함수
+ * 토큰 존재 여부와 만료 시간을 모두 확인
  */
 export const isAuthenticated = (): boolean => {
   const token = getStoredToken();
-  if (!token) return false;
+  if (!token) {
+    console.log("인증 상태: 토큰 없음");
+    return false;
+  }
+
   const expStr = localStorage.getItem(
     OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
   );
-  if (!expStr) return true;
-  const now = Date.now();
-  const valid = now < Number(expStr);
-  if (!valid) {
-    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+
+  // expires_at이 없으면 토큰이 있다고 가정 (하위 호환성)
+  if (!expStr) {
+    console.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
+    return true;
   }
+
+  const now = Date.now();
+  const expiresAt = Number(expStr);
+  const valid = now < expiresAt;
+
+  if (!valid) {
+    console.log("인증 상태: 토큰 만료됨");
+    // 만료된 토큰 정리
+    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
+  } else {
+    console.log("인증 상태: 유효한 토큰");
+  }
+
   return valid;
 };
 
@@ -442,6 +461,9 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
           },
           credentials: "include", // 쿠키를 포함하여 요청
         });
+      } else {
+        // 토큰 갱신 실패 시 인증 오류로 처리
+        throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
     }
     if (!response.ok) {
@@ -503,6 +525,9 @@ export const updateUserProfile = async (
           body: JSON.stringify(requestBody),
           credentials: "include", // 쿠키를 포함하여 요청
         });
+      } else {
+        // 토큰 갱신 실패 시 인증 오류로 처리
+        throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
     }
     if (!response.ok) {
@@ -524,10 +549,15 @@ export const updateUserProfile = async (
 };
 
 /**
- * 토큰 갱신 함수 (향후 구현 예정)
+ * 토큰 갱신 함수
+ * 네트워크 타임아웃과 실패 시 적절한 처리 포함
  */
 export const refreshToken = async (): Promise<string | null> => {
   try {
+    // 네트워크 타임아웃 설정 (10초)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
     const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
       method: "POST",
@@ -536,23 +566,48 @@ export const refreshToken = async (): Promise<string | null> => {
       },
       body: JSON.stringify({ refresh_token: "" }), // 서버에서 쿠키의 refresh_token을 사용
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      throw new Error("토큰 갱신에 실패했습니다.");
+      if (response.status === 401) {
+        console.warn("리프레시 토큰이 만료되었습니다.");
+        return null; // 상위에서 UX 처리하도록 null 반환
+      }
+      throw new Error(`토큰 갱신 실패: ${response.status}`);
     }
 
     const result = await response.json();
+
     // 새로운 access_token을 sessionStorage에 저장
     sessionStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
 
+    // expires_at 업데이트 (새 토큰의 만료 시간 설정)
+    if (result.data.expires_in) {
+      const skewed = Math.max(0, result.data.expires_in - 30); // 30초 여유
+      const expiresAt = Date.now() + skewed * 1000;
+      localStorage.setItem(
+        OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
+        String(expiresAt),
+      );
+    }
+
+    console.log("토큰 갱신 성공");
     return result.data.access_token;
   } catch (error) {
-    console.error("토큰 갱신 실패:", error);
-    logout(); // 토큰 갱신 실패 시 로그아웃
+    if (error instanceof Error && error.name === "AbortError") {
+      console.error("토큰 갱신 타임아웃:", error);
+    } else {
+      console.error("토큰 갱신 실패:", error);
+    }
+
+    // 실패 시 즉시 로그아웃하지 않고 null 반환
+    // 상위에서 UX 처리하도록 함
     return null;
   }
 };

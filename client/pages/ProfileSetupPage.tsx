@@ -25,6 +25,16 @@ export default function ProfileSetupPage() {
       } catch (error) {
         console.error("사용자 프로필 가져오기 실패:", error);
 
+        // 인증 만료 오류인 경우 로그인 페이지로 이동
+        if (
+          error instanceof Error &&
+          error.message.includes("인증이 만료되었습니다")
+        ) {
+          alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+          navigate("/login");
+          return;
+        }
+
         // API 실패 시 로컬 저장된 최소 정보로 기본값 설정
         const storedUserInfo = getStoredUserInfo();
         if (!storedUserInfo) {
@@ -78,6 +88,17 @@ export default function ProfileSetupPage() {
       navigate("/"); // 메인 페이지로 이동
     } catch (error) {
       console.error("프로필 저장 실패:", error);
+
+      // 인증 만료 오류인 경우 로그인 페이지로 이동
+      if (
+        error instanceof Error &&
+        error.message.includes("인증이 만료되었습니다")
+      ) {
+        alert("세션이 만료되었습니다. 다시 로그인해주세요.");
+        navigate("/login");
+        return;
+      }
+
       alert("프로필 저장에 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
