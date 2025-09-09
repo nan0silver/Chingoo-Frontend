@@ -404,7 +404,11 @@ export const isAuthenticated = (): boolean => {
   );
   if (!expStr) return true;
   const now = Date.now();
-  return now < Number(expStr);
+  const valid = now < Number(expStr);
+  if (!valid) {
+    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+  }
+  return valid;
 };
 
 /**
