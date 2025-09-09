@@ -468,7 +468,7 @@ export const updateUserProfile = async (
 
     console.log("프로필 업데이트 요청 데이터:", requestBody);
 
-    const response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
+    let response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -478,6 +478,20 @@ export const updateUserProfile = async (
       credentials: "include", // 쿠키를 포함하여 요청
     });
 
+    if (response.status === 401) {
+      const newToken = await refreshToken();
+      if (newToken) {
+        response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${newToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+          credentials: "include", // 쿠키를 포함하여 요청
+        });
+      }
+    }
     if (!response.ok) {
       const errorData: ApiErrorResponse = await response.json();
       console.error("프로필 업데이트 API 오류:", errorData);
