@@ -59,8 +59,12 @@ export const getOAuthConfig = async (
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       // 응답이 JSON이 아닌 경우를 처리
@@ -199,16 +203,20 @@ export const processSocialLogin = async (
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-      credentials: "include", // 쿠키를 포함하여 요청
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       console.error("OAuth 로그인 응답 에러:", {
@@ -340,14 +348,18 @@ export const logoutFromServer = async (): Promise<void> => {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-      credentials: "include", // 쿠키를 포함하여 요청
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       const ct = response.headers.get("content-type") || "";
@@ -615,19 +627,21 @@ export const refreshToken = async (): Promise<string | null> => {
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
-    const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: "" }), // 서버에서 쿠키의 refresh_token을 사용
-      credentials: "include", // 쿠키를 포함하여 요청
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh_token: "" }), // 서버에서 쿠키의 refresh_token을 사용
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
