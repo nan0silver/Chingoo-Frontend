@@ -38,11 +38,13 @@ export default function Index() {
           }
 
           if (userInfo.is_new_user || !userInfo.is_profile_complete) {
-            console.log("프로필 설정 페이지로 리다이렉트");
+            if (import.meta.env.DEV)
+              console.log("프로필 설정 페이지로 리다이렉트");
             navigate("/profile-setup", { replace: true });
             return;
           } else {
-            console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
+            if (import.meta.env.DEV)
+              console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
             // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
             return;
           }
@@ -78,7 +80,7 @@ export default function Index() {
       setShowActivity(false);
 
       // 로그인 페이지로 리다이렉트
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("로그아웃 중 오류 발생:", error);
       // 에러가 발생해도 로컬 상태는 초기화하고 로그인 페이지로 이동
@@ -87,7 +89,7 @@ export default function Index() {
       setSelectedCategory(null);
       setShowSettings(false);
       setShowActivity(false);
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   };
 
