@@ -198,6 +198,8 @@ export const processSocialLogin = async (
       });
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
       method: "POST",
       headers: {
@@ -205,7 +207,9 @@ export const processSocialLogin = async (
       },
       body: JSON.stringify(requestBody),
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.error("OAuth 로그인 응답 에러:", {
