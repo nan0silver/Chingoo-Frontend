@@ -16,8 +16,14 @@ import {
  * API 설정
  */
 // 백엔드 서버 포트를 실제 포트로 변경해주세요
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
+  : import.meta.env.DEV
+    ? "http://localhost:8080/api"
+    : "";
+if (!import.meta.env.DEV && !API_BASE_URL) {
+  throw new Error("환경 변수 VITE_API_BASE_URL가 설정되지 않았습니다.");
+}
 
 /**
  * 보안 설정 안내:
@@ -25,24 +31,6 @@ const API_BASE_URL =
  * 1. access_token: sessionStorage에 저장 (XSS 보호)
  * 2. refresh_token: HttpOnly Secure SameSite=Strict 쿠키로 서버에서 설정 필요
  *
- * 백엔드에서 refresh_token을 HttpOnly 쿠키로 설정하는 예시:
- *
- * // Express.js 예시
- * res.cookie('refresh_token', refreshToken, {
- *   httpOnly: true,
- *   secure: true, // HTTPS에서만
- *   sameSite: 'strict',
- *   maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
- * });
- *
- * // Spring Boot 예시
- * ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
- *   .httpOnly(true)
- *   .secure(true)
- *   .sameSite("Strict")
- *   .maxAge(Duration.ofDays(7))
- *   .build();
- * response.addHeader("Set-Cookie", cookie.toString());
  */
 
 /**
@@ -53,7 +41,6 @@ const OAUTH_STORAGE_KEYS = {
   CODE_VERIFIER: "oauth_code_verifier",
   PROVIDER: "oauth_provider",
   ACCESS_TOKEN: "access_token",
-  REFRESH_TOKEN: "refresh_token",
   USER_INFO: "user_info",
   ACCESS_TOKEN_EXPIRES_AT: "access_token_expires_at",
 } as const;
@@ -66,9 +53,18 @@ export const getOAuthConfig = async (
 ): Promise<OAuthConfigResponse> => {
   try {
     const url = `${API_BASE_URL}/v1/auth/oauth/${provider}/config`;
-    console.log("OAuth 설정 요청 URL:", url);
+    if (import.meta.env.DEV) {
+      console.log("OAuth 설정 요청 URL:", url);
+    }
 
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       // 응답이 JSON이 아닌 경우를 처리
@@ -205,14 +201,22 @@ export const processSocialLogin = async (
       });
     }
 
-    const response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-      credentials: "include", // 쿠키를 포함하여 요청
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       console.error("OAuth 로그인 응답 에러:", {
@@ -338,25 +342,47 @@ export const logoutFromServer = async (): Promise<void> => {
       logout_all: true,
     };
 
-    console.log("로그아웃 요청 데이터:", requestBody);
+    if (import.meta.env.DEV) {
+      console.log("로그아웃 요청 데이터:", requestBody);
+    }
 
-    const response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-      credentials: "include", // 쿠키를 포함하여 요청
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json();
-      console.error("로그아웃 API 오류:", errorData);
-      throw new Error(
-        `로그아웃 실패: ${errorData.message || response.statusText}`,
-      );
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        console.error("로그아웃 API 오류:", errorData);
+        throw new Error(
+          `로그아웃 실패: ${errorData.message || response.statusText}`,
+        );
+      } else {
+        const text = await response.text();
+        console.error("로그아웃 API 오류(텍스트):", text);
+        throw new Error(
+          `로그아웃 실패: ${response.status} ${response.statusText}`,
+        );
+      }
     }
 
     const data: LogoutResponse = await response.json();
-    console.log("로그아웃 성공:", data);
+
+    if (import.meta.env.DEV) {
+      console.log("로그아웃 성공(DEV):", data);
+    }
   } catch (error) {
     console.error("서버 로그아웃 중 오류 발생:", error);
     // 서버 로그아웃이 실패해도 로컬 로그아웃은 진행
@@ -380,13 +406,14 @@ export const logout = async (): Promise<void> => {
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
       // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로 프론트엔드에서 삭제 불가
       localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
+      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
 
       // 세션 스토리지도 정리
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
 
-      console.log("로컬 로그아웃 완료");
+      if (import.meta.env.DEV) console.log("로컬 로그아웃 완료");
     } catch (error) {
       console.error("로컬 로그아웃 중 오류 발생:", error);
     }
@@ -400,7 +427,7 @@ export const logout = async (): Promise<void> => {
 export const isAuthenticated = (): boolean => {
   const token = getStoredToken();
   if (!token) {
-    console.log("인증 상태: 토큰 없음");
+    if (import.meta.env.DEV) console.log("인증 상태: 토큰 없음");
     return false;
   }
 
@@ -410,7 +437,8 @@ export const isAuthenticated = (): boolean => {
 
   // expires_at이 없으면 토큰이 있다고 가정 (하위 호환성)
   if (!expStr) {
-    console.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
+    if (import.meta.env.DEV)
+      console.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
     return true;
   }
 
@@ -419,12 +447,12 @@ export const isAuthenticated = (): boolean => {
   const valid = now < expiresAt;
 
   if (!valid) {
-    console.log("인증 상태: 토큰 만료됨");
+    if (import.meta.env.DEV) console.log("인증 상태: 토큰 만료됨");
     // 만료된 토큰 정리
     sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
   } else {
-    console.log("인증 상태: 유효한 토큰");
+    if (import.meta.env.DEV) console.log("인증 상태: 유효한 토큰");
   }
 
   return valid;
@@ -441,6 +469,8 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
       throw new Error("액세스 토큰이 없습니다.");
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       method: "GET",
       headers: {
@@ -448,11 +478,15 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
         "Content-Type": "application/json",
       },
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (response.status === 401) {
       const newToken = await refreshToken();
       if (newToken) {
+        const controller2 = new AbortController();
+        const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
           method: "GET",
           headers: {
@@ -460,22 +494,36 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
             "Content-Type": "application/json",
           },
           credentials: "include", // 쿠키를 포함하여 요청
+          signal: controller2.signal,
         });
+        clearTimeout(timeoutId2);
       } else {
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
     }
+
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json();
-      console.error("프로필 조회 API 오류:", errorData);
-      throw new Error(
-        `프로필 조회 실패: ${errorData.message || response.statusText}`,
-      );
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        console.error("프로필 조회 API 오류:", errorData);
+        throw new Error(
+          `프로필 조회 실패: ${errorData.message || response.statusText}`,
+        );
+      } else {
+        const text = await response.text();
+        console.error("프로필 조회 API 오류(텍스트):", text);
+        throw new Error(
+          `프로필 조회 실패: ${response.status} ${response.statusText}`,
+        );
+      }
     }
 
     const data: UserProfileResponse = await response.json();
-    console.log("사용자 프로필 조회 성공:", data);
+    if (import.meta.env.DEV) {
+      console.log("사용자 프로필 조회 성공(DEV):", data);
+    }
 
     return data;
   } catch (error) {
@@ -501,8 +549,12 @@ export const updateUserProfile = async (
       nickname: nickname,
     };
 
-    console.log("프로필 업데이트 요청 데이터:", requestBody);
+    if (import.meta.env.DEV) {
+      console.log("프로필 업데이트 요청 데이터:", requestBody);
+    }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
       method: "PUT",
       headers: {
@@ -511,11 +563,15 @@ export const updateUserProfile = async (
       },
       body: JSON.stringify(requestBody),
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (response.status === 401) {
       const newToken = await refreshToken();
       if (newToken) {
+        const controller2 = new AbortController();
+        const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
           method: "PUT",
           headers: {
@@ -524,22 +580,36 @@ export const updateUserProfile = async (
           },
           body: JSON.stringify(requestBody),
           credentials: "include", // 쿠키를 포함하여 요청
+          signal: controller2.signal,
         });
+        clearTimeout(timeoutId2);
       } else {
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
     }
+
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json();
-      console.error("프로필 업데이트 API 오류:", errorData);
-      throw new Error(
-        `프로필 업데이트 실패: ${errorData.message || response.statusText}`,
-      );
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        console.error("프로필 업데이트 API 오류:", errorData);
+        throw new Error(
+          `프로필 업데이트 실패: ${errorData.message || response.statusText}`,
+        );
+      } else {
+        const text = await response.text();
+        console.error("프로필 업데이트 API 오류(텍스트):", text);
+        throw new Error(
+          `프로필 업데이트 실패: ${response.status} ${response.statusText}`,
+        );
+      }
     }
 
     const data: UpdateProfileResponse = await response.json();
-    console.log("프로필 업데이트 성공:", data);
+    if (import.meta.env.DEV) {
+      console.log("프로필 업데이트 성공(DEV):", data);
+    }
 
     return data;
   } catch (error) {
@@ -557,19 +627,21 @@ export const refreshToken = async (): Promise<string | null> => {
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
-    const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh_token: "" }), // 서버에서 쿠키의 refresh_token을 사용
-      credentials: "include", // 쿠키를 포함하여 요청
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh_token: "" }), // 서버에서 쿠키의 refresh_token을 사용
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -588,7 +660,7 @@ export const refreshToken = async (): Promise<string | null> => {
     );
 
     // expires_at 업데이트 (새 토큰의 만료 시간 설정)
-    if (result.data.expires_in) {
+    if (typeof result.data.expires_in === "number") {
       const skewed = Math.max(0, result.data.expires_in - 30); // 30초 여유
       const expiresAt = Date.now() + skewed * 1000;
       localStorage.setItem(
@@ -597,7 +669,10 @@ export const refreshToken = async (): Promise<string | null> => {
       );
     }
 
-    console.log("토큰 갱신 성공");
+    if (import.meta.env.DEV) {
+      console.log("토큰 갱신 성공(DEV)");
+    }
+
     return result.data.access_token;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {

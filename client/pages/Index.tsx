@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated, getStoredUserInfo, logout } from "@/lib/auth";
-import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
 import CallConnectedPage from "./CallConnectedPage";
 import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
 import MyActivityPage from "./MyActivityPage";
-import SignUpPage from "./SignUpPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -19,7 +17,6 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
-  const [showSignUp, setShowSignUp] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Check authentication status on component mount
@@ -33,17 +30,21 @@ export default function Index() {
 
         // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
         if (authenticated && userInfo) {
-          console.log("인증된 사용자 정보:", {
-            is_new_user: userInfo.is_new_user,
-            is_profile_complete: userInfo.is_profile_complete,
-          });
+          if (import.meta.env.DEV) {
+            console.log("인증된 사용자 정보:", {
+              is_new_user: userInfo.is_new_user,
+              is_profile_complete: userInfo.is_profile_complete,
+            });
+          }
 
           if (userInfo.is_new_user || !userInfo.is_profile_complete) {
-            console.log("프로필 설정 페이지로 리다이렉트");
-            navigate("/profile-setup");
+            if (import.meta.env.DEV)
+              console.log("프로필 설정 페이지로 리다이렉트");
+            navigate("/profile-setup", { replace: true });
             return;
           } else {
-            console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
+            if (import.meta.env.DEV)
+              console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
             // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
             return;
           }
@@ -59,15 +60,12 @@ export default function Index() {
     checkAuthStatus();
   }, [navigate]);
 
-  const handleLogin = () => {
-    // OAuth 로그인은 별도 페이지에서 처리되므로 여기서는 기본 로그인만 처리
-    try {
-      localStorage.setItem("isLoggedIn", "true");
-      setIsLoggedIn(true);
-    } catch (error) {
-      console.error("Error saving auth status:", error);
+  // 비로그인 상태에서는 라우팅으로 대체
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      navigate("/login", { replace: true });
     }
-  };
+  }, [isLoading, isLoggedIn, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -80,10 +78,9 @@ export default function Index() {
       setSelectedCategory(null);
       setShowSettings(false);
       setShowActivity(false);
-      setShowSignUp(false);
 
       // 로그인 페이지로 리다이렉트
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (error) {
       console.error("로그아웃 중 오류 발생:", error);
       // 에러가 발생해도 로컬 상태는 초기화하고 로그인 페이지로 이동
@@ -92,8 +89,7 @@ export default function Index() {
       setSelectedCategory(null);
       setShowSettings(false);
       setShowActivity(false);
-      setShowSignUp(false);
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   };
 
@@ -145,21 +141,6 @@ export default function Index() {
     setShowActivity(false);
   };
 
-  const handleShowSignUp = () => {
-    setShowSignUp(true);
-  };
-
-  const handleBackFromSignUp = () => {
-    setShowSignUp(false);
-  };
-
-  const handleSignUp = () => {
-    // For demo purposes, signing up logs the user in
-    setShowSignUp(false);
-    setIsLoggedIn(true);
-    localStorage.setItem("isLoggedIn", "true");
-  };
-
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -177,13 +158,7 @@ export default function Index() {
   // Render appropriate page based on authentication status and call state
   return (
     <div className="max-w-md mx-auto">
-      {!isLoggedIn ? (
-        showSignUp ? (
-          <SignUpPage onBack={handleBackFromSignUp} onSignUp={handleSignUp} />
-        ) : (
-          <LoginPage onLogin={handleLogin} onSignUp={handleShowSignUp} />
-        )
-      ) : showActivity ? (
+      {!isLoggedIn ? null : showActivity ? (
         <MyActivityPage onBack={handleBackFromActivity} />
       ) : showSettings ? (
         <SettingsPage

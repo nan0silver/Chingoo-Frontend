@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
+import SignUpPage from "./pages/SignUpPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import ProfileSetupPage from "./pages/ProfileSetupPage";
 import AuthGuard from "./components/AuthGuard";
@@ -26,6 +27,10 @@ const App = () => (
           <Route
             path="/login"
             element={<LoginPage onLogin={() => {}} onSignUp={() => {}} />}
+          />
+          <Route
+            path="/signup"
+            element={<SignUpPage onBack={() => {}} onSignUp={() => {}} />}
           />
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
           <Route
