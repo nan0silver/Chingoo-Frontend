@@ -148,8 +148,6 @@ export default function Index() {
   };
 
   const handleSignUp = () => {
-    // 회원가입은 별도 페이지에서 처리되므로 여기서는 페이지 이동만 처리
-    setShowSignUp(false);
     navigate("/signup");
   };
 
