@@ -453,6 +453,8 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
       throw new Error("액세스 토큰이 없습니다.");
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       method: "GET",
       headers: {
@@ -460,11 +462,15 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
         "Content-Type": "application/json",
       },
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (response.status === 401) {
       const newToken = await refreshToken();
       if (newToken) {
+        const controller2 = new AbortController();
+        const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
           method: "GET",
           headers: {
@@ -472,7 +478,9 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
             "Content-Type": "application/json",
           },
           credentials: "include", // 쿠키를 포함하여 요청
+          signal: controller2.signal,
         });
+        clearTimeout(timeoutId2);
       } else {
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
@@ -515,6 +523,8 @@ export const updateUserProfile = async (
 
     console.log("프로필 업데이트 요청 데이터:", requestBody);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
       method: "PUT",
       headers: {
@@ -523,7 +533,9 @@ export const updateUserProfile = async (
       },
       body: JSON.stringify(requestBody),
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (response.status === 401) {
       const newToken = await refreshToken();
