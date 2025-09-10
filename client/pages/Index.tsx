@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated, getStoredUserInfo, logout } from "@/lib/auth";
-import LoginPage from "./LoginPage";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
 import CallConnectedPage from "./CallConnectedPage";
 import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
 import MyActivityPage from "./MyActivityPage";
-import SignUpPage from "./SignUpPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -19,7 +17,6 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
-  const [showSignUp, setShowSignUp] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Check authentication status on component mount
@@ -59,9 +56,12 @@ export default function Index() {
     checkAuthStatus();
   }, [navigate]);
 
-  const handleLogin = () => {
-    navigate("/login");
-  };
+  // 비로그인 상태에서는 라우팅으로 대체
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      navigate("/login");
+    }
+  }, [isLoading, isLoggedIn, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -74,7 +74,6 @@ export default function Index() {
       setSelectedCategory(null);
       setShowSettings(false);
       setShowActivity(false);
-      setShowSignUp(false);
 
       // 로그인 페이지로 리다이렉트
       navigate("/login");
@@ -86,7 +85,6 @@ export default function Index() {
       setSelectedCategory(null);
       setShowSettings(false);
       setShowActivity(false);
-      setShowSignUp(false);
       navigate("/login");
     }
   };
@@ -139,18 +137,6 @@ export default function Index() {
     setShowActivity(false);
   };
 
-  const handleShowSignUp = () => {
-    setShowSignUp(true);
-  };
-
-  const handleBackFromSignUp = () => {
-    setShowSignUp(false);
-  };
-
-  const handleSignUp = () => {
-    navigate("/signup");
-  };
-
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -168,13 +154,7 @@ export default function Index() {
   // Render appropriate page based on authentication status and call state
   return (
     <div className="max-w-md mx-auto">
-      {!isLoggedIn ? (
-        showSignUp ? (
-          <SignUpPage onBack={handleBackFromSignUp} onSignUp={handleSignUp} />
-        ) : (
-          <LoginPage onLogin={handleLogin} onSignUp={handleShowSignUp} />
-        )
-      ) : showActivity ? (
+      {!isLoggedIn ? null : showActivity ? (
         <MyActivityPage onBack={handleBackFromActivity} />
       ) : showSettings ? (
         <SettingsPage
