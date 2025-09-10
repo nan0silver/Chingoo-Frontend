@@ -61,7 +61,7 @@ export default function Index() {
   // 비로그인 상태에서는 라우팅으로 대체
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [isLoading, isLoggedIn, navigate]);
 
