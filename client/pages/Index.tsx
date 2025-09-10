@@ -30,10 +30,12 @@ export default function Index() {
 
         // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
         if (authenticated && userInfo) {
-          console.log("인증된 사용자 정보:", {
-            is_new_user: userInfo.is_new_user,
-            is_profile_complete: userInfo.is_profile_complete,
-          });
+          if (import.meta.env.DEV) {
+            console.log("인증된 사용자 정보:", {
+              is_new_user: userInfo.is_new_user,
+              is_profile_complete: userInfo.is_profile_complete,
+            });
+          }
 
           if (userInfo.is_new_user || !userInfo.is_profile_complete) {
             console.log("프로필 설정 페이지로 리다이렉트");
