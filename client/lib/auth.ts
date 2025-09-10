@@ -558,6 +558,8 @@ export const updateUserProfile = async (
     if (response.status === 401) {
       const newToken = await refreshToken();
       if (newToken) {
+        const controller2 = new AbortController();
+        const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
           method: "PUT",
           headers: {
@@ -566,7 +568,9 @@ export const updateUserProfile = async (
           },
           body: JSON.stringify(requestBody),
           credentials: "include", // 쿠키를 포함하여 요청
+          signal: controller2.signal,
         });
+        clearTimeout(timeoutId2);
       } else {
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
