@@ -41,7 +41,6 @@ const OAUTH_STORAGE_KEYS = {
   CODE_VERIFIER: "oauth_code_verifier",
   PROVIDER: "oauth_provider",
   ACCESS_TOKEN: "access_token",
-  REFRESH_TOKEN: "refresh_token",
   USER_INFO: "user_info",
   ACCESS_TOKEN_EXPIRES_AT: "access_token_expires_at",
 } as const;
