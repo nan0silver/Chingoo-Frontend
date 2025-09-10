@@ -54,9 +54,14 @@ export const getOAuthConfig = async (
 ): Promise<OAuthConfigResponse> => {
   try {
     const url = `${API_BASE_URL}/v1/auth/oauth/${provider}/config`;
-    console.log("OAuth 설정 요청 URL:", url);
+    if (import.meta.env.DEV) {
+      console.log("OAuth 설정 요청 URL:", url);
+    }
 
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       // 응답이 JSON이 아닌 경우를 처리
