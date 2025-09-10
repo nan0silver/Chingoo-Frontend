@@ -401,7 +401,7 @@ export const logout = async (): Promise<void> => {
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
 
-      console.log("로컬 로그아웃 완료");
+      if (import.meta.env.DEV) console.log("로컬 로그아웃 완료");
     } catch (error) {
       console.error("로컬 로그아웃 중 오류 발생:", error);
     }

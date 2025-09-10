@@ -39,7 +39,7 @@ export default function Index() {
 
           if (userInfo.is_new_user || !userInfo.is_profile_complete) {
             console.log("프로필 설정 페이지로 리다이렉트");
-            navigate("/profile-setup");
+            navigate("/profile-setup", { replace: true });
             return;
           } else {
             console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
