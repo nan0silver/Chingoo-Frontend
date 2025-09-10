@@ -486,16 +486,28 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
     }
+
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json();
-      console.error("프로필 조회 API 오류:", errorData);
-      throw new Error(
-        `프로필 조회 실패: ${errorData.message || response.statusText}`,
-      );
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        console.error("프로필 조회 API 오류:", errorData);
+        throw new Error(
+          `프로필 조회 실패: ${errorData.message || response.statusText}`,
+        );
+      } else {
+        const text = await response.text();
+        console.error("프로필 조회 API 오류(텍스트):", text);
+        throw new Error(
+          `프로필 조회 실패: ${response.status} ${response.statusText}`,
+        );
+      }
     }
 
     const data: UserProfileResponse = await response.json();
-    console.log("사용자 프로필 조회 성공:", data);
+    if (import.meta.env.DEV) {
+      console.log("사용자 프로필 조회 성공(DEV):", data);
+    }
 
     return data;
   } catch (error) {
@@ -521,7 +533,9 @@ export const updateUserProfile = async (
       nickname: nickname,
     };
 
-    console.log("프로필 업데이트 요청 데이터:", requestBody);
+    if (import.meta.env.DEV) {
+      console.log("프로필 업데이트 요청 데이터:", requestBody);
+    }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -554,16 +568,28 @@ export const updateUserProfile = async (
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
     }
+
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json();
-      console.error("프로필 업데이트 API 오류:", errorData);
-      throw new Error(
-        `프로필 업데이트 실패: ${errorData.message || response.statusText}`,
-      );
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        console.error("프로필 업데이트 API 오류:", errorData);
+        throw new Error(
+          `프로필 업데이트 실패: ${errorData.message || response.statusText}`,
+        );
+      } else {
+        const text = await response.text();
+        console.error("프로필 업데이트 API 오류(텍스트):", text);
+        throw new Error(
+          `프로필 업데이트 실패: ${response.status} ${response.statusText}`,
+        );
+      }
     }
 
     const data: UpdateProfileResponse = await response.json();
-    console.log("프로필 업데이트 성공:", data);
+    if (import.meta.env.DEV) {
+      console.log("프로필 업데이트 성공(DEV):", data);
+    }
 
     return data;
   } catch (error) {
@@ -612,7 +638,7 @@ export const refreshToken = async (): Promise<string | null> => {
     );
 
     // expires_at 업데이트 (새 토큰의 만료 시간 설정)
-    if (result.data.expires_in) {
+    if (typeof result.data.expires_in === "number") {
       const skewed = Math.max(0, result.data.expires_in - 30); // 30초 여유
       const expiresAt = Date.now() + skewed * 1000;
       localStorage.setItem(
@@ -621,7 +647,10 @@ export const refreshToken = async (): Promise<string | null> => {
       );
     }
 
-    console.log("토큰 갱신 성공");
+    if (import.meta.env.DEV) {
+      console.log("토큰 갱신 성공(DEV)");
+    }
+
     return result.data.access_token;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
