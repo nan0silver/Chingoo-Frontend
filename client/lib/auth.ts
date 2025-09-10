@@ -335,21 +335,36 @@ export const logoutFromServer = async (): Promise<void> => {
       logout_all: true,
     };
 
-    console.log("로그아웃 요청 데이터:", requestBody);
+    if (import.meta.env.DEV) {
+      console.log("로그아웃 요청 데이터:", requestBody);
+    }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
       method: "POST",
       headers,
       body: JSON.stringify(requestBody),
       credentials: "include", // 쿠키를 포함하여 요청
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const errorData: ApiErrorResponse = await response.json();
-      console.error("로그아웃 API 오류:", errorData);
-      throw new Error(
-        `로그아웃 실패: ${errorData.message || response.statusText}`,
-      );
+      const ct = response.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        console.error("로그아웃 API 오류:", errorData);
+        throw new Error(
+          `로그아웃 실패: ${errorData.message || response.statusText}`,
+        );
+      } else {
+        const text = await response.text();
+        console.error("로그아웃 API 오류(텍스트):", text);
+        throw new Error(
+          `로그아웃 실패: ${response.status} ${response.statusText}`,
+        );
+      }
     }
 
     const data: LogoutResponse = await response.json();
