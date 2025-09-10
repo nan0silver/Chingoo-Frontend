@@ -17,11 +17,12 @@ export default function HomePage({
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
+    let mounted = true;
     const fetchUserProfile = async () => {
       try {
         setIsLoadingProfile(true);
         const profile = await getUserProfile();
-        setUserNickname(profile.data.nickname);
+        if (mounted) setUserNickname(profile.data.nickname);
       } catch (error) {
         console.error("사용자 프로필 가져오기 실패:", error);
 
@@ -34,11 +35,15 @@ export default function HomePage({
         }
         // 에러가 발생해도 기본 닉네임 유지
       } finally {
-        setIsLoadingProfile(false);
+        if (mounted) setIsLoadingProfile(false);
       }
     };
 
     fetchUserProfile();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const categories = [
