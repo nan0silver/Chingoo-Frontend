@@ -60,13 +60,7 @@ export default function Index() {
   }, [navigate]);
 
   const handleLogin = () => {
-    // OAuth 로그인은 별도 페이지에서 처리되므로 여기서는 기본 로그인만 처리
-    try {
-      localStorage.setItem("isLoggedIn", "true");
-      setIsLoggedIn(true);
-    } catch (error) {
-      console.error("Error saving auth status:", error);
-    }
+    navigate("/login");
   };
 
   const handleLogout = async () => {
@@ -154,10 +148,9 @@ export default function Index() {
   };
 
   const handleSignUp = () => {
-    // For demo purposes, signing up logs the user in
+    // 회원가입은 별도 페이지에서 처리되므로 여기서는 페이지 이동만 처리
     setShowSignUp(false);
-    setIsLoggedIn(true);
-    localStorage.setItem("isLoggedIn", "true");
+    navigate("/signup");
   };
 
   // Show loading spinner while checking authentication
