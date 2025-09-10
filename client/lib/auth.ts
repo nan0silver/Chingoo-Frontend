@@ -16,8 +16,14 @@ import {
  * API 설정
  */
 // 백엔드 서버 포트를 실제 포트로 변경해주세요
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
+  : import.meta.env.DEV
+    ? "http://localhost:8080/api"
+    : "";
+if (!import.meta.env.DEV && !API_BASE_URL) {
+  throw new Error("환경 변수 VITE_API_BASE_URL가 설정되지 않았습니다.");
+}
 
 /**
  * 보안 설정 안내:
@@ -25,24 +31,6 @@ const API_BASE_URL =
  * 1. access_token: sessionStorage에 저장 (XSS 보호)
  * 2. refresh_token: HttpOnly Secure SameSite=Strict 쿠키로 서버에서 설정 필요
  *
- * 백엔드에서 refresh_token을 HttpOnly 쿠키로 설정하는 예시:
- *
- * // Express.js 예시
- * res.cookie('refresh_token', refreshToken, {
- *   httpOnly: true,
- *   secure: true, // HTTPS에서만
- *   sameSite: 'strict',
- *   maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
- * });
- *
- * // Spring Boot 예시
- * ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
- *   .httpOnly(true)
- *   .secure(true)
- *   .sameSite("Strict")
- *   .maxAge(Duration.ofDays(7))
- *   .build();
- * response.addHeader("Set-Cookie", cookie.toString());
  */
 
 /**
