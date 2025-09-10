@@ -367,7 +367,10 @@ export const logoutFromServer = async (): Promise<void> => {
     }
 
     const data: LogoutResponse = await response.json();
-    console.log("로그아웃 성공:", data);
+
+    if (import.meta.env.DEV) {
+      console.log("로그아웃 성공(DEV):", data);
+    }
   } catch (error) {
     console.error("서버 로그아웃 중 오류 발생:", error);
     // 서버 로그아웃이 실패해도 로컬 로그아웃은 진행
@@ -391,6 +394,7 @@ export const logout = async (): Promise<void> => {
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
       // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로 프론트엔드에서 삭제 불가
       localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
+      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
 
       // 세션 스토리지도 정리
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
@@ -411,7 +415,7 @@ export const logout = async (): Promise<void> => {
 export const isAuthenticated = (): boolean => {
   const token = getStoredToken();
   if (!token) {
-    console.log("인증 상태: 토큰 없음");
+    if (import.meta.env.DEV) console.log("인증 상태: 토큰 없음");
     return false;
   }
 
@@ -421,7 +425,8 @@ export const isAuthenticated = (): boolean => {
 
   // expires_at이 없으면 토큰이 있다고 가정 (하위 호환성)
   if (!expStr) {
-    console.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
+    if (import.meta.env.DEV)
+      console.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
     return true;
   }
 
@@ -430,12 +435,12 @@ export const isAuthenticated = (): boolean => {
   const valid = now < expiresAt;
 
   if (!valid) {
-    console.log("인증 상태: 토큰 만료됨");
+    if (import.meta.env.DEV) console.log("인증 상태: 토큰 만료됨");
     // 만료된 토큰 정리
     sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
   } else {
-    console.log("인증 상태: 유효한 토큰");
+    if (import.meta.env.DEV) console.log("인증 상태: 유효한 토큰");
   }
 
   return valid;
