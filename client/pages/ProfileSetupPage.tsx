@@ -11,6 +11,7 @@ export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,8 +75,11 @@ export default function ProfileSetupPage() {
       };
       localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
 
-      alert("프로필이 저장되었습니다!");
-      navigate("/"); // 메인 페이지로 이동
+      // 성공 메시지 표시 후 자동으로 2초 후에 메인 페이지로 이동
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
       return;
     }
 
@@ -93,8 +97,11 @@ export default function ProfileSetupPage() {
       };
       localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
 
-      alert("프로필이 저장되었습니다!");
-      navigate("/"); // 메인 페이지로 이동
+      // 성공 메시지 표시 후 자동으로 2초 후에 메인 페이지로 이동
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     } catch (error) {
       console.error("프로필 저장 실패:", error);
 
@@ -123,7 +130,33 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
+    <div className="min-h-screen bg-white flex flex-col items-center relative">
+      {/* Success Message Overlay */}
+      {showSuccessMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 mx-4 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              프로필이 저장되었습니다!
+            </h3>
+            <p className="text-gray-600">잠시 후 메인 페이지로 이동합니다...</p>
+          </div>
+        </div>
+      )}
       {/* Status Bar - only show on mobile */}
       <div className="w-full max-w-sm relative md:hidden">
         <div className="flex justify-between items-center px-6 py-3 h-11">
