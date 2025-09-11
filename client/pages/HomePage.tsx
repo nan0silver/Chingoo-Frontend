@@ -198,13 +198,13 @@ export default function HomePage({
             <button
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
-              className={`relative h-28 md:h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-center px-4 gap-6 transition-colors hover:shadow-md ${
+              className={`relative h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-center px-4 gap-6 transition-colors hover:shadow-md ${
                 selectedCategory === category.id
                   ? "border-orange-accent bg-orange-accent/5"
                   : ""
               }`}
             >
-              <span className="text-grey-900 font-crimson text-xl md:text-2xl font-bold whitespace-nowrap">
+              <span className="text-grey-900 font-crimson text-2xl font-bold whitespace-nowrap">
                 {category.name}
               </span>
               <div>{category.icon}</div>
@@ -229,11 +229,11 @@ export default function HomePage({
 
       {/* Start Call Button */}
       <div className="px-5 md:px-8 pb-8 md:pb-12">
-        <div className="h-20 md:h-24 relative">
+        <div className="h-24 relative">
           <button
             onClick={handleStartCall}
             disabled={!selectedCategory}
-            className={`w-full h-14 md:h-16 rounded-lg font-crimson text-xl md:text-2xl font-semibold text-white transition-opacity ${
+            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-opacity ${
               selectedCategory
                 ? "bg-gradient-to-r from-yellow-300 to-red-gradient"
                 : "bg-gray-400 opacity-50 cursor-not-allowed"
