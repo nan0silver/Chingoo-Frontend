@@ -116,7 +116,7 @@ export default function HomePage({
   return (
     <div className="min-h-screen bg-grey-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 md:px-8">
+      <div className="flex items-center justify-between px-8 py-4">
         {/* Logo */}
         <div className="flex items-center">
           <svg width="90" height="28" viewBox="0 0 90 28" fill="none">
@@ -166,7 +166,7 @@ export default function HomePage({
       </div>
 
       {/* User Info */}
-      <div className="px-5 md:px-8 mb-6">
+      <div className="px-8 mb-6">
         <div className="flex items-center gap-2">
           <div className="relative">
             <button
@@ -185,14 +185,14 @@ export default function HomePage({
       </div>
 
       {/* Description */}
-      <div className="px-5 md:px-8 mb-8">
+      <div className="px-8 mb-8">
         <h2 className="text-grey-900 font-crimson text-lg md:text-xl font-bold">
           관심사를 선택해 통화를 시작해보세요!
         </h2>
       </div>
 
       {/* Categories Grid */}
-      <div className="flex-1 px-5 md:px-8">
+      <div className="flex-1 px-8">
         <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
           {categories.map((category) => (
             <button
@@ -214,7 +214,7 @@ export default function HomePage({
       </div>
 
       {/* Subscription Section */}
-      <div className="px-5 md:px-8 mb-4">
+      <div className="px-8 mb-4">
         <div className="relative bg-orange-subscription rounded-2xl p-6 md:p-8 flex items-center justify-between">
           <div>
             <p className="text-white font-crimson text-base md:text-lg font-bold leading-6">
@@ -228,7 +228,7 @@ export default function HomePage({
       </div>
 
       {/* Start Call Button */}
-      <div className="px-5 md:px-8 pb-8 md:pb-12">
+      <div className="px-8 pb-8 md:pb-12">
         <div className="h-24 relative">
           <button
             onClick={handleStartCall}
