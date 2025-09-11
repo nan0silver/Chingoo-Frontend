@@ -186,7 +186,7 @@ export default function HomePage({
 
       {/* Description */}
       <div className="px-8 mb-8">
-        <h2 className="text-grey-900 font-crimson text-lg md:text-xl font-bold">
+        <h2 className="text-grey-900 font-crimson text-xl font-bold">
           관심사를 선택해 통화를 시작해보세요!
         </h2>
       </div>
