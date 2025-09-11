@@ -141,10 +141,18 @@ export default function HomePage({
 
         {/* Right side buttons */}
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded">
+          <button
+            type="button"
+            className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded"
+          >
             통화 기록
           </button>
-          <button onClick={onOpenSettings} className="p-3" title="설정">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="p-3"
+            title="설정"
+          >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
@@ -239,7 +247,7 @@ export default function HomePage({
                 : "bg-gray-400 opacity-50 cursor-not-allowed"
             }`}
           >
-            통화시작
+            통화 시작
           </button>
         </div>
       </div>
