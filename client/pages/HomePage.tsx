@@ -116,7 +116,7 @@ export default function HomePage({
   return (
     <div className="min-h-screen bg-grey-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 md:px-8">
+      <div className="flex items-center justify-between px-8 py-4">
         {/* Logo */}
         <div className="flex items-center">
           <svg width="90" height="28" viewBox="0 0 90 28" fill="none">
@@ -141,10 +141,18 @@ export default function HomePage({
 
         {/* Right side buttons */}
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded">
+          <button
+            type="button"
+            className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded"
+          >
             통화 기록
           </button>
-          <button onClick={onOpenSettings} className="p-3" title="설정">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="p-3"
+            title="설정"
+          >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
@@ -166,7 +174,7 @@ export default function HomePage({
       </div>
 
       {/* User Info */}
-      <div className="px-5 md:px-8 mb-6">
+      <div className="px-8 mb-6">
         <div className="flex items-center gap-2">
           <div className="relative">
             <button
@@ -185,26 +193,26 @@ export default function HomePage({
       </div>
 
       {/* Description */}
-      <div className="px-5 md:px-8 mb-8">
-        <h2 className="text-grey-900 font-crimson text-lg md:text-xl font-bold">
+      <div className="px-8 mb-8">
+        <h2 className="text-grey-900 font-crimson text-xl font-bold">
           관심사를 선택해 통화를 시작해보세요!
         </h2>
       </div>
 
       {/* Categories Grid */}
-      <div className="flex-1 px-5 md:px-8">
-        <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
+      <div className="flex-1 px-8">
+        <div className="grid grid-cols-2 gap-6 mb-8">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
-              className={`relative h-28 md:h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-center px-4 gap-6 transition-colors hover:shadow-md ${
+              className={`relative h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-center px-4 gap-6 transition-colors hover:shadow-md ${
                 selectedCategory === category.id
                   ? "border-orange-accent bg-orange-accent/5"
                   : ""
               }`}
             >
-              <span className="text-grey-900 font-crimson text-xl md:text-2xl font-bold whitespace-nowrap">
+              <span className="text-grey-900 font-crimson text-2xl font-bold whitespace-nowrap">
                 {category.name}
               </span>
               <div>{category.icon}</div>
@@ -214,32 +222,32 @@ export default function HomePage({
       </div>
 
       {/* Subscription Section */}
-      <div className="px-5 md:px-8 mb-4">
-        <div className="relative bg-orange-subscription rounded-2xl p-6 md:p-8 flex items-center justify-between">
+      <div className="px-8 mb-8">
+        <div className="relative bg-orange-subscription rounded-2xl p-8 flex items-center justify-between">
           <div>
-            <p className="text-white font-crimson text-base md:text-lg font-bold leading-6">
+            <p className="text-white font-crimson text-lg font-bold leading-6">
               구독을 통해
               <br />
               무제한 통화를 시작해보세요
             </p>
           </div>
-          <div className="text-4xl md:text-5xl">🔗</div>
+          <div className="text-5xl">🔗</div>
         </div>
       </div>
 
       {/* Start Call Button */}
-      <div className="px-5 md:px-8 pb-8 md:pb-12">
-        <div className="h-20 md:h-24 relative">
+      <div className="px-8 pb-12">
+        <div className="h-24 relative">
           <button
             onClick={handleStartCall}
             disabled={!selectedCategory}
-            className={`w-full h-14 md:h-16 rounded-lg font-crimson text-xl md:text-2xl font-semibold text-white transition-opacity ${
+            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-opacity ${
               selectedCategory
                 ? "bg-gradient-to-r from-yellow-300 to-red-gradient"
                 : "bg-gray-400 opacity-50 cursor-not-allowed"
             }`}
           >
-            통화시작
+            통화 시작
           </button>
         </div>
       </div>
