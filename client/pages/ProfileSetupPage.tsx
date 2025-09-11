@@ -128,10 +128,19 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center relative">
+    <div
+      className="min-h-screen bg-white flex flex-col items-center relative"
+      aria-busy={showSuccessMessage}
+    >
       {/* Success Message Overlay */}
       {showSuccessMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-save-title"
+          aria-describedby="profile-save-desc"
+        >
           <div className="bg-white rounded-lg p-6 mx-4 text-center">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -139,6 +148,7 @@ export default function ProfileSetupPage() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -148,10 +158,15 @@ export default function ProfileSetupPage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3
+              id="profile-save-title"
+              className="text-lg font-semibold text-gray-900 mb-2"
+            >
               프로필이 저장되었습니다!
             </h3>
-            <p className="text-gray-600">잠시 후 메인 페이지로 이동합니다...</p>
+            <p id="profile-save-desc" className="text-gray-600">
+              잠시 후 메인 페이지로 이동합니다...
+            </p>
           </div>
         </div>
       )}
