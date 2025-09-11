@@ -14,6 +14,26 @@ export default function ProfileSetupPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
 
+  // 공통 성공 처리 함수
+  const scheduleSuccessNavigate = () => {
+    setShowSuccessMessage(true);
+    setTimeout(() => {
+      navigate("/", { replace: true });
+    }, 2000);
+  };
+
+  // 공통 사용자 정보 업데이트 함수
+  const updateUserInfo = () => {
+    if (!userProfile) return;
+
+    const updatedUserInfo: UserInfo = {
+      id: userProfile.id,
+      is_profile_complete: true,
+      is_new_user: false,
+    };
+    localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
+  };
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -67,19 +87,8 @@ export default function ProfileSetupPage() {
 
     // 기존 닉네임과 동일한 경우 API 요청 없이 바로 메인 페이지로 이동
     if (userProfile && nickname === userProfile.nickname) {
-      // PII 보안: 최소한의 정보만 localStorage에 저장
-      const updatedUserInfo: UserInfo = {
-        id: userProfile.id,
-        is_profile_complete: true,
-        is_new_user: false,
-      };
-      localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
-
-      // 성공 메시지 표시 후 자동으로 2초 후에 메인 페이지로 이동
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      updateUserInfo();
+      scheduleSuccessNavigate();
       return;
     }
 
@@ -89,19 +98,8 @@ export default function ProfileSetupPage() {
       // 실제 API 호출
       await updateUserProfile(nickname);
 
-      // PII 보안: 최소한의 정보만 localStorage에 저장
-      const updatedUserInfo: UserInfo = {
-        id: userProfile!.id,
-        is_profile_complete: true,
-        is_new_user: false,
-      };
-      localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
-
-      // 성공 메시지 표시 후 자동으로 2초 후에 메인 페이지로 이동
-      setShowSuccessMessage(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      updateUserInfo();
+      scheduleSuccessNavigate();
     } catch (error) {
       console.error("프로필 저장 실패:", error);
 
@@ -219,7 +217,7 @@ export default function ProfileSetupPage() {
         <div className="pt-4">
           <button
             onClick={handleSaveProfile}
-            disabled={isLoading || !nickname.trim()}
+            disabled={isLoading || !nickname.trim() || showSuccessMessage}
             className="w-full h-14 md:h-16 bg-login-button text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {isLoading ? "저장 중..." : "프로필 저장"}
@@ -230,8 +228,12 @@ export default function ProfileSetupPage() {
         {!userProfile.is_new_user && (
           <div className="text-center">
             <button
-              onClick={() => navigate("/")}
-              className="text-gray-600 underline hover:text-gray-800"
+              onClick={() => {
+                updateUserInfo();
+                navigate("/", { replace: true });
+              }}
+              disabled={showSuccessMessage}
+              className="text-gray-600 underline hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               나중에 설정하기
             </button>
