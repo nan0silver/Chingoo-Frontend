@@ -214,21 +214,21 @@ export default function HomePage({
       </div>
 
       {/* Subscription Section */}
-      <div className="px-8 mb-4">
-        <div className="relative bg-orange-subscription rounded-2xl p-6 md:p-8 flex items-center justify-between">
+      <div className="px-8 mb-8">
+        <div className="relative bg-orange-subscription rounded-2xl p-8 flex items-center justify-between">
           <div>
-            <p className="text-white font-crimson text-base md:text-lg font-bold leading-6">
+            <p className="text-white font-crimson text-lg font-bold leading-6">
               구독을 통해
               <br />
               무제한 통화를 시작해보세요
             </p>
           </div>
-          <div className="text-4xl md:text-5xl">🔗</div>
+          <div className="text-5xl">🔗</div>
         </div>
       </div>
 
       {/* Start Call Button */}
-      <div className="px-8 pb-8 md:pb-12">
+      <div className="px-8 pb-12">
         <div className="h-24 relative">
           <button
             onClick={handleStartCall}
