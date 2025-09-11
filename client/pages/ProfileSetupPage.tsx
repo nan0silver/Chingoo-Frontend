@@ -64,9 +64,18 @@ export default function ProfileSetupPage() {
       return;
     }
 
-    // 기존 닉네임과 동일한지 확인
+    // 기존 닉네임과 동일한 경우 API 요청 없이 바로 메인 페이지로 이동
     if (userProfile && nickname === userProfile.nickname) {
-      alert("기존 닉네임과 동일합니다. 변경사항이 없습니다.");
+      // PII 보안: 최소한의 정보만 localStorage에 저장
+      const updatedUserInfo: UserInfo = {
+        id: userProfile.id,
+        is_profile_complete: true,
+        is_new_user: false,
+      };
+      localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
+
+      alert("프로필이 저장되었습니다!");
+      navigate("/"); // 메인 페이지로 이동
       return;
     }
 
