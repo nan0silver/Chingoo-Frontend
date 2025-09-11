@@ -11,7 +11,28 @@ export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
+
+  // 공통 성공 처리 함수
+  const scheduleSuccessNavigate = () => {
+    setShowSuccessMessage(true);
+    setTimeout(() => {
+      navigate("/", { replace: true });
+    }, 2000);
+  };
+
+  // 공통 사용자 정보 업데이트 함수
+  const updateUserInfo = () => {
+    if (!userProfile) return;
+
+    const updatedUserInfo: UserInfo = {
+      id: userProfile.id,
+      is_profile_complete: true,
+      is_new_user: false,
+    };
+    localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -64,9 +85,10 @@ export default function ProfileSetupPage() {
       return;
     }
 
-    // 기존 닉네임과 동일한지 확인
+    // 기존 닉네임과 동일한 경우 API 요청 없이 바로 메인 페이지로 이동
     if (userProfile && nickname === userProfile.nickname) {
-      alert("기존 닉네임과 동일합니다. 변경사항이 없습니다.");
+      updateUserInfo();
+      scheduleSuccessNavigate();
       return;
     }
 
@@ -76,16 +98,8 @@ export default function ProfileSetupPage() {
       // 실제 API 호출
       await updateUserProfile(nickname);
 
-      // PII 보안: 최소한의 정보만 localStorage에 저장
-      const updatedUserInfo: UserInfo = {
-        id: userProfile!.id,
-        is_profile_complete: true,
-        is_new_user: false,
-      };
-      localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
-
-      alert("프로필이 저장되었습니다!");
-      navigate("/"); // 메인 페이지로 이동
+      updateUserInfo();
+      scheduleSuccessNavigate();
     } catch (error) {
       console.error("프로필 저장 실패:", error);
 
@@ -114,40 +128,48 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
-      {/* Status Bar - only show on mobile */}
-      <div className="w-full max-w-sm relative md:hidden">
-        <div className="flex justify-between items-center px-6 py-3 h-11">
-          <span className="text-black text-lg font-medium">9:41</span>
-          <div className="flex items-center gap-1">
-            {/* Signal bars */}
-            <div className="flex gap-1">
-              <div className="w-1 h-4 bg-black rounded-sm"></div>
-              <div className="w-1 h-3 bg-black rounded-sm"></div>
-              <div className="w-1 h-5 bg-black rounded-sm"></div>
-              <div className="w-1 h-2 bg-black rounded-sm"></div>
+    <div
+      className="min-h-screen bg-white flex flex-col items-center relative"
+      aria-busy={showSuccessMessage}
+    >
+      {/* Success Message Overlay */}
+      {showSuccessMessage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="profile-save-title"
+          aria-describedby="profile-save-desc"
+        >
+          <div className="bg-white rounded-lg p-6 mx-4 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
             </div>
-            {/* WiFi icon */}
-            <svg
-              width="15"
-              height="11"
-              viewBox="0 0 15 11"
-              fill="none"
-              className="ml-2"
+            <h3
+              id="profile-save-title"
+              className="text-lg font-semibold text-gray-900 mb-2"
             >
-              <path
-                d="M7.5 3.5C10.5 3.5 13 5.5 13 8H12C12 6.5 9.5 5 7.5 5S3 6.5 3 8H2C2 5.5 4.5 3.5 7.5 3.5Z"
-                fill="black"
-              />
-            </svg>
-            {/* Battery */}
-            <div className="ml-2 w-6 h-3 border border-black rounded-sm relative">
-              <div className="absolute inset-0.5 bg-black rounded-sm"></div>
-              <div className="absolute -right-1 top-1 w-0.5 h-1 bg-black rounded-r"></div>
-            </div>
+              프로필이 저장되었습니다!
+            </h3>
+            <p id="profile-save-desc" className="text-gray-600">
+              잠시 후 메인 페이지로 이동합니다...
+            </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Header */}
       <div className="w-full max-w-sm md:max-w-md px-5 pt-4 pb-6">
@@ -210,7 +232,7 @@ export default function ProfileSetupPage() {
         <div className="pt-4">
           <button
             onClick={handleSaveProfile}
-            disabled={isLoading || !nickname.trim()}
+            disabled={isLoading || !nickname.trim() || showSuccessMessage}
             className="w-full h-14 md:h-16 bg-login-button text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {isLoading ? "저장 중..." : "프로필 저장"}
@@ -221,8 +243,12 @@ export default function ProfileSetupPage() {
         {!userProfile.is_new_user && (
           <div className="text-center">
             <button
-              onClick={() => navigate("/")}
-              className="text-gray-600 underline hover:text-gray-800"
+              onClick={() => {
+                updateUserInfo();
+                navigate("/", { replace: true });
+              }}
+              disabled={showSuccessMessage}
+              className="text-gray-600 underline hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               나중에 설정하기
             </button>
