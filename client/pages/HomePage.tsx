@@ -115,38 +115,6 @@ export default function HomePage({
 
   return (
     <div className="min-h-screen bg-grey-50 flex flex-col">
-      {/* Status Bar */}
-      <div className="w-full flex justify-between items-center px-6 py-3 h-11 md:hidden">
-        <span className="text-black text-lg font-medium">9:41</span>
-        <div className="flex items-center gap-1">
-          {/* Signal bars */}
-          <div className="flex gap-1">
-            <div className="w-1 h-4 bg-black rounded-sm"></div>
-            <div className="w-1 h-3 bg-black rounded-sm"></div>
-            <div className="w-1 h-5 bg-black rounded-sm"></div>
-            <div className="w-1 h-2 bg-black rounded-sm"></div>
-          </div>
-          {/* WiFi icon */}
-          <svg
-            width="15"
-            height="11"
-            viewBox="0 0 15 11"
-            fill="none"
-            className="ml-2"
-          >
-            <path
-              d="M7.5 3.5C10.5 3.5 13 5.5 13 8H12C12 6.5 9.5 5 7.5 5S3 6.5 3 8H2C2 5.5 4.5 3.5 7.5 3.5Z"
-              fill="black"
-            />
-          </svg>
-          {/* Battery */}
-          <div className="ml-2 w-6 h-3 border border-black rounded-sm relative">
-            <div className="absolute inset-0.5 bg-black rounded-sm"></div>
-            <div className="absolute -right-1 top-1 w-0.5 h-1 bg-black rounded-r"></div>
-          </div>
-        </div>
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 md:px-8">
         {/* Logo */}
