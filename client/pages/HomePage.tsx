@@ -193,7 +193,7 @@ export default function HomePage({
 
       {/* Categories Grid */}
       <div className="flex-1 px-8">
-        <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-6 mb-8">
           {categories.map((category) => (
             <button
               key={category.id}
