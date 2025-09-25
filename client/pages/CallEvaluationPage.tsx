@@ -115,6 +115,29 @@ export default function CallEvaluationPage({
         </p>
       </div>
 
+      {/* Submit Rating Button */}
+      <div className="flex justify-center mt-6 px-5">
+        <button
+          onClick={() => {
+            if (selectedRating) {
+              // TODO: 실제 평가 제출 로직 구현
+              console.log("평가 제출:", selectedRating);
+              alert(
+                `평가가 제출되었습니다: ${selectedRating === "good" ? "좋았어요" : "별로였어요"}`,
+              );
+            }
+          }}
+          disabled={!selectedRating}
+          className={`w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all ${
+            selectedRating
+              ? "bg-gradient-to-r from-yellow-300 to-red-gradient text-white hover:opacity-90"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          평가 제출하기
+        </button>
+      </div>
+
       {/* Buttons Container */}
       <div className="flex-1 flex items-end pb-8">
         <div className="w-full px-5">
