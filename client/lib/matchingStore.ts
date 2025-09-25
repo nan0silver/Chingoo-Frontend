@@ -117,20 +117,26 @@ export const useMatchingStore = create<MatchingStore>()(
             const response = await matchingApiService.joinMatching(request);
 
             set({
-              matchingId: response.matchingId,
-              status: response.status,
-              categoryId: request.categoryId,
-              location: request.location,
-              queuePosition: response.queuePosition,
-              estimatedWaitTime: response.estimatedWaitTime,
-              createdAt: new Date().toISOString(),
+              matchingId: response.queue_id,
+              status: response.queue_status.toLowerCase() as
+                | "waiting"
+                | "matched"
+                | "cancelled"
+                | "timeout",
+              categoryId: response.category_id,
+              queuePosition: response.queue_position,
+              estimatedWaitTime: Math.ceil(
+                response.estimated_wait_time_seconds / 60,
+              ), // 초를 분으로 변환
+              createdAt: response.created_at,
               updatedAt: new Date().toISOString(),
             });
 
-            // WebSocket 연결 (아직 연결되지 않은 경우)
-            if (!get().connectionState.isConnected) {
-              await get().connectWebSocket();
-            }
+            // WebSocket 연결은 실제로 매칭이 성공한 후에만 시도
+            // 현재는 백엔드 WebSocket 서버가 없으므로 주석 처리
+            // if (!get().connectionState.isConnected) {
+            //   await get().connectWebSocket();
+            // }
           } catch (error) {
             const errorMessage =
               error instanceof Error

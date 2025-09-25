@@ -25,7 +25,7 @@ export class WebSocketService {
   private onError?: (error: string) => void;
 
   constructor() {
-    this.setupClient();
+    // setupClient는 connect 시점에 호출
   }
 
   private setupClient() {
@@ -86,10 +86,6 @@ export class WebSocketService {
    * JWT 토큰을 사용하여 WebSocket 연결
    */
   async connect(token: string): Promise<void> {
-    if (!this.client) {
-      throw new Error("WebSocket 클라이언트가 초기화되지 않았습니다.");
-    }
-
     if (this.connectionState.isConnected || this.connectionState.isConnecting) {
       console.log("이미 연결 중이거나 연결되어 있습니다.");
       return;
@@ -102,12 +98,17 @@ export class WebSocketService {
       };
       this.onConnectionStateChange?.(this.connectionState);
 
+      // 클라이언트가 없으면 새로 생성
+      if (!this.client) {
+        this.setupClient();
+      }
+
       // JWT 토큰을 헤더에 포함하여 연결
-      this.client.connectHeaders = {
+      this.client!.connectHeaders = {
         Authorization: `Bearer ${token}`,
       };
 
-      await this.client.activate();
+      await this.client!.activate();
     } catch (error) {
       console.error("WebSocket 연결 실패:", error);
       this.connectionState = {
@@ -268,5 +269,15 @@ export class WebSocketService {
   }
 }
 
-// 싱글톤 인스턴스
-export const webSocketService = new WebSocketService();
+// 싱글톤 인스턴스 - 지연 초기화
+let webSocketServiceInstance: WebSocketService | null = null;
+
+export const getWebSocketService = (): WebSocketService => {
+  if (!webSocketServiceInstance) {
+    webSocketServiceInstance = new WebSocketService();
+  }
+  return webSocketServiceInstance;
+};
+
+// 기존 호환성을 위한 export
+export const webSocketService = getWebSocketService();

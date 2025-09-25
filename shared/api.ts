@@ -160,13 +160,7 @@ export interface Location {
  * 매칭 요청
  */
 export interface MatchingRequest {
-  categoryId: number;
-  location: Location;
-  preferences?: {
-    ageRange?: [number, number];
-    gender?: "male" | "female" | "any";
-    maxDistance?: number; // km
-  };
+  category_id: number;
 }
 
 /**
@@ -237,10 +231,15 @@ export interface WebSocketConnectionState {
  * 매칭 응답
  */
 export interface MatchingResponse {
-  matchingId: string;
-  status: MatchingStatus["status"];
-  queuePosition?: number;
-  estimatedWaitTime?: number;
+  queue_id: string;
+  category_id: number;
+  category_name: string;
+  queue_status: "WAITING" | "MATCHED" | "CANCELLED" | "TIMEOUT";
+  estimated_wait_time_seconds: number;
+  queue_position: number;
+  created_at: string;
+  waiting: boolean;
+  matching: boolean;
 }
 
 /**
@@ -254,3 +253,18 @@ export interface CategoriesResponse {
  * WebSocket 메시지 타입
  */
 export type WebSocketMessage = MatchingNotification | CallStartNotification;
+
+/**
+ * 카테고리 상수
+ */
+export const CATEGORIES = {
+  HOBBY: { id: 1, name: "취미", icon: "hobby.png" },
+  CHILDREN: { id: 2, name: "자녀", icon: "children.png" },
+  COOKING: { id: 3, name: "요리", icon: "cooking.png" },
+  MEMORIES: { id: 4, name: "추억", icon: "memories.png" },
+  MUSIC: { id: 5, name: "음악", icon: "music.png" },
+  TRAVEL: { id: 6, name: "여행", icon: "travel.png" },
+} as const;
+
+export type CategoryId = (typeof CATEGORIES)[keyof typeof CATEGORIES]["id"];
+export type CategoryName = (typeof CATEGORIES)[keyof typeof CATEGORIES]["name"];

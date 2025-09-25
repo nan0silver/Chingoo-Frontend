@@ -9,7 +9,11 @@ import {
 /**
  * API 기본 설정
  */
-const API_BASE_URL = "/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
+  : import.meta.env.DEV
+    ? "http://localhost:8080/api"
+    : "/api";
 
 /**
  * HTTP 요청 헤더 생성
@@ -86,8 +90,13 @@ export class MatchingApiService {
       throw new Error("인증 토큰이 필요합니다.");
     }
 
+    const url = `${this.baseUrl}/v1/calls/match`;
+    console.log("매칭 API 요청 URL:", url);
+    console.log("API_BASE_URL:", API_BASE_URL);
+    console.log("this.baseUrl:", this.baseUrl);
+
     try {
-      const response = await fetch(`${this.baseUrl}/calls/match`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: createHeaders(this.token),
         body: JSON.stringify(request),
@@ -96,7 +105,7 @@ export class MatchingApiService {
       const result: ApiResponse<MatchingResponse> =
         await handleApiResponse(response);
 
-      if (!result.success || !result.data) {
+      if (!result.data) {
         throw new Error(result.message || "매칭 참가에 실패했습니다.");
       }
 
@@ -119,7 +128,7 @@ export class MatchingApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/calls/match/status`, {
+      const response = await fetch(`${this.baseUrl}/v1/calls/match/status`, {
         method: "GET",
         headers: createHeaders(this.token),
       });
@@ -150,7 +159,7 @@ export class MatchingApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/calls/match`, {
+      const response = await fetch(`${this.baseUrl}/v1/calls/match`, {
         method: "DELETE",
         headers: createHeaders(this.token),
       });
@@ -174,7 +183,7 @@ export class MatchingApiService {
    */
   async getActiveCategories(): Promise<Category[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/categories/active`, {
+      const response = await fetch(`${this.baseUrl}/v1/categories/active`, {
         method: "GET",
         headers: createHeaders(this.token),
       });
@@ -201,10 +210,13 @@ export class MatchingApiService {
    */
   async getCategory(categoryId: number): Promise<Category> {
     try {
-      const response = await fetch(`${this.baseUrl}/categories/${categoryId}`, {
-        method: "GET",
-        headers: createHeaders(this.token),
-      });
+      const response = await fetch(
+        `${this.baseUrl}/v1/categories/${categoryId}`,
+        {
+          method: "GET",
+          headers: createHeaders(this.token),
+        },
+      );
 
       const result: ApiResponse<Category> = await handleApiResponse(response);
 
@@ -235,7 +247,7 @@ export class MatchingApiService {
 
     try {
       const response = await fetch(
-        `${this.baseUrl}/calls/match/queue/position`,
+        `${this.baseUrl}/v1/calls/match/queue/position`,
         {
           method: "GET",
           headers: createHeaders(this.token),
@@ -274,7 +286,7 @@ export class MatchingApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/calls/match/stats`, {
+      const response = await fetch(`${this.baseUrl}/v1/calls/match/stats`, {
         method: "GET",
         headers: createHeaders(this.token),
       });
@@ -299,5 +311,15 @@ export class MatchingApiService {
   }
 }
 
-// 싱글톤 인스턴스
-export const matchingApiService = new MatchingApiService();
+// 싱글톤 인스턴스 - 지연 초기화
+let matchingApiServiceInstance: MatchingApiService | null = null;
+
+export const getMatchingApiService = (): MatchingApiService => {
+  if (!matchingApiServiceInstance) {
+    matchingApiServiceInstance = new MatchingApiService();
+  }
+  return matchingApiServiceInstance;
+};
+
+// 기존 호환성을 위한 export
+export const matchingApiService = getMatchingApiService();
