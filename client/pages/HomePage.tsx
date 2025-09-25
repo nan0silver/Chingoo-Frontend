@@ -4,11 +4,15 @@ import { getUserProfile } from "@/lib/auth";
 interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
+  isDemoMode?: boolean;
+  onExitDemoMode?: () => void;
 }
 
 export default function HomePage({
   onStartCall,
   onOpenSettings,
+  isDemoMode = false,
+  onExitDemoMode,
 }: HomePageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -17,6 +21,12 @@ export default function HomePage({
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
+    // 시연 모드에서는 프로필 로딩을 건너뛰고 기본 닉네임 사용
+    if (isDemoMode) {
+      setIsLoadingProfile(false);
+      return;
+    }
+
     let mounted = true;
     const fetchUserProfile = async () => {
       try {
@@ -44,7 +54,7 @@ export default function HomePage({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isDemoMode]);
 
   const categories = [
     {
@@ -141,6 +151,15 @@ export default function HomePage({
 
         {/* Right side buttons */}
         <div className="flex items-center gap-2">
+          {isDemoMode && (
+            <button
+              type="button"
+              onClick={onExitDemoMode}
+              className="px-3 py-1 bg-orange-accent text-white font-crimson text-sm font-bold rounded"
+            >
+              데모 종료
+            </button>
+          )}
           <button
             type="button"
             className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded"
