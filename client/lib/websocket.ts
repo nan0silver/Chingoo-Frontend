@@ -30,7 +30,8 @@ export class WebSocketService {
 
   private setupClient() {
     // SockJS를 사용하여 WebSocket 연결 설정
-    const socket = new SockJS("/ws");
+    const wsUrl = import.meta.env.DEV ? "http://localhost:8080/ws" : "/ws";
+    const socket = new SockJS(wsUrl);
 
     this.client = new Client({
       webSocketFactory: () => socket,

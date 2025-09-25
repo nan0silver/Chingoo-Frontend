@@ -6,7 +6,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
@@ -27,12 +27,35 @@ const queryClient = new QueryClient();
 const AppRoutes = () => {
   const navigate = useNavigate();
   const [isDemoMode, setIsDemoMode] = useState(false);
-  const { categoryId, cancelMatching, resetMatching } = useMatchingStore();
+  const { categoryId, cancelMatching, resetMatching, status, matchingId } =
+    useMatchingStore();
+  const previousStatusRef = useRef<string | null>(null);
 
   const handleEnterDemoMode = () => {
     setIsDemoMode(true);
     navigate("/");
   };
+
+  // 매칭 상태 변화 감지하여 자동 페이지 이동
+  useEffect(() => {
+    const previousStatus = previousStatusRef.current;
+
+    // 이전 상태와 다를 때만 처리 (초기 마운트 시에는 처리하지 않음)
+    if (previousStatus !== null && previousStatus !== status) {
+      if (status === "matched" && matchingId) {
+        // 매칭 성공 시 자동으로 통화 화면으로 이동 (matchingId가 있어야 함)
+        console.log("매칭 성공, 통화 화면으로 이동:", { status, matchingId });
+        navigate("/call-connected");
+      } else if (status === "cancelled" || status === "timeout") {
+        // 매칭 취소 또는 타임아웃 시 홈으로 이동
+        console.log("매칭 취소/타임아웃, 홈으로 이동:", { status });
+        navigate("/");
+      }
+    }
+
+    // 현재 상태를 이전 상태로 저장
+    previousStatusRef.current = status;
+  }, [status, matchingId, navigate]);
 
   // 카테고리 ID를 카테고리 이름으로 변환
   const getCategoryName = (categoryId?: number): string | null => {

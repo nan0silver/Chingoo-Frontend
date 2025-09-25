@@ -187,7 +187,7 @@ export interface MatchingStatus {
  * 매칭 알림
  */
 export interface MatchingNotification {
-  type: "matched" | "cancelled" | "timeout";
+  type: "matched" | "cancelled" | "timeout" | "position_update";
   matchingId: string;
   matchedUser?: {
     id: string;
@@ -196,6 +196,8 @@ export interface MatchingNotification {
     age?: number;
     gender?: "male" | "female";
   };
+  queuePosition?: number;
+  estimatedWaitTime?: number;
   message: string;
   timestamp: string;
 }

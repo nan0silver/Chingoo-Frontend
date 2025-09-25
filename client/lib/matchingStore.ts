@@ -132,11 +132,15 @@ export const useMatchingStore = create<MatchingStore>()(
               updatedAt: new Date().toISOString(),
             });
 
-            // WebSocket 연결은 실제로 매칭이 성공한 후에만 시도
-            // 현재는 백엔드 WebSocket 서버가 없으므로 주석 처리
-            // if (!get().connectionState.isConnected) {
-            //   await get().connectWebSocket();
-            // }
+            // WebSocket 연결 시도 (실패해도 매칭은 계속 진행)
+            if (!get().connectionState.isConnected) {
+              try {
+                await get().connectWebSocket();
+              } catch (wsError) {
+                console.warn("WebSocket 연결 실패, 매칭은 계속 진행:", wsError);
+                // WebSocket 연결 실패해도 매칭은 계속 진행
+              }
+            }
           } catch (error) {
             const errorMessage =
               error instanceof Error
@@ -326,12 +330,23 @@ export const useMatchingStore = create<MatchingStore>()(
           const currentState = get();
 
           switch (notification.type) {
+            case "position_update":
+              // 대기 위치 및 예상 대기 시간 업데이트
+              set({
+                queuePosition: notification.queuePosition,
+                estimatedWaitTime: notification.estimatedWaitTime,
+                updatedAt: new Date().toISOString(),
+              });
+              break;
+
             case "matched":
               set({
                 status: "matched",
                 matchedUser: notification.matchedUser,
                 updatedAt: new Date().toISOString(),
               });
+              // 매칭 성공 시 자동으로 통화 화면으로 이동
+              // 이 이벤트는 App.tsx에서 감지하여 처리
               break;
 
             case "cancelled":
