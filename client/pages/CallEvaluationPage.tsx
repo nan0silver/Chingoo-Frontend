@@ -80,7 +80,7 @@ export default function CallEvaluationPage({
           className={`flex-1 h-36 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${
             selectedRating === "good"
               ? "border-orange-400 bg-orange-50"
-              : "border-orange-300 bg-orange-50"
+              : "border-gray-300 bg-gray-100"
           }`}
         >
           <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
