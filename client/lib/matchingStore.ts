@@ -160,8 +160,13 @@ export const useMatchingStore = create<MatchingStore>()(
               throw new Error("인증 토큰이 필요합니다.");
             }
 
+            const { matchingId } = get();
+            if (!matchingId) {
+              throw new Error("취소할 매칭이 없습니다.");
+            }
+
             matchingApiService.setToken(token);
-            await matchingApiService.cancelMatching();
+            await matchingApiService.cancelMatching(matchingId);
 
             set({
               status: "cancelled",

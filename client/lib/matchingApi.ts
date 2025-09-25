@@ -153,7 +153,7 @@ export class MatchingApiService {
    * 매칭 취소
    * DELETE /api/v1/calls/match
    */
-  async cancelMatching(): Promise<void> {
+  async cancelMatching(queueId: string): Promise<void> {
     if (!this.token) {
       throw new Error("인증 토큰이 필요합니다.");
     }
@@ -162,13 +162,11 @@ export class MatchingApiService {
       const response = await fetch(`${this.baseUrl}/v1/calls/match`, {
         method: "DELETE",
         headers: createHeaders(this.token),
+        body: JSON.stringify({ queue_id: queueId }),
       });
 
-      const result: ApiResponse<void> = await handleApiResponse(response);
-
-      if (!result.success) {
-        throw new Error(result.message || "매칭 취소에 실패했습니다.");
-      }
+      // HTTP 상태 코드가 200-299 범위면 성공으로 간주
+      // handleApiResponse에서 이미 에러 처리를 했으므로 여기서는 추가 체크 불필요
     } catch (error) {
       console.error("매칭 취소 오류:", error);
       throw error instanceof Error

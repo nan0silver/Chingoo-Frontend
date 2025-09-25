@@ -46,9 +46,11 @@ const AppRoutes = () => {
   const handleCancelMatching = async () => {
     try {
       await cancelMatching();
-      navigate("/");
     } catch (error) {
       console.error("매칭 취소 실패:", error);
+    } finally {
+      // 성공/실패 관계없이 HomePage로 이동
+      navigate("/");
     }
   };
 
