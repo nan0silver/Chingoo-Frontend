@@ -96,23 +96,38 @@ const AppRoutes = () => {
       <Route
         path="/login"
         element={
-          <LoginPage
-            onLogin={() => {}}
-            onSignUp={() => {}}
-            onEnterDemoMode={handleEnterDemoMode}
-          />
+          <div className="max-w-md mx-auto">
+            <LoginPage
+              onLogin={() => {}}
+              onSignUp={() => {}}
+              onEnterDemoMode={handleEnterDemoMode}
+            />
+          </div>
         }
       />
       <Route
         path="/signup"
-        element={<SignUpPage onBack={() => {}} onSignUp={() => {}} />}
+        element={
+          <div className="max-w-md mx-auto">
+            <SignUpPage onBack={() => {}} onSignUp={() => {}} />
+          </div>
+        }
       />
-      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route
+        path="/oauth/callback"
+        element={
+          <div className="max-w-md mx-auto">
+            <OAuthCallbackPage />
+          </div>
+        }
+      />
       <Route
         path="/profile-setup"
         element={
           <AuthGuard>
-            <ProfileSetupPage />
+            <div className="max-w-md mx-auto">
+              <ProfileSetupPage />
+            </div>
           </AuthGuard>
         }
       />
@@ -161,7 +176,9 @@ const AppRoutes = () => {
         path="/my-activity"
         element={
           <AuthGuard>
-            <MyActivityPage onBack={handleBack} />
+            <div className="max-w-md mx-auto">
+              <MyActivityPage onBack={handleBack} />
+            </div>
           </AuthGuard>
         }
       />
@@ -169,12 +186,14 @@ const AppRoutes = () => {
         path="/settings"
         element={
           <AuthGuard>
-            <SettingsPage
-              onBack={handleBack}
-              onNavigateToActivity={handleNavigateToActivity}
-              onNavigateToProfileEdit={handleNavigateToProfileEdit}
-              onLogout={handleLogout}
-            />
+            <div className="max-w-md mx-auto">
+              <SettingsPage
+                onBack={handleBack}
+                onNavigateToActivity={handleNavigateToActivity}
+                onNavigateToProfileEdit={handleNavigateToProfileEdit}
+                onLogout={handleLogout}
+              />
+            </div>
           </AuthGuard>
         }
       />
