@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useMatchingStore } from "@/lib/matchingStore";
 
 interface ConnectingCallPageProps {
   selectedCategory: string | null;
@@ -12,6 +13,7 @@ export default function ConnectingCallPage({
   onConnected,
 }: ConnectingCallPageProps) {
   const [dots, setDots] = useState("");
+  const { queuePosition, estimatedWaitTime } = useMatchingStore();
 
   // Animate loading dots
   useEffect(() => {
@@ -25,16 +27,33 @@ export default function ConnectingCallPage({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-connect after 5 seconds
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      onConnected();
-    }, 5000);
+  // 자동 연결 로직 제거 - 실제 매칭 성공 시에만 연결
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     onConnected();
+  //   }, 5000);
 
-    return () => clearTimeout(timeout);
-  }, [onConnected]);
+  //   return () => clearTimeout(timeout);
+  // }, [onConnected]);
 
   const getCategoryDisplayName = (category: string | null) => {
+    if (!category) return "알 수 없음";
+
+    // 숫자 ID인 경우 카테고리 이름으로 변환
+    const categoryId = parseInt(category);
+    if (!isNaN(categoryId)) {
+      const categoryMap: Record<number, string> = {
+        1: "취미",
+        2: "자녀",
+        3: "요리",
+        4: "추억",
+        5: "음악",
+        6: "여행",
+      };
+      return categoryMap[categoryId] || "알 수 없음";
+    }
+
+    // 문자열인 경우 기존 로직 사용
     const categoryMap: Record<string, string> = {
       hobby: "취미",
       children: "자녀",
@@ -43,7 +62,7 @@ export default function ConnectingCallPage({
       music: "음악",
       travel: "여행",
     };
-    return category ? categoryMap[category] || category : "알 수 없음";
+    return categoryMap[category] || category;
   };
 
   return (
@@ -139,6 +158,22 @@ export default function ConnectingCallPage({
             <br />
             잠시만 기다려주세요{dots}
           </p>
+
+          {/* 실시간 대기 정보 */}
+          {(queuePosition !== undefined || estimatedWaitTime !== undefined) && (
+            <div className="mt-8 space-y-2">
+              {queuePosition !== undefined && (
+                <p className="text-white font-crimson text-lg">
+                  대기 순서: {queuePosition}번째
+                </p>
+              )}
+              {estimatedWaitTime !== undefined && (
+                <p className="text-white font-crimson text-lg">
+                  예상 대기 시간: {estimatedWaitTime}분
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

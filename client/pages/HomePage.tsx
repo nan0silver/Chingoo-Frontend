@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getUserProfile } from "@/lib/auth";
+import { useMatchingStore } from "@/lib/matchingStore";
+import { CATEGORIES } from "@shared/api";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
@@ -14,10 +17,13 @@ export default function HomePage({
   isDemoMode = false,
   onExitDemoMode,
 }: HomePageProps) {
+  const navigate = useNavigate();
+  const { startMatching, status, error } = useMatchingStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [userNickname, setUserNickname] = useState<string>("따뜻한 햇살"); // 기본값
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
+  const [isStartingMatching, setIsStartingMatching] = useState<boolean>(false);
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
@@ -56,66 +62,42 @@ export default function HomePage({
     };
   }, [isDemoMode]);
 
-  const categories = [
-    {
-      id: "hobby",
-      name: "취미",
-      icon: (
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/icons/hobby.png" alt="취미" className="w-16 h-16" />
-        </div>
-      ),
-    },
-    {
-      id: "children",
-      name: "자녀",
-      icon: (
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/icons/children.png" alt="자녀" className="w-16 h-16" />
-        </div>
-      ),
-    },
-    {
-      id: "cooking",
-      name: "요리",
-      icon: (
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/icons/cooking.png" alt="요리" className="w-16 h-16" />
-        </div>
-      ),
-    },
-    {
-      id: "memories",
-      name: "추억",
-      icon: (
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/icons/memories.png" alt="추억" className="w-16 h-16" />
-        </div>
-      ),
-    },
-    {
-      id: "music",
-      name: "음악",
-      icon: (
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/icons/music.png" alt="음악" className="w-16 h-16" />
-        </div>
-      ),
-    },
-    {
-      id: "travel",
-      name: "여행",
-      icon: (
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/icons/travel.png" alt="여행" className="w-16 h-16" />
-        </div>
-      ),
-    },
-  ];
+  // CATEGORIES 상수를 사용하여 카테고리 배열 생성
+  const categories = Object.values(CATEGORIES).map((category) => ({
+    id: category.id.toString(),
+    name: category.name,
+    icon: (
+      <div className="w-20 h-20 flex items-center justify-center">
+        <img
+          src={`/icons/${category.icon}`}
+          alt={category.name}
+          className="w-16 h-16"
+        />
+      </div>
+    ),
+  }));
 
-  const handleStartCall = () => {
-    if (selectedCategory) {
-      onStartCall(selectedCategory);
+  const handleStartCall = async () => {
+    if (!selectedCategory || isStartingMatching) return;
+
+    try {
+      setIsStartingMatching(true);
+
+      // 시연 모드가 아닌 경우 실제 매칭 API 호출
+      if (!isDemoMode) {
+        await startMatching({ category_id: parseInt(selectedCategory) });
+
+        // 매칭 성공 시 연결 페이지로 이동
+        navigate("/connecting-call");
+      } else {
+        // 시연 모드에서는 기존 로직 사용
+        onStartCall(selectedCategory);
+      }
+    } catch (error) {
+      console.error("매칭 시작 실패:", error);
+      // 에러는 matchingStore에서 관리됨
+    } finally {
+      setIsStartingMatching(false);
     }
   };
 
@@ -225,11 +207,12 @@ export default function HomePage({
             <button
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
+              disabled={isStartingMatching}
               className={`relative h-32 bg-white border border-grey-100 rounded-2xl flex flex-row items-center justify-center px-4 gap-6 transition-colors hover:shadow-md ${
                 selectedCategory === category.id
                   ? "border-orange-accent bg-orange-accent/5"
                   : ""
-              }`}
+              } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span className="text-grey-900 font-crimson text-2xl font-bold whitespace-nowrap">
                 {category.name}
@@ -239,6 +222,15 @@ export default function HomePage({
           ))}
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="px-8 mb-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600 font-crimson text-sm">{error}</p>
+          </div>
+        </div>
+      )}
 
       {/* Subscription Section */}
       <div className="px-8 mb-8">
@@ -259,14 +251,14 @@ export default function HomePage({
         <div className="h-24 relative">
           <button
             onClick={handleStartCall}
-            disabled={!selectedCategory}
+            disabled={!selectedCategory || isStartingMatching}
             className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-opacity ${
-              selectedCategory
+              selectedCategory && !isStartingMatching
                 ? "bg-gradient-to-r from-yellow-300 to-red-gradient"
                 : "bg-gray-400 opacity-50 cursor-not-allowed"
             }`}
           >
-            통화 시작
+            {isStartingMatching ? "매칭 중..." : "통화 시작"}
           </button>
         </div>
       </div>

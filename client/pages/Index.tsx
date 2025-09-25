@@ -228,7 +228,7 @@ export default function Index({
               </svg>
             </div>
             <h1 className="text-grey-900 font-crimson text-2xl font-bold mb-4">
-              칭구하자에 오신 것을 환영합니다!
+              친구하자에 오신 것을 환영합니다!
             </h1>
             <p className="text-grey-600 font-crimson text-lg mb-8">
               백엔드 배포 전 시연을 위해 데모 모드로 체험해보세요

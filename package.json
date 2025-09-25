@@ -21,9 +21,12 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.2.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "zod": "^3.25.76"
+    "sockjs-client": "^1.6.1",
+    "zod": "^3.25.76",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@hookform/resolvers": "^5.2.1",
