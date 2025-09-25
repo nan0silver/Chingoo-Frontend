@@ -120,11 +120,13 @@ const AppRoutes = () => {
         path="/connecting-call"
         element={
           <AuthGuard>
-            <ConnectingCallPage
-              selectedCategory={getCategoryName(categoryId)}
-              onCancel={handleCancelMatching}
-              onConnected={handleConnected}
-            />
+            <div className="max-w-md mx-auto">
+              <ConnectingCallPage
+                selectedCategory={getCategoryName(categoryId)}
+                onCancel={handleCancelMatching}
+                onConnected={handleConnected}
+              />
+            </div>
           </AuthGuard>
         }
       />
@@ -132,10 +134,12 @@ const AppRoutes = () => {
         path="/call-connected"
         element={
           <AuthGuard>
-            <CallConnectedPage
-              selectedCategory={getCategoryName(categoryId)}
-              onEndCall={handleEndCall}
-            />
+            <div className="max-w-md mx-auto">
+              <CallConnectedPage
+                selectedCategory={getCategoryName(categoryId)}
+                onEndCall={handleEndCall}
+              />
+            </div>
           </AuthGuard>
         }
       />
@@ -143,11 +147,13 @@ const AppRoutes = () => {
         path="/call-evaluation"
         element={
           <AuthGuard>
-            <CallEvaluationPage
-              selectedCategory={getCategoryName(categoryId)}
-              onCallAgain={handleCallAgain}
-              onSelectInterests={handleSelectInterests}
-            />
+            <div className="max-w-md mx-auto">
+              <CallEvaluationPage
+                selectedCategory={getCategoryName(categoryId)}
+                onCallAgain={handleCallAgain}
+                onSelectInterests={handleSelectInterests}
+              />
+            </div>
           </AuthGuard>
         }
       />
