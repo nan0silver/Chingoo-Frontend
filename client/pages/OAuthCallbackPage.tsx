@@ -95,7 +95,7 @@ export default function OAuthCallbackPage() {
             로그인 성공!
           </h2>
           <p className="text-gray-600 mb-4">
-            안녕하세요, {userInfo?.nickname}님!
+            안녕하세요! 로그인이 완료되었습니다.
           </p>
           <p className="text-sm text-gray-500">
             {userInfo?.is_new_user || !userInfo?.is_profile_complete
