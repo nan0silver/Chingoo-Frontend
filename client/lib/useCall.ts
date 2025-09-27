@@ -87,6 +87,22 @@ export const useCall = () => {
           },
           onCallEnded: () => {
             console.log("Agora 통화 종료");
+            // WebSocket으로 상대방에게 통화 종료 알림 전송
+            if (callId && partner?.id) {
+              console.log("📡 상대방에게 통화 종료 알림 전송:", {
+                callId,
+                partnerId: partner.id,
+              });
+              try {
+                webSocketService.sendCallEndNotification(callId, partner.id);
+                console.log("✅ 통화 종료 WebSocket 알림 전송 성공");
+              } catch (wsError) {
+                console.error(
+                  "❌ 통화 종료 WebSocket 알림 전송 실패:",
+                  wsError,
+                );
+              }
+            }
             endCall();
           },
           onError: (error) => {
@@ -150,6 +166,21 @@ export const useCall = () => {
         } catch (apiError) {
           console.error("❌ 백엔드 통화 종료 API 호출 실패:", apiError);
           // API 호출 실패해도 Agora 채널 퇴장은 계속 진행
+        }
+      }
+
+      // 상대방에게 통화 종료 WebSocket 알림 전송
+      if (callId && partner?.id) {
+        console.log("📡 상대방에게 통화 종료 알림 전송:", {
+          callId,
+          partnerId: partner.id,
+        });
+        try {
+          webSocketService.sendCallEndNotification(callId, partner.id);
+          console.log("✅ 통화 종료 WebSocket 알림 전송 성공");
+        } catch (wsError) {
+          console.error("❌ 통화 종료 WebSocket 알림 전송 실패:", wsError);
+          // WebSocket 전송 실패해도 통화 종료는 계속 진행
         }
       }
 
@@ -225,6 +256,27 @@ export const useCall = () => {
   }, [callStartTime]);
 
   /**
+   * WebSocket 통화 종료 알림 처리
+   */
+  const handleCallEndNotification = useCallback(
+    (notification: any) => {
+      console.log("🔔 통화 종료 알림 수신:", notification);
+
+      // 상대방이 통화를 종료한 경우 처리
+      if (notification.type === "call_end" && notification.callId === callId) {
+        console.log("📞 상대방이 통화를 종료했습니다");
+
+        // Agora 채널에서 퇴장
+        agoraService.leaveChannel().catch(console.error);
+
+        // 통화 상태 초기화
+        endCall();
+      }
+    },
+    [callId, agoraService, endCall],
+  );
+
+  /**
    * WebSocket 통화 시작 알림 구독
    * 주의: ConnectingCallPage에서 직접 콜백을 설정하므로 여기서는 제거
    */
@@ -236,6 +288,18 @@ export const useCall = () => {
   //     // 정리 함수는 필요시에만 구현
   //   };
   // }, [webSocketService, handleCallStart]);
+
+  /**
+   * WebSocket 통화 종료 알림 구독
+   */
+  useEffect(() => {
+    // 통화 종료 알림 콜백 설정
+    webSocketService.onCallEndNotificationCallback(handleCallEndNotification);
+
+    return () => {
+      // 정리 함수는 필요시에만 구현
+    };
+  }, [webSocketService, handleCallEndNotification]);
 
   /**
    * 컴포넌트 언마운트 시 정리
