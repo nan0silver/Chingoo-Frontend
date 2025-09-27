@@ -121,10 +121,12 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
   endCall: () => {
     console.log("통화 종료");
+    const currentState = get();
+
     set({
       callId: null,
       matchingId: null,
-      partner: null,
+      partner: currentState.partner, // partner 정보 보존
       agoraChannelInfo: null,
       isInCall: false,
       isConnecting: false,

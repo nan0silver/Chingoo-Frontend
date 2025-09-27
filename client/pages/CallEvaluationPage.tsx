@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useCall } from "@/lib/useCall";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -14,6 +15,12 @@ export default function CallEvaluationPage({
   const [selectedRating, setSelectedRating] = useState<"good" | "bad" | null>(
     null,
   );
+  const { partner } = useCall();
+
+  // 디버깅: partner 정보 확인
+  useEffect(() => {
+    console.log("🔍 CallEvaluationPage - partner 정보:", partner);
+  }, [partner]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -28,7 +35,7 @@ export default function CallEvaluationPage({
       <div className="flex flex-col items-center justify-center mt-8 gap-3">
         <div className="flex items-center gap-1">
           <span className="text-gray-900 font-crimson text-4xl font-bold">
-            겨울꽃
+            {partner?.nickname || "상대방"}
           </span>
           <span className="text-gray-900 font-pretendard text-4xl font-normal">
             님과의
