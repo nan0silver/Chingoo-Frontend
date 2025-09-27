@@ -22,6 +22,7 @@ export class WebSocketService {
   private onCallStartNotification?: (
     notification: CallStartNotification,
   ) => void;
+  private onCallEndNotification?: (notification: any) => void;
   private onError?: (error: string) => void;
 
   constructor() {
@@ -31,6 +32,7 @@ export class WebSocketService {
   private setupClient() {
     // SockJS를 사용하여 WebSocket 연결 설정
     const wsUrl = import.meta.env.DEV ? "http://localhost:8080/ws" : "/ws";
+    console.log("🔗 WebSocket URL:", wsUrl);
     const socket = new SockJS(wsUrl);
 
     this.client = new Client({
@@ -45,7 +47,10 @@ export class WebSocketService {
 
     // 연결 성공 시
     this.client.onConnect = (frame) => {
-      console.log("WebSocket 연결 성공:", frame);
+      console.log("✅ WebSocket 연결 성공:", frame);
+      console.log("✅ 연결 헤더:", frame.headers);
+      console.log("✅ 연결 바디:", frame.body);
+
       this.connectionState = {
         ...this.connectionState,
         isConnected: true,
@@ -54,12 +59,20 @@ export class WebSocketService {
         lastConnected: new Date().toISOString(),
       };
       this.onConnectionStateChange?.(this.connectionState);
+      console.log("📡 큐 구독 시작");
       this.subscribeToQueues();
+
+      // 구독 완료 후 상태 로그
+      setTimeout(() => {
+        this.logSubscriptionStatus();
+      }, 100);
     };
 
     // 연결 실패 시
     this.client.onStompError = (frame) => {
-      console.error("STOMP 에러:", frame);
+      console.error("❌ STOMP 에러:", frame);
+      console.error("❌ 에러 헤더:", frame.headers);
+      console.error("❌ 에러 바디:", frame.body);
       this.connectionState = {
         ...this.connectionState,
         isConnected: false,
@@ -93,6 +106,7 @@ export class WebSocketService {
     }
 
     try {
+      console.log("🚀 WebSocket 연결 시도 시작");
       this.connectionState = {
         ...this.connectionState,
         isConnecting: true,
@@ -101,6 +115,7 @@ export class WebSocketService {
 
       // 클라이언트가 없으면 새로 생성
       if (!this.client) {
+        console.log("📱 WebSocket 클라이언트 생성");
         this.setupClient();
       }
 
@@ -108,10 +123,20 @@ export class WebSocketService {
       this.client!.connectHeaders = {
         Authorization: `Bearer ${token}`,
       };
+      console.log("🔑 JWT 토큰 설정 완료");
+      console.log("🔑 토큰 길이:", token.length);
+      console.log("🔑 토큰 앞 10자리:", token.substring(0, 10) + "...");
 
+      console.log("⚡ STOMP 클라이언트 활성화 시도");
       await this.client!.activate();
+      console.log("✅ STOMP 클라이언트 활성화 성공");
     } catch (error) {
-      console.error("WebSocket 연결 실패:", error);
+      console.error("❌ WebSocket 연결 실패:", error);
+      console.error("❌ 에러 타입:", typeof error);
+      console.error(
+        "❌ 에러 스택:",
+        error instanceof Error ? error.stack : "No stack",
+      );
       this.connectionState = {
         ...this.connectionState,
         isConnecting: false,
@@ -140,41 +165,111 @@ export class WebSocketService {
    */
   private subscribeToQueues(): void {
     if (!this.client || !this.connectionState.isConnected) {
+      console.warn("⚠️ WebSocket 클라이언트가 없거나 연결되지 않음");
       return;
     }
 
+    console.log("📡 큐 구독 시작 - 클라이언트 상태:", {
+      isConnected: this.connectionState.isConnected,
+      clientExists: !!this.client,
+    });
+
     // 매칭 알림 구독
+    console.log("📡 /user/queue/matching 구독 시작");
     const matchingSubscription = this.client.subscribe(
-      "/queue/matching",
+      "/user/queue/matching",
       (message: IMessage) => {
         try {
+          console.log(
+            "📨 [매칭] WebSocket 메시지 수신 (/user/queue/matching):",
+            message.body,
+          );
           const notification: MatchingNotification = JSON.parse(message.body);
-          console.log("매칭 알림 수신:", notification);
+          console.log("✅ [매칭] 알림 파싱 성공:", notification);
+          console.log("📋 [매칭] 알림 상세:", {
+            type: notification.type,
+            matchingId: notification.matchingId,
+            matchedUser: notification.matchedUser,
+            message: notification.message,
+            timestamp: notification.timestamp,
+          });
           this.onMatchingNotification?.(notification);
         } catch (error) {
-          console.error("매칭 알림 파싱 오류:", error);
+          console.error("❌ [매칭] 알림 파싱 오류:", error);
+          console.error("❌ [매칭] 원본 메시지:", message.body);
           this.onError?.("매칭 알림 처리 중 오류가 발생했습니다.");
         }
       },
     );
 
     // 통화 시작 알림 구독
+    console.log("📡 /user/queue/call-start 구독 시작");
     const callStartSubscription = this.client.subscribe(
-      "/queue/call-start",
+      "/user/queue/call-start",
       (message: IMessage) => {
         try {
+          console.log(
+            "📨 [통화] WebSocket 메시지 수신 (/user/queue/call-start):",
+            message.body,
+          );
           const notification: CallStartNotification = JSON.parse(message.body);
-          console.log("통화 시작 알림 수신:", notification);
+          console.log("✅ [통화] 알림 파싱 성공:", notification);
+          console.log("📋 [통화] 알림 상세:", {
+            type: notification.type,
+            callId: notification.callId,
+            matchingId: notification.matchingId,
+            partnerId: notification.partnerId,
+            partnerNickname: notification.partnerNickname,
+            channelName: notification.channelName,
+            agoraUid: notification.agoraUid,
+            timestamp: notification.timestamp,
+          });
           this.onCallStartNotification?.(notification);
         } catch (error) {
-          console.error("통화 시작 알림 파싱 오류:", error);
+          console.error("❌ [통화] 알림 파싱 오류:", error);
+          console.error("❌ [통화] 원본 메시지:", message.body);
           this.onError?.("통화 시작 알림 처리 중 오류가 발생했습니다.");
+        }
+      },
+    );
+
+    // 통화 종료 알림 구독
+    console.log("📡 /user/queue/call-end 구독 시작");
+    const callEndSubscription = this.client.subscribe(
+      "/user/queue/call-end",
+      (message: IMessage) => {
+        try {
+          console.log(
+            "📨 [통화종료] WebSocket 메시지 수신 (/user/queue/call-end):",
+            message.body,
+          );
+          const notification = JSON.parse(message.body);
+          console.log("✅ [통화종료] 알림 파싱 성공:", notification);
+          console.log("📋 [통화종료] 알림 상세:", {
+            type: notification.type,
+            callId: notification.callId,
+            partnerId: notification.partnerId,
+            timestamp: notification.timestamp,
+          });
+          this.onCallEndNotification?.(notification);
+        } catch (error) {
+          console.error("❌ [통화종료] 알림 파싱 오류:", error);
+          console.error("❌ [통화종료] 원본 메시지:", message.body);
+          this.onError?.("통화 종료 알림 처리 중 오류가 발생했습니다.");
         }
       },
     );
 
     this.subscriptions.set("matching", matchingSubscription);
     this.subscriptions.set("call-start", callStartSubscription);
+    this.subscriptions.set("call-end", callEndSubscription);
+
+    console.log("✅ 큐 구독 완료:", {
+      matchingSubscribed: this.subscriptions.has("matching"),
+      callStartSubscribed: this.subscriptions.has("call-start"),
+      callEndSubscribed: this.subscriptions.has("call-end"),
+      totalSubscriptions: this.subscriptions.size,
+    });
   }
 
   /**
@@ -216,10 +311,55 @@ export class WebSocketService {
   }
 
   /**
+   * 통화 종료 알림 콜백 설정
+   */
+  onCallEndNotificationCallback(callback: (notification: any) => void): void {
+    this.onCallEndNotification = callback;
+  }
+
+  /**
    * 에러 콜백 설정
    */
   onErrorCallback(callback: (error: string) => void): void {
     this.onError = callback;
+  }
+
+  /**
+   * WebSocket 메시지 전송
+   */
+  sendMessage(destination: string, message: any): void {
+    if (!this.client || !this.connectionState.isConnected) {
+      console.error("❌ WebSocket이 연결되지 않음 - 메시지 전송 실패");
+      throw new Error("WebSocket이 연결되지 않았습니다.");
+    }
+
+    try {
+      console.log("📤 WebSocket 메시지 전송:", { destination, message });
+      this.client.publish({
+        destination,
+        body: JSON.stringify(message),
+      });
+      console.log("✅ WebSocket 메시지 전송 성공");
+    } catch (error) {
+      console.error("❌ WebSocket 메시지 전송 실패:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 통화 종료 알림 전송
+   */
+  sendCallEndNotification(callId: string, partnerId: string): void {
+    const message = {
+      type: "call_end",
+      callId: callId,
+      partnerId: partnerId,
+      timestamp: new Date().toISOString(),
+    };
+
+    // 상대방에게 개인 메시지로 전송
+    const destination = `/app/call-end/${partnerId}`;
+    this.sendMessage(destination, message);
   }
 
   /**
@@ -234,6 +374,29 @@ export class WebSocketService {
    */
   isConnected(): boolean {
     return this.connectionState.isConnected;
+  }
+
+  /**
+   * 구독 상태 확인
+   */
+  getSubscriptionStatus(): { [key: string]: boolean } {
+    const status: { [key: string]: boolean } = {};
+    this.subscriptions.forEach((subscription, key) => {
+      status[key] = true;
+    });
+    return status;
+  }
+
+  /**
+   * 구독 상태 로그 출력
+   */
+  logSubscriptionStatus(): void {
+    console.log("📊 WebSocket 구독 상태:", {
+      isConnected: this.connectionState.isConnected,
+      subscriptions: this.getSubscriptionStatus(),
+      totalSubscriptions: this.subscriptions.size,
+      lastConnected: this.connectionState.lastConnected,
+    });
   }
 
   /**
@@ -266,6 +429,7 @@ export class WebSocketService {
     this.onConnectionStateChange = undefined;
     this.onMatchingNotification = undefined;
     this.onCallStartNotification = undefined;
+    this.onCallEndNotification = undefined;
     this.onError = undefined;
   }
 }

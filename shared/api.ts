@@ -206,16 +206,17 @@ export interface MatchingNotification {
  * 통화 시작 알림
  */
 export interface CallStartNotification {
-  type: "call_start";
-  callId: string;
-  matchingId: string;
-  partner: {
-    id: string;
-    nickname: string;
-    profileImageUrl?: string;
-  };
-  callDuration?: number; // seconds
-  timestamp: string;
+  type?: "call_start";
+  callId: number;
+  matchingId?: string;
+  partnerId: number;
+  partnerNickname: string;
+  channelName: string;
+  rtcToken: string;
+  agoraUid: number;
+  appId?: string; // 백엔드에서 보내주거나 프론트엔드에서 설정
+  expiresAt: string;
+  timestamp?: string;
 }
 
 /**
