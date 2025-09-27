@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMatchingStore } from "@/lib/matchingStore";
+import { useCall } from "@/lib/useCall";
+import { getWebSocketService } from "@/lib/websocket";
 
 interface ConnectingCallPageProps {
   selectedCategory: string | null;
@@ -13,7 +15,16 @@ export default function ConnectingCallPage({
   onConnected,
 }: ConnectingCallPageProps) {
   const [dots, setDots] = useState("");
+  const [debugInfo, setDebugInfo] = useState({
+    wsConnected: false,
+    wsConnecting: false,
+    lastNotification: null as any,
+    callState: null as any,
+    subscriptionStatus: null as any,
+  });
   const { queuePosition, estimatedWaitTime } = useMatchingStore();
+  const { isInCall, isConnecting, error, callId, partner } = useCall();
+  const webSocketService = getWebSocketService();
 
   // Animate loading dots
   useEffect(() => {
@@ -27,14 +38,88 @@ export default function ConnectingCallPage({
     return () => clearInterval(interval);
   }, []);
 
-  // 자동 연결 로직 제거 - 실제 매칭 성공 시에만 연결
-  // useEffect(() => {
-  //   const timeout = setTimeout(() => {
-  //     onConnected();
-  //   }, 5000);
+  // 통화 연결 성공 시 자동으로 연결된 페이지로 이동
+  useEffect(() => {
+    if (isInCall && !isConnecting) {
+      onConnected();
+    }
+  }, [isInCall, isConnecting, onConnected]);
 
-  //   return () => clearTimeout(timeout);
-  // }, [onConnected]);
+  // 디버깅 정보 업데이트
+  useEffect(() => {
+    const updateDebugInfo = () => {
+      const wsState = webSocketService.getConnectionState();
+      const subscriptionStatus = webSocketService.getSubscriptionStatus();
+
+      setDebugInfo((prev) => ({
+        ...prev,
+        wsConnected: wsState.isConnected,
+        wsConnecting: wsState.isConnecting,
+        callState: { isInCall, isConnecting, callId, partner, error },
+        subscriptionStatus: subscriptionStatus,
+      }));
+
+      // WebSocket 구독 상태 로그 출력 (5초마다)
+      if (wsState.isConnected) {
+        webSocketService.logSubscriptionStatus();
+      }
+    };
+
+    // 초기 상태 업데이트
+    updateDebugInfo();
+    console.log("🔍 ConnectingCallPage 초기화 - WebSocket 상태 확인");
+
+    // WebSocket 구독 상태 즉시 확인
+    console.log(
+      "🔍 WebSocket 구독 상태 즉시 확인:",
+      webSocketService.getSubscriptionStatus(),
+    );
+    webSocketService.logSubscriptionStatus();
+
+    // 주기적으로 상태 업데이트 (2초마다)
+    const interval = setInterval(updateDebugInfo, 2000);
+
+    return () => clearInterval(interval);
+  }, [webSocketService, isInCall, isConnecting, callId, partner, error]);
+
+  // WebSocket 알림 수신 추적
+  useEffect(() => {
+    // 통화 시작 알림 콜백 설정
+    const handleCallStart = (notification: any) => {
+      console.log(
+        "🔔 ConnectingCallPage에서 통화 시작 알림 수신:",
+        notification,
+      );
+      setDebugInfo((prev) => ({
+        ...prev,
+        lastNotification: notification,
+      }));
+    };
+
+    // 매칭 알림 콜백 설정
+    const handleMatching = (notification: any) => {
+      console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
+      setDebugInfo((prev) => ({
+        ...prev,
+        lastNotification: notification,
+      }));
+    };
+
+    webSocketService.onCallStartNotificationCallback(handleCallStart);
+    webSocketService.onMatchingNotificationCallback(handleMatching);
+
+    return () => {
+      // 정리 함수는 필요시에만 구현
+    };
+  }, [webSocketService]);
+
+  // 에러 발생 시 처리
+  useEffect(() => {
+    if (error) {
+      console.error("통화 연결 에러:", error);
+      // 에러 발생 시 사용자에게 알림 (필요시 토스트 메시지 등으로 처리)
+    }
+  }, [error]);
 
   const getCategoryDisplayName = (category: string | null) => {
     if (!category) return "알 수 없음";
@@ -172,6 +257,54 @@ export default function ConnectingCallPage({
                   예상 대기 시간: {estimatedWaitTime}분
                 </p>
               )}
+            </div>
+          )}
+
+          {/* 디버깅 정보 (개발 환경에서만 표시) */}
+          {import.meta.env.DEV && (
+            <div className="mt-8 p-4 bg-black bg-opacity-50 rounded-lg text-left">
+              <h3 className="text-white font-bold mb-2">🔍 디버깅 정보</h3>
+              <div className="text-sm text-white space-y-1">
+                <p>
+                  <strong>WebSocket:</strong>{" "}
+                  {debugInfo.wsConnected
+                    ? "✅ 연결됨"
+                    : debugInfo.wsConnecting
+                      ? "🔄 연결 중"
+                      : "❌ 연결 안됨"}
+                </p>
+                <p>
+                  <strong>구독 상태:</strong>{" "}
+                  {debugInfo.subscriptionStatus
+                    ? Object.entries(debugInfo.subscriptionStatus)
+                        .map(([key, value]) => `${key}: ${value ? "✅" : "❌"}`)
+                        .join(", ")
+                    : "없음"}
+                </p>
+                <p>
+                  <strong>통화 상태:</strong>{" "}
+                  {isInCall
+                    ? "✅ 통화 중"
+                    : isConnecting
+                      ? "🔄 연결 중"
+                      : "⏳ 대기 중"}
+                </p>
+                <p>
+                  <strong>Call ID:</strong> {callId || "없음"}
+                </p>
+                <p>
+                  <strong>상대방:</strong> {partner?.nickname || "없음"}
+                </p>
+                <p>
+                  <strong>에러:</strong> {error || "없음"}
+                </p>
+                <p>
+                  <strong>마지막 알림:</strong>{" "}
+                  {debugInfo.lastNotification
+                    ? JSON.stringify(debugInfo.lastNotification)
+                    : "없음"}
+                </p>
+              </div>
             </div>
           )}
         </div>

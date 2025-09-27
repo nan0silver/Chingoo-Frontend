@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useCall } from "@/lib/useCall";
 
 interface CallConnectedPageProps {
   selectedCategory: string | null;
@@ -9,8 +10,16 @@ export default function CallConnectedPage({
   selectedCategory,
   onEndCall,
 }: CallConnectedPageProps) {
-  const [callDuration, setCallDuration] = useState(0);
   const [audioWaveAnimation, setAudioWaveAnimation] = useState(0);
+  const {
+    partner,
+    agoraState,
+    callDuration,
+    handleEndCall,
+    toggleMute,
+    toggleSpeaker,
+    setError,
+  } = useCall();
 
   // Format seconds to MM:SS
   const formatDuration = (seconds: number) => {
@@ -21,14 +30,16 @@ export default function CallConnectedPage({
       .padStart(2, "0")}`;
   };
 
-  // Increment call duration every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // 통화 종료 핸들러
+  const handleEndCallClick = async () => {
+    try {
+      await handleEndCall();
+      onEndCall();
+    } catch (error) {
+      console.error("통화 종료 실패:", error);
+      setError("통화 종료에 실패했습니다.");
+    }
+  };
 
   // Animate audio wave dots
   useEffect(() => {
@@ -89,7 +100,7 @@ export default function CallConnectedPage({
       <div className="flex flex-col items-center justify-center mt-8 gap-1">
         <div className="flex items-center gap-1">
           <span className="text-white font-crimson text-3xl font-bold">
-            겨울꽃
+            {partner?.nickname || "상대방"}
           </span>
           <span className="text-white font-pretendard text-3xl font-normal">
             님과
@@ -139,10 +150,17 @@ export default function CallConnectedPage({
 
       {/* Controls Container */}
       <div className="flex-1 flex items-end justify-center pb-16">
-        <div className="flex items-center justify-between w-64">
+        <div className="flex items-center justify-between w-80">
           {/* Speaker Button */}
           <div className="flex flex-col items-center gap-4">
-            <button className="w-20 h-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+            <button
+              onClick={toggleSpeaker}
+              className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
+                agoraState.isSpeakerOn
+                  ? "bg-white bg-opacity-20"
+                  : "bg-red-500 bg-opacity-50"
+              }`}
+            >
               <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
                 <path
                   d="M23.1549 16.3334C22.4369 16.3334 21.8549 15.7513 21.8549 15.0334C21.8549 14.3154 22.4369 13.7334 23.1549 13.7334H26.7C27.418 13.7334 28 14.3154 28 15.0334C28 15.7513 27.418 16.3334 26.7 16.3334H23.1549ZM24.5798 26.9517C24.1486 27.5287 23.3292 27.6426 22.757 27.205L19.8968 25.0174C19.3336 24.5866 19.2219 23.7829 19.6464 23.2149C20.0776 22.638 20.8968 22.5242 21.4689 22.9617L24.3293 25.1491C24.8925 25.5798 25.0042 26.3836 24.5798 26.9517ZM21.4037 7.03847C20.8315 7.47612 20.0121 7.36225 19.5809 6.78516C19.1564 6.21715 19.2681 5.41337 19.8313 4.9826L22.6915 2.79506C23.2637 2.35741 24.0832 2.47128 24.5144 3.04838C24.9388 3.61639 24.8271 4.42017 24.2639 4.85093L21.4037 7.03847ZM3 19.3667C1.89543 19.3667 1 18.4713 1 17.3667V12.7C1 11.5955 1.89543 10.7 3 10.7H7.3087L12.8842 5.01477C13.5113 4.37534 14.5982 4.81934 14.5982 5.71495V24.3518C14.5982 25.2474 13.5113 25.6914 12.8842 25.052L7.3087 19.3667H3Z"
@@ -155,10 +173,32 @@ export default function CallConnectedPage({
             </span>
           </div>
 
+          {/* Microphone Button */}
+          <div className="flex flex-col items-center gap-4">
+            <button
+              onClick={toggleMute}
+              className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
+                agoraState.isMuted
+                  ? "bg-red-500 bg-opacity-50"
+                  : "bg-white bg-opacity-20"
+              }`}
+            >
+              <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                <path
+                  d="M15 2C16.1046 2 17 2.89543 17 4V16C17 17.1046 16.1046 18 15 18C13.8954 18 13 17.1046 13 16V4C13 2.89543 13.8954 2 15 2ZM21 12C21 16.4183 17.4183 20 13 20V22H17V24H13H11V22H13V20C8.58172 20 5 16.4183 5 12H7C7 15.866 10.134 19 14 19C17.866 19 21 15.866 21 12ZM9 12C9 14.7614 11.2386 17 14 17C16.7614 17 19 14.7614 19 12H17C17 13.6569 15.6569 15 14 15C12.3431 15 11 13.6569 11 12H9Z"
+                  fill="white"
+                />
+              </svg>
+            </button>
+            <span className="text-white font-crimson text-lg font-bold">
+              마이크
+            </span>
+          </div>
+
           {/* End Call Button */}
           <div className="flex flex-col items-center gap-4">
             <button
-              onClick={onEndCall}
+              onClick={handleEndCallClick}
               className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center"
             >
               <svg width="30" height="30" viewBox="0 0 30 30" fill="none">

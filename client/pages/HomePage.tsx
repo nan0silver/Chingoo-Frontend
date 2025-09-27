@@ -81,20 +81,26 @@ export default function HomePage({
     if (!selectedCategory || isStartingMatching) return;
 
     try {
+      console.log("🏠 HomePage: handleStartCall 호출됨");
+      console.log("🏠 선택된 카테고리:", selectedCategory);
+      console.log("🏠 데모 모드:", isDemoMode);
       setIsStartingMatching(true);
 
       // 시연 모드가 아닌 경우 실제 매칭 API 호출
       if (!isDemoMode) {
+        console.log("🏠 실제 매칭 시작");
         await startMatching({ category_id: parseInt(selectedCategory) });
 
         // 매칭 성공 시 연결 페이지로 이동
+        console.log("🏠 ConnectingCallPage로 이동");
         navigate("/connecting-call");
       } else {
         // 시연 모드에서는 기존 로직 사용
+        console.log("🏠 데모 모드 - onStartCall 호출");
         onStartCall(selectedCategory);
       }
     } catch (error) {
-      console.error("매칭 시작 실패:", error);
+      console.error("🏠 매칭 시작 실패:", error);
       // 에러는 matchingStore에서 관리됨
     } finally {
       setIsStartingMatching(false);

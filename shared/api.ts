@@ -214,6 +214,12 @@ export interface CallStartNotification {
     nickname: string;
     profileImageUrl?: string;
   };
+  agoraChannelInfo: {
+    appId: string;
+    channelName: string;
+    token: string;
+    uid: string;
+  };
   callDuration?: number; // seconds
   timestamp: string;
 }
