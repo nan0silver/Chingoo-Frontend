@@ -39,8 +39,10 @@ export const useCall = () => {
           type: notification.type,
           callId: notification.callId,
           matchingId: notification.matchingId,
-          partner: notification.partner,
-          agoraChannelInfo: notification.agoraChannelInfo,
+          partnerId: notification.partnerId,
+          partnerNickname: notification.partnerNickname,
+          channelName: notification.channelName,
+          agoraUid: notification.agoraUid,
           timestamp: notification.timestamp,
         });
 
@@ -85,9 +87,24 @@ export const useCall = () => {
 
         agoraService.setCallbacks(agoraCallbacks);
 
+        // 백엔드 데이터를 Agora 형식으로 변환
+        const agoraChannelInfo = {
+          appId: import.meta.env.VITE_AGORA_APP_ID || "your-agora-app-id",
+          channelName: notification.channelName,
+          token: notification.rtcToken,
+          uid: String(notification.agoraUid),
+        };
+
+        console.log("🔄 변환된 Agora 채널 정보:", agoraChannelInfo);
+
         // Agora 채널에 입장
-        if (notification.agoraChannelInfo) {
-          await agoraService.joinChannel(notification.agoraChannelInfo);
+        console.log("🎯 Agora 채널 입장 시작:", agoraChannelInfo);
+        try {
+          await agoraService.joinChannel(agoraChannelInfo);
+          console.log("✅ Agora 채널 입장 완료");
+        } catch (agoraError) {
+          console.error("❌ Agora 채널 입장 실패:", agoraError);
+          throw agoraError;
         }
       } catch (error) {
         console.error("통화 시작 실패:", error);
@@ -187,15 +204,16 @@ export const useCall = () => {
 
   /**
    * WebSocket 통화 시작 알림 구독
+   * 주의: ConnectingCallPage에서 직접 콜백을 설정하므로 여기서는 제거
    */
-  useEffect(() => {
-    // 통화 시작 알림 콜백 설정
-    webSocketService.onCallStartNotificationCallback(handleCallStart);
+  // useEffect(() => {
+  //   // 통화 시작 알림 콜백 설정
+  //   webSocketService.onCallStartNotificationCallback(handleCallStart);
 
-    return () => {
-      // 정리 함수는 필요시에만 구현
-    };
-  }, [webSocketService, handleCallStart]);
+  //   return () => {
+  //     // 정리 함수는 필요시에만 구현
+  //   };
+  // }, [webSocketService, handleCallStart]);
 
   /**
    * 컴포넌트 언마운트 시 정리

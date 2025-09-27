@@ -217,8 +217,10 @@ export class WebSocketService {
             type: notification.type,
             callId: notification.callId,
             matchingId: notification.matchingId,
-            partner: notification.partner,
-            agoraChannelInfo: notification.agoraChannelInfo,
+            partnerId: notification.partnerId,
+            partnerNickname: notification.partnerNickname,
+            channelName: notification.channelName,
+            agoraUid: notification.agoraUid,
             timestamp: notification.timestamp,
           });
           this.onCallStartNotification?.(notification);

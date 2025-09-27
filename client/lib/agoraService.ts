@@ -89,24 +89,34 @@ export class AgoraService {
    */
   async joinChannel(channelInfo: AgoraChannelInfo): Promise<void> {
     try {
-      console.log("Agora 채널 입장 시도:", channelInfo);
+      console.log("🎯 Agora 채널 입장 시도:", channelInfo);
+      console.log("📋 채널 정보 상세:", {
+        appId: channelInfo.appId,
+        channelName: channelInfo.channelName,
+        token: channelInfo.token ? "토큰 있음" : "토큰 없음",
+        uid: channelInfo.uid,
+      });
 
       this.callState.isConnecting = true;
       this.currentChannelInfo = channelInfo;
 
       // 클라이언트 생성
+      console.log("🔧 Agora 클라이언트 생성 중...");
       this.client = AgoraRTC.createClient({
         mode: "rtc",
         codec: "vp8",
       });
 
       // 이벤트 리스너 설정
+      console.log("📡 이벤트 리스너 설정 중...");
       this.setupEventListeners();
 
       // 마이크 권한 요청 및 오디오 트랙 생성
+      console.log("🎤 마이크 권한 요청 및 오디오 트랙 생성 중...");
       await this.createLocalAudioTrack();
 
       // 채널에 입장
+      console.log("🚪 Agora 채널에 입장 중...");
       await this.client.join(
         channelInfo.appId,
         channelInfo.channelName,
@@ -114,12 +124,15 @@ export class AgoraService {
         channelInfo.uid,
       );
 
-      console.log("Agora 채널 입장 성공");
+      console.log("✅ Agora 채널 입장 성공");
       this.callState.isConnected = true;
       this.callState.isConnecting = false;
+
+      console.log("🔔 onCallStarted 콜백 호출 중...");
       this.callbacks.onCallStarted?.();
+      console.log("✅ onCallStarted 콜백 호출 완료");
     } catch (error) {
-      console.error("Agora 채널 입장 실패:", error);
+      console.error("❌ Agora 채널 입장 실패:", error);
       this.callState.isConnecting = false;
       this.callbacks.onError?.(error as Error);
       throw error;

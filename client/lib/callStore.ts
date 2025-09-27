@@ -95,11 +95,18 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
   startCall: (notification: CallStartNotification) => {
     console.log("통화 시작:", notification);
+
+    // 백엔드 데이터를 프론트엔드 형식으로 변환
+    const partner = {
+      id: notification.partnerId,
+      nickname: notification.partnerNickname,
+    };
+
     set({
       callId: notification.callId,
-      matchingId: notification.matchingId,
-      partner: notification.partner,
-      agoraChannelInfo: notification.agoraChannelInfo,
+      matchingId: notification.matchingId || null,
+      partner: partner,
+      agoraChannelInfo: null, // useCall에서 직접 생성하므로 null
       isInCall: true,
       callStartTime: new Date(),
       error: null,

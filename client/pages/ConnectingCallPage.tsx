@@ -23,7 +23,8 @@ export default function ConnectingCallPage({
     subscriptionStatus: null as any,
   });
   const { queuePosition, estimatedWaitTime } = useMatchingStore();
-  const { isInCall, isConnecting, error, callId, partner } = useCall();
+  const { isInCall, isConnecting, error, callId, partner, handleCallStart } =
+    useCall();
   const webSocketService = getWebSocketService();
 
   // Animate loading dots
@@ -85,7 +86,7 @@ export default function ConnectingCallPage({
   // WebSocket 알림 수신 추적
   useEffect(() => {
     // 통화 시작 알림 콜백 설정
-    const handleCallStart = (notification: any) => {
+    const handleCallStartNotification = (notification: any) => {
       console.log(
         "🔔 ConnectingCallPage에서 통화 시작 알림 수신:",
         notification,
@@ -94,6 +95,10 @@ export default function ConnectingCallPage({
         ...prev,
         lastNotification: notification,
       }));
+
+      // useCall의 handleCallStart 함수 호출
+      console.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
+      handleCallStart(notification);
     };
 
     // 매칭 알림 콜백 설정
@@ -105,7 +110,9 @@ export default function ConnectingCallPage({
       }));
     };
 
-    webSocketService.onCallStartNotificationCallback(handleCallStart);
+    webSocketService.onCallStartNotificationCallback(
+      handleCallStartNotification,
+    );
     webSocketService.onMatchingNotificationCallback(handleMatching);
 
     return () => {
