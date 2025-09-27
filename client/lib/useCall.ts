@@ -2,6 +2,7 @@ import { useEffect, useCallback } from "react";
 import { useCallStore } from "./callStore";
 import { getAgoraService, AgoraCallbacks } from "./agoraService";
 import { getWebSocketService } from "./websocket";
+import { getMatchingApiService } from "./matchingApi";
 import { CallStartNotification } from "@shared/api";
 
 /**
@@ -30,6 +31,7 @@ export const useCall = () => {
 
   const agoraService = getAgoraService();
   const webSocketService = getWebSocketService();
+  const matchingApiService = getMatchingApiService();
 
   /**
    * 통화 시작 (WebSocket 알림 수신 시)
@@ -139,6 +141,18 @@ export const useCall = () => {
     try {
       console.log("통화 종료 요청");
 
+      // 백엔드에 통화 종료 API 호출
+      if (callId) {
+        console.log("📡 백엔드에 통화 종료 API 호출:", callId);
+        try {
+          await matchingApiService.endCall(callId);
+          console.log("✅ 백엔드 통화 종료 API 호출 성공");
+        } catch (apiError) {
+          console.error("❌ 백엔드 통화 종료 API 호출 실패:", apiError);
+          // API 호출 실패해도 Agora 채널 퇴장은 계속 진행
+        }
+      }
+
       // Agora 채널에서 퇴장
       await agoraService.leaveChannel();
 
@@ -150,7 +164,7 @@ export const useCall = () => {
         error instanceof Error ? error.message : "통화 종료에 실패했습니다.",
       );
     }
-  }, [agoraService, endCall, setError]);
+  }, [agoraService, endCall, setError, callId, matchingApiService]);
 
   /**
    * 마이크 토글
