@@ -25,6 +25,9 @@ export const useCall = () => {
     setError,
   } = useCallStore();
 
+  // 디버깅: useCall 훅에서 partner 정보 확인
+  console.log("🎣 useCall 훅 - partner 정보:", partner);
+
   const agoraService = getAgoraService();
   const webSocketService = getWebSocketService();
 
@@ -47,7 +50,12 @@ export const useCall = () => {
         });
 
         // 통화 상태 업데이트
+        console.log(
+          "🔄 useCall에서 startCall 호출 전 - notification:",
+          notification,
+        );
         startCall(notification);
+        console.log("🔄 useCall에서 startCall 호출 후");
         updateConnectingState(true);
 
         // Agora 콜백 설정
@@ -217,15 +225,16 @@ export const useCall = () => {
 
   /**
    * 컴포넌트 언마운트 시 정리
+   * 주의: 페이지 이동 시 자동으로 통화를 종료하지 않음
    */
-  useEffect(() => {
-    return () => {
-      // 통화 중이면 정리
-      if (isInCall) {
-        agoraService.leaveChannel().catch(console.error);
-      }
-    };
-  }, [isInCall, agoraService]);
+  // useEffect(() => {
+  //   return () => {
+  //     // 통화 중이면 정리
+  //     if (isInCall) {
+  //       agoraService.leaveChannel().catch(console.error);
+  //     }
+  //   };
+  // }, [isInCall, agoraService]);
 
   return {
     // 상태

@@ -309,17 +309,27 @@ export class AgoraService {
 
     // 연결 상태 변경
     this.client.on("connection-state-change", (curState, revState, reason) => {
-      console.log("연결 상태 변경:", { curState, revState, reason });
+      console.log("🔗 Agora 연결 상태 변경:", { curState, revState, reason });
       this.callState.connectionState = curState;
       this.callbacks.onConnectionStateChange?.(curState);
+
+      if (curState === "CONNECTED") {
+        console.log("✅ Agora 채널 연결 성공");
+      }
 
       // 연결 해제 시 처리
       if (curState === "DISCONNECTED") {
         this.callState.isConnected = false;
         if (reason === "LEAVE") {
-          console.log("사용자가 채널을 떠남");
+          console.log("🚪 사용자가 채널을 떠남");
         } else {
-          console.log("네트워크 연결 문제로 채널 연결 해제");
+          console.error("❌ 연결이 예상치 못하게 끊어짐:", reason);
+          console.error("❌ 연결 끊어짐 상세 정보:", {
+            curState,
+            revState,
+            reason,
+            channelInfo: this.currentChannelInfo,
+          });
           this.callbacks.onError?.(new Error("네트워크 연결이 불안정합니다."));
         }
       }

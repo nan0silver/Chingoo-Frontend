@@ -94,16 +94,20 @@ export const useCallStore = create<CallStore>((set, get) => ({
   ...initialState,
 
   startCall: (notification: CallStartNotification) => {
-    console.log("통화 시작:", notification);
+    console.log("🏪 callStore.startCall 호출 - notification:", notification);
 
     // 백엔드 데이터를 프론트엔드 형식으로 변환
     const partner = {
-      id: notification.partnerId,
+      id: String(notification.partnerId), // number를 string으로 변환
       nickname: notification.partnerNickname,
     };
 
+    console.log("🏪 변환된 partner 객체:", partner);
+    console.log("🏪 partnerId:", notification.partnerId);
+    console.log("🏪 partnerNickname:", notification.partnerNickname);
+
     set({
-      callId: notification.callId,
+      callId: String(notification.callId), // number를 string으로 변환
       matchingId: notification.matchingId || null,
       partner: partner,
       agoraChannelInfo: null, // useCall에서 직접 생성하므로 null
@@ -111,6 +115,8 @@ export const useCallStore = create<CallStore>((set, get) => ({
       callStartTime: new Date(),
       error: null,
     });
+
+    console.log("🏪 callStore 상태 업데이트 완료");
   },
 
   endCall: () => {

@@ -21,6 +21,11 @@ export default function CallConnectedPage({
     setError,
   } = useCall();
 
+  // 디버깅: partner 정보 확인
+  useEffect(() => {
+    console.log("🔍 CallConnectedPage - partner 정보:", partner);
+  }, [partner]);
+
   // Format seconds to MM:SS
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -170,28 +175,6 @@ export default function CallConnectedPage({
             </button>
             <span className="text-white font-crimson text-lg font-bold">
               스피커폰
-            </span>
-          </div>
-
-          {/* Microphone Button */}
-          <div className="flex flex-col items-center gap-4">
-            <button
-              onClick={toggleMute}
-              className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
-                agoraState.isMuted
-                  ? "bg-red-500 bg-opacity-50"
-                  : "bg-white bg-opacity-20"
-              }`}
-            >
-              <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                <path
-                  d="M15 2C16.1046 2 17 2.89543 17 4V16C17 17.1046 16.1046 18 15 18C13.8954 18 13 17.1046 13 16V4C13 2.89543 13.8954 2 15 2ZM21 12C21 16.4183 17.4183 20 13 20V22H17V24H13H11V22H13V20C8.58172 20 5 16.4183 5 12H7C7 15.866 10.134 19 14 19C17.866 19 21 15.866 21 12ZM9 12C9 14.7614 11.2386 17 14 17C16.7614 17 19 14.7614 19 12H17C17 13.6569 15.6569 15 14 15C12.3431 15 11 13.6569 11 12H9Z"
-                  fill="white"
-                />
-              </svg>
-            </button>
-            <span className="text-white font-crimson text-lg font-bold">
-              마이크
             </span>
           </div>
 
