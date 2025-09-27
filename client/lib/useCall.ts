@@ -71,6 +71,20 @@ export const useCall = () => {
           },
           onUserLeft: (userId) => {
             console.log("사용자 퇴장:", userId);
+
+            // 상대방이 퇴장한 경우 통화 종료 처리
+            if (partner?.id && String(userId) === String(partner.id)) {
+              console.log("📞 상대방이 퇴장했습니다 - 통화 종료 처리 시작");
+
+              // Agora 채널에서 퇴장
+              agoraService.leaveChannel().catch((error) => {
+                console.error("Agora 채널 퇴장 실패:", error);
+              });
+
+              // 통화 상태 초기화
+              endCall();
+              console.log("📞 상대방 퇴장으로 인한 통화 종료 처리 완료");
+            }
           },
           onAudioTrackSubscribed: (userId, audioTrack) => {
             console.log("오디오 트랙 구독:", userId);
@@ -87,22 +101,8 @@ export const useCall = () => {
           },
           onCallEnded: () => {
             console.log("Agora 통화 종료");
-            // WebSocket으로 상대방에게 통화 종료 알림 전송
-            if (callId && partner?.id) {
-              console.log("📡 상대방에게 통화 종료 알림 전송:", {
-                callId,
-                partnerId: partner.id,
-              });
-              try {
-                webSocketService.sendCallEndNotification(callId, partner.id);
-                console.log("✅ 통화 종료 WebSocket 알림 전송 성공");
-              } catch (wsError) {
-                console.error(
-                  "❌ 통화 종료 WebSocket 알림 전송 실패:",
-                  wsError,
-                );
-              }
-            }
+            // onCallEnded는 Agora SDK에서 호출되는 콜백이므로
+            // 여기서는 단순히 상태만 초기화하고 WebSocket 알림은 handleEndCall에서 처리
             endCall();
           },
           onError: (error) => {
@@ -164,7 +164,15 @@ export const useCall = () => {
           await matchingApiService.endCall(callId);
           console.log("✅ 백엔드 통화 종료 API 호출 성공");
         } catch (apiError) {
-          console.error("❌ 백엔드 통화 종료 API 호출 실패:", apiError);
+          // 409 Conflict (이미 종료된 통화)는 정상적인 상황으로 처리
+          if (
+            apiError instanceof Error &&
+            apiError.message.includes("이미 종료된 통화")
+          ) {
+            console.log("ℹ️ 통화가 이미 종료됨 - 정상적인 상황");
+          } else {
+            console.error("❌ 백엔드 통화 종료 API 호출 실패:", apiError);
+          }
           // API 호출 실패해도 Agora 채널 퇴장은 계속 진행
         }
       }
@@ -260,17 +268,27 @@ export const useCall = () => {
    */
   const handleCallEndNotification = useCallback(
     (notification: any) => {
-      console.log("🔔 통화 종료 알림 수신:", notification);
+      console.log("🔔 useCall - 통화 종료 알림 수신:", notification);
+      console.log("🔔 현재 callId:", callId);
+      console.log("🔔 알림 callId:", notification.callId);
 
       // 상대방이 통화를 종료한 경우 처리
       if (notification.type === "call_end" && notification.callId === callId) {
-        console.log("📞 상대방이 통화를 종료했습니다");
+        console.log("📞 상대방이 통화를 종료했습니다 - 처리 시작");
 
-        // Agora 채널에서 퇴장
-        agoraService.leaveChannel().catch(console.error);
+        // Agora 채널에서 퇴장 (에러 무시)
+        agoraService.leaveChannel().catch((error) => {
+          console.log(
+            "Agora 채널 퇴장 중 에러 (정상적인 상황일 수 있음):",
+            error,
+          );
+        });
 
         // 통화 상태 초기화
         endCall();
+        console.log("📞 통화 종료 처리 완료");
+      } else {
+        console.log("📞 통화 종료 알림이지만 현재 통화와 다름 - 무시");
       }
     },
     [callId, agoraService, endCall],
@@ -293,10 +311,12 @@ export const useCall = () => {
    * WebSocket 통화 종료 알림 구독
    */
   useEffect(() => {
+    console.log("🔔 useCall - 통화 종료 알림 콜백 설정");
     // 통화 종료 알림 콜백 설정
     webSocketService.onCallEndNotificationCallback(handleCallEndNotification);
 
     return () => {
+      console.log("🔔 useCall - 통화 종료 알림 콜백 정리");
       // 정리 함수는 필요시에만 구현
     };
   }, [webSocketService, handleCallEndNotification]);
