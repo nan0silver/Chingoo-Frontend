@@ -15,13 +15,6 @@ export default function ConnectingCallPage({
   onConnected,
 }: ConnectingCallPageProps) {
   const [dots, setDots] = useState("");
-  const [debugInfo, setDebugInfo] = useState({
-    wsConnected: false,
-    wsConnecting: false,
-    lastNotification: null as any,
-    callState: null as any,
-    subscriptionStatus: null as any,
-  });
   const { queuePosition, estimatedWaitTime } = useMatchingStore();
   const { isInCall, isConnecting, error, callId, partner, handleCallStart } =
     useCall();
@@ -46,43 +39,6 @@ export default function ConnectingCallPage({
     }
   }, [isInCall, isConnecting, onConnected]);
 
-  // 디버깅 정보 업데이트
-  useEffect(() => {
-    const updateDebugInfo = () => {
-      const wsState = webSocketService.getConnectionState();
-      const subscriptionStatus = webSocketService.getSubscriptionStatus();
-
-      setDebugInfo((prev) => ({
-        ...prev,
-        wsConnected: wsState.isConnected,
-        wsConnecting: wsState.isConnecting,
-        callState: { isInCall, isConnecting, callId, partner, error },
-        subscriptionStatus: subscriptionStatus,
-      }));
-
-      // WebSocket 구독 상태 로그 출력 (5초마다)
-      if (wsState.isConnected) {
-        webSocketService.logSubscriptionStatus();
-      }
-    };
-
-    // 초기 상태 업데이트
-    updateDebugInfo();
-    console.log("🔍 ConnectingCallPage 초기화 - WebSocket 상태 확인");
-
-    // WebSocket 구독 상태 즉시 확인
-    console.log(
-      "🔍 WebSocket 구독 상태 즉시 확인:",
-      webSocketService.getSubscriptionStatus(),
-    );
-    webSocketService.logSubscriptionStatus();
-
-    // 주기적으로 상태 업데이트 (2초마다)
-    const interval = setInterval(updateDebugInfo, 2000);
-
-    return () => clearInterval(interval);
-  }, [webSocketService, isInCall, isConnecting, callId, partner, error]);
-
   // WebSocket 알림 수신 추적
   useEffect(() => {
     // 통화 시작 알림 콜백 설정
@@ -91,10 +47,6 @@ export default function ConnectingCallPage({
         "🔔 ConnectingCallPage에서 통화 시작 알림 수신:",
         notification,
       );
-      setDebugInfo((prev) => ({
-        ...prev,
-        lastNotification: notification,
-      }));
 
       // useCall의 handleCallStart 함수 호출
       console.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
@@ -104,10 +56,6 @@ export default function ConnectingCallPage({
     // 매칭 알림 콜백 설정
     const handleMatching = (notification: any) => {
       console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
-      setDebugInfo((prev) => ({
-        ...prev,
-        lastNotification: notification,
-      }));
     };
 
     webSocketService.onCallStartNotificationCallback(
@@ -165,38 +113,6 @@ export default function ConnectingCallPage({
                     radial-gradient(138.99% 139.71% at 10.56% -25.76%, rgba(235, 161, 0, 0.80) 0%, rgba(245, 69, 53, 0.80) 100%)`,
       }}
     >
-      {/* Status Bar */}
-      <div className="w-full flex justify-between items-center px-6 py-3 h-11 md:hidden">
-        <span className="text-white text-lg font-medium">9:41</span>
-        <div className="flex items-center gap-1">
-          {/* Signal bars */}
-          <div className="flex gap-1">
-            <div className="w-1 h-4 bg-white rounded-sm"></div>
-            <div className="w-1 h-3 bg-white rounded-sm"></div>
-            <div className="w-1 h-5 bg-white rounded-sm"></div>
-            <div className="w-1 h-2 bg-white rounded-sm"></div>
-          </div>
-          {/* WiFi icon */}
-          <svg
-            width="15"
-            height="11"
-            viewBox="0 0 15 11"
-            fill="none"
-            className="ml-2"
-          >
-            <path
-              d="M7.5 3.5C10.5 3.5 13 5.5 13 8H12C12 6.5 9.5 5 7.5 5S3 6.5 3 8H2C2 5.5 4.5 3.5 7.5 3.5Z"
-              fill="white"
-            />
-          </svg>
-          {/* Battery */}
-          <div className="ml-2 w-6 h-3 border border-white rounded-sm relative">
-            <div className="absolute inset-0.5 bg-white rounded-sm"></div>
-            <div className="absolute -right-1 top-1 w-0.5 h-1 bg-white rounded-r"></div>
-          </div>
-        </div>
-      </div>
-
       {/* Interest Tag */}
       <div className="flex justify-center mt-8">
         <div className="bg-white px-4 py-2 rounded">
@@ -264,54 +180,6 @@ export default function ConnectingCallPage({
                   예상 대기 시간: {estimatedWaitTime}분
                 </p>
               )}
-            </div>
-          )}
-
-          {/* 디버깅 정보 (개발 환경에서만 표시) */}
-          {import.meta.env.DEV && (
-            <div className="mt-8 p-4 bg-black bg-opacity-50 rounded-lg text-left">
-              <h3 className="text-white font-bold mb-2">🔍 디버깅 정보</h3>
-              <div className="text-sm text-white space-y-1">
-                <p>
-                  <strong>WebSocket:</strong>{" "}
-                  {debugInfo.wsConnected
-                    ? "✅ 연결됨"
-                    : debugInfo.wsConnecting
-                      ? "🔄 연결 중"
-                      : "❌ 연결 안됨"}
-                </p>
-                <p>
-                  <strong>구독 상태:</strong>{" "}
-                  {debugInfo.subscriptionStatus
-                    ? Object.entries(debugInfo.subscriptionStatus)
-                        .map(([key, value]) => `${key}: ${value ? "✅" : "❌"}`)
-                        .join(", ")
-                    : "없음"}
-                </p>
-                <p>
-                  <strong>통화 상태:</strong>{" "}
-                  {isInCall
-                    ? "✅ 통화 중"
-                    : isConnecting
-                      ? "🔄 연결 중"
-                      : "⏳ 대기 중"}
-                </p>
-                <p>
-                  <strong>Call ID:</strong> {callId || "없음"}
-                </p>
-                <p>
-                  <strong>상대방:</strong> {partner?.nickname || "없음"}
-                </p>
-                <p>
-                  <strong>에러:</strong> {error || "없음"}
-                </p>
-                <p>
-                  <strong>마지막 알림:</strong>{" "}
-                  {debugInfo.lastNotification
-                    ? JSON.stringify(debugInfo.lastNotification)
-                    : "없음"}
-                </p>
-              </div>
             </div>
           )}
         </div>

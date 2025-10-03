@@ -145,6 +145,11 @@ export default function Index({
     setSelectedCategory(null);
   };
 
+  const handleGoHome = () => {
+    setCallState("home");
+    setSelectedCategory(null);
+  };
+
   const handleOpenSettings = () => {
     setShowSettings(true);
   };
@@ -281,6 +286,7 @@ export default function Index({
           selectedCategory={selectedCategory}
           onCallAgain={handleCallAgain}
           onSelectInterests={handleSelectInterests}
+          onGoHome={handleGoHome}
         />
       ) : (
         <HomePage

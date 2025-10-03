@@ -1,29 +1,113 @@
 import { useState, useEffect } from "react";
 import { useCall } from "@/lib/useCall";
+import { getMatchingApiService } from "@/lib/matchingApi";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
   onCallAgain: () => void;
   onSelectInterests: () => void;
+  onGoHome: () => void;
 }
 
 export default function CallEvaluationPage({
   selectedCategory,
   onCallAgain,
   onSelectInterests,
+  onGoHome,
 }: CallEvaluationPageProps) {
   const [selectedRating, setSelectedRating] = useState<"good" | "bad" | null>(
     null,
   );
-  const { partner } = useCall();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const { partner, clearPartner, callId } = useCall();
+  const matchingApiService = getMatchingApiService();
 
-  // 디버깅: partner 정보 확인
+  // 디버깅: partner 정보 및 callId 확인
   useEffect(() => {
     console.log("🔍 CallEvaluationPage - partner 정보:", partner);
-  }, [partner]);
+    console.log("🔍 CallEvaluationPage - callId:", callId);
+  }, [partner, callId]);
+
+  // 평가 제출 함수
+  const handleSubmitEvaluation = async () => {
+    if (!selectedRating || !callId) {
+      console.error("평가 정보 또는 callId가 없습니다.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const evaluationData = {
+        call_id: parseInt(callId),
+        feedback_type:
+          selectedRating === "good"
+            ? "POSITIVE"
+            : ("NEGATIVE" as "POSITIVE" | "NEGATIVE"),
+        negative: selectedRating === "bad",
+        positive: selectedRating === "good",
+      };
+
+      if (import.meta.env.DEV) {
+        console.log("📤 평가 제출 시작:", evaluationData);
+      }
+      await matchingApiService.submitEvaluation(evaluationData);
+      console.log("✅ 평가 제출 성공");
+
+      // 성공 모달 표시
+      setShowSuccessModal(true);
+
+      // 평가 제출 후 partner 정보 삭제
+      clearPartner();
+      console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
+
+      // 2초 후 홈페이지로 이동
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        onGoHome();
+      }, 2000);
+    } catch (error) {
+      console.error("❌ 평가 제출 실패:", error);
+      alert("평가 제출에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col relative">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="text-green-600"
+              >
+                <path
+                  d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              평가가 제출되었습니다!
+            </h3>
+            <p className="text-gray-600">
+              {selectedRating === "good" ? "좋았어요" : "별로였어요"}로
+              평가되었습니다.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex justify-center mt-8">
         <h1 className="text-orange-500 font-crimson text-2xl font-bold">
@@ -125,23 +209,15 @@ export default function CallEvaluationPage({
       {/* Submit Rating Button */}
       <div className="flex justify-center mt-6 px-5">
         <button
-          onClick={() => {
-            if (selectedRating) {
-              // TODO: 실제 평가 제출 로직 구현
-              console.log("평가 제출:", selectedRating);
-              alert(
-                `평가가 제출되었습니다: ${selectedRating === "good" ? "좋았어요" : "별로였어요"}`,
-              );
-            }
-          }}
-          disabled={!selectedRating}
+          onClick={handleSubmitEvaluation}
+          disabled={!selectedRating || isSubmitting}
           className={`w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all ${
-            selectedRating
+            selectedRating && !isSubmitting
               ? "bg-gradient-to-r from-yellow-300 to-red-gradient text-white hover:opacity-90"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
-          평가 제출하기
+          {isSubmitting ? "제출 중..." : "평가 제출하기"}
         </button>
       </div>
 
@@ -151,7 +227,12 @@ export default function CallEvaluationPage({
           <div className="flex gap-2">
             {/* Call Again Button */}
             <button
-              onClick={onCallAgain}
+              onClick={() => {
+                // 다시 통화하기 전에 partner 정보 삭제
+                clearPartner();
+                console.log("✅ 다시 통화하기 - partner 정보 삭제 완료");
+                onCallAgain();
+              }}
               className="flex-1 h-14 border border-orange-500 rounded-lg flex items-center justify-center bg-white"
             >
               <span className="text-orange-500 font-crimson text-xl font-bold">
@@ -161,7 +242,12 @@ export default function CallEvaluationPage({
 
             {/* Select Interests Button */}
             <button
-              onClick={onSelectInterests}
+              onClick={() => {
+                // 관심사 선택 전에 partner 정보 삭제
+                clearPartner();
+                console.log("✅ 관심사 선택 - partner 정보 삭제 완료");
+                onSelectInterests();
+              }}
               className="flex-1 h-14 bg-orange-500 rounded-lg flex items-center justify-center"
             >
               <span className="text-white font-crimson text-xl font-bold">

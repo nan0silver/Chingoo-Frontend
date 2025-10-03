@@ -59,8 +59,11 @@ export default function CallConnectedPage({
 
   // 통화 종료 핸들러
   const handleEndCallClick = async () => {
+    console.log("🔴 통화 종료 버튼 클릭됨 - handleEndCallClick 시작");
     try {
+      console.log("🔴 handleEndCall 호출 전");
       await handleEndCall();
+      console.log("🔴 handleEndCall 호출 후");
       onEndCall();
     } catch (error) {
       console.error("통화 종료 실패:", error);

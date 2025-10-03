@@ -91,9 +91,11 @@ export class MatchingApiService {
     }
 
     const url = `${this.baseUrl}/v1/calls/match`;
-    console.log("매칭 API 요청 URL:", url);
-    console.log("API_BASE_URL:", API_BASE_URL);
-    console.log("this.baseUrl:", this.baseUrl);
+    if (import.meta.env.DEV) {
+      console.log("매칭 API 요청 URL:", url);
+      console.log("API_BASE_URL:", API_BASE_URL);
+      console.log("this.baseUrl:", this.baseUrl);
+    }
 
     try {
       const response = await fetch(url, {
@@ -309,6 +311,35 @@ export class MatchingApiService {
   }
 
   /**
+   * 채널 나가기
+   * POST /api/v1/calls/{callId}/channel/leave
+   */
+  async leaveChannel(callId: string): Promise<void> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/calls/${callId}/channel/leave`;
+      console.log("채널 나가기 API 요청 URL:", url);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+      });
+
+      // HTTP 상태 코드가 200-299 범위면 성공으로 간주
+      await handleApiResponse(response);
+      console.log("✅ 채널 나가기 API 호출 성공");
+    } catch (error) {
+      console.error("채널 나가기 오류:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("채널 나가기 중 오류가 발생했습니다.");
+    }
+  }
+
+  /**
    * 통화 종료
    * POST /api/v1/calls/{callId}/end
    */
@@ -319,9 +350,11 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/calls/${callId}/end`;
-      console.log("통화 종료 API 요청 URL:", url);
-      console.log("API_BASE_URL:", API_BASE_URL);
-      console.log("this.baseUrl:", this.baseUrl);
+      if (import.meta.env.DEV) {
+        console.log("통화 종료 API 요청 URL:", url);
+        console.log("API_BASE_URL:", API_BASE_URL);
+        console.log("this.baseUrl:", this.baseUrl);
+      }
 
       const response = await fetch(url, {
         method: "POST",
@@ -336,6 +369,44 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("통화 종료 중 오류가 발생했습니다.");
+    }
+  }
+
+  /**
+   * 통화 평가 제출
+   * POST /api/v1/evaluations
+   */
+  async submitEvaluation(request: {
+    call_id: number;
+    feedback_type: "POSITIVE" | "NEGATIVE";
+    negative: boolean;
+    positive: boolean;
+  }): Promise<void> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/evaluations`;
+      if (import.meta.env.DEV) {
+        console.log("통화 평가 API 요청 URL:", url);
+        console.log("평가 요청 데이터:", request);
+      }
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+        body: JSON.stringify(request),
+      });
+
+      // HTTP 상태 코드가 200-299 범위면 성공으로 간주
+      await handleApiResponse(response);
+      console.log("✅ 통화 평가 API 호출 성공");
+    } catch (error) {
+      console.error("통화 평가 오류:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("통화 평가 중 오류가 발생했습니다.");
     }
   }
 }
