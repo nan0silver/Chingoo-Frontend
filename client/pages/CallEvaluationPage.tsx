@@ -49,7 +49,9 @@ export default function CallEvaluationPage({
         positive: selectedRating === "good",
       };
 
-      console.log("📤 평가 제출 시작:", evaluationData);
+      if (import.meta.env.DEV) {
+        console.log("📤 평가 제출 시작:", evaluationData);
+      }
       await matchingApiService.submitEvaluation(evaluationData);
       console.log("✅ 평가 제출 성공");
 

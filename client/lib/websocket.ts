@@ -124,19 +124,23 @@ export class WebSocketService {
         Authorization: `Bearer ${token}`,
       };
       console.log("🔑 JWT 토큰 설정 완료");
-      console.log("🔑 토큰 길이:", token.length);
-      console.log("🔑 토큰 앞 10자리:", token.substring(0, 10) + "...");
+      if (import.meta.env.DEV) {
+        console.log("🔑 토큰 길이:", token.length);
+        console.log("🔑 토큰 앞 10자리:", token.substring(0, 10) + "...");
+      }
 
       console.log("⚡ STOMP 클라이언트 활성화 시도");
       await this.client!.activate();
       console.log("✅ STOMP 클라이언트 활성화 성공");
     } catch (error) {
       console.error("❌ WebSocket 연결 실패:", error);
-      console.error("❌ 에러 타입:", typeof error);
-      console.error(
-        "❌ 에러 스택:",
-        error instanceof Error ? error.stack : "No stack",
-      );
+      if (import.meta.env.DEV) {
+        console.error("❌ 에러 타입:", typeof error);
+        console.error(
+          "❌ 에러 스택:",
+          error instanceof Error ? error.stack : "No stack",
+        );
+      }
       this.connectionState = {
         ...this.connectionState,
         isConnecting: false,
@@ -334,7 +338,9 @@ export class WebSocketService {
     }
 
     try {
-      console.log("📤 WebSocket 메시지 전송:", { destination, message });
+      if (import.meta.env.DEV) {
+        console.log("📤 WebSocket 메시지 전송:", { destination, message });
+      }
       this.client.publish({
         destination,
         body: JSON.stringify(message),

@@ -91,9 +91,11 @@ export class MatchingApiService {
     }
 
     const url = `${this.baseUrl}/v1/calls/match`;
-    console.log("매칭 API 요청 URL:", url);
-    console.log("API_BASE_URL:", API_BASE_URL);
-    console.log("this.baseUrl:", this.baseUrl);
+    if (import.meta.env.DEV) {
+      console.log("매칭 API 요청 URL:", url);
+      console.log("API_BASE_URL:", API_BASE_URL);
+      console.log("this.baseUrl:", this.baseUrl);
+    }
 
     try {
       const response = await fetch(url, {
@@ -348,9 +350,11 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/calls/${callId}/end`;
-      console.log("통화 종료 API 요청 URL:", url);
-      console.log("API_BASE_URL:", API_BASE_URL);
-      console.log("this.baseUrl:", this.baseUrl);
+      if (import.meta.env.DEV) {
+        console.log("통화 종료 API 요청 URL:", url);
+        console.log("API_BASE_URL:", API_BASE_URL);
+        console.log("this.baseUrl:", this.baseUrl);
+      }
 
       const response = await fetch(url, {
         method: "POST",
@@ -384,8 +388,10 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/evaluations`;
-      console.log("통화 평가 API 요청 URL:", url);
-      console.log("평가 요청 데이터:", request);
+      if (import.meta.env.DEV) {
+        console.log("통화 평가 API 요청 URL:", url);
+        console.log("평가 요청 데이터:", request);
+      }
 
       const response = await fetch(url, {
         method: "POST",

@@ -89,10 +89,12 @@ export const useCall = () => {
 
               // 상대방 퇴장 시에도 WebSocket 알림 전송 (상대방이 예상치 못하게 퇴장한 경우)
               if (currentState.callId && currentState.partner.id) {
-                console.log("📡 상대방 퇴장으로 인한 WebSocket 알림 전송:", {
-                  callId: currentState.callId,
-                  partnerId: currentState.partner.id,
-                });
+                if (import.meta.env.DEV) {
+                  console.log("📡 상대방 퇴장으로 인한 WebSocket 알림 전송:", {
+                    callId: currentState.callId,
+                    partnerId: currentState.partner.id,
+                  });
+                }
                 try {
                   webSocketService.sendCallEndNotification(
                     currentState.callId,
@@ -233,14 +235,18 @@ export const useCall = () => {
 
       // 4. 상대방에게 통화 종료 WebSocket 알림 전송 (저장된 partner 정보 사용)
       if (currentPartner?.id) {
-        console.log("📡 상대방에게 통화 종료 알림 전송:", {
-          callId,
-          partnerId: currentPartner.id,
-        });
+        if (import.meta.env.DEV) {
+          console.log("📡 상대방에게 통화 종료 알림 전송:", {
+            callId,
+            partnerId: currentPartner.id,
+          });
+        }
 
         // WebSocket 연결 상태 확인
         const wsConnectionState = webSocketService.getConnectionState();
-        console.log("🔍 WebSocket 연결 상태:", wsConnectionState);
+        if (import.meta.env.DEV) {
+          console.log("🔍 WebSocket 연결 상태:", wsConnectionState);
+        }
 
         if (!wsConnectionState.isConnected) {
           console.error("❌ WebSocket이 연결되지 않음 - 알림 전송 불가");
