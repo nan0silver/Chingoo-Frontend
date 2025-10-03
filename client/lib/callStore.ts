@@ -127,7 +127,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
     const currentState = get();
 
     set({
-      callId: null,
+      callId: currentState.callId, // 평가 페이지에서 사용하기 위해 일시적으로 보존
       matchingId: null,
       partner: currentState.partner, // 평가 페이지에서 사용하기 위해 일시적으로 보존
       agoraChannelInfo: null,
@@ -165,7 +165,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
   },
 
   clearPartner: () => {
-    console.log("partner 정보 삭제");
-    set({ partner: null });
+    console.log("partner 정보 및 callId 삭제");
+    set({ partner: null, callId: null });
   },
 }));
