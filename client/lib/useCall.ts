@@ -27,8 +27,10 @@ export const useCall = () => {
     clearPartner,
   } = useCallStore();
 
-  // 디버깅: useCall 훅에서 partner 정보 확인
-  console.log("🎣 useCall 훅 - partner 정보:", partner);
+  // 디버깅: partner 정보 변경 시에만 로그 출력
+  useEffect(() => {
+    console.log("🎣 useCall 훅 - partner 정보:", partner);
+  }, [partner]);
 
   const agoraService = getAgoraService();
   const webSocketService = getWebSocketService();
