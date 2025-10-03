@@ -15,7 +15,7 @@ export default function CallEvaluationPage({
   const [selectedRating, setSelectedRating] = useState<"good" | "bad" | null>(
     null,
   );
-  const { partner } = useCall();
+  const { partner, clearPartner } = useCall();
 
   // 디버깅: partner 정보 확인
   useEffect(() => {
@@ -132,6 +132,10 @@ export default function CallEvaluationPage({
               alert(
                 `평가가 제출되었습니다: ${selectedRating === "good" ? "좋았어요" : "별로였어요"}`,
               );
+
+              // 평가 제출 후 partner 정보 삭제
+              clearPartner();
+              console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
             }
           }}
           disabled={!selectedRating}
@@ -151,7 +155,12 @@ export default function CallEvaluationPage({
           <div className="flex gap-2">
             {/* Call Again Button */}
             <button
-              onClick={onCallAgain}
+              onClick={() => {
+                // 다시 통화하기 전에 partner 정보 삭제
+                clearPartner();
+                console.log("✅ 다시 통화하기 - partner 정보 삭제 완료");
+                onCallAgain();
+              }}
               className="flex-1 h-14 border border-orange-500 rounded-lg flex items-center justify-center bg-white"
             >
               <span className="text-orange-500 font-crimson text-xl font-bold">
@@ -161,7 +170,12 @@ export default function CallEvaluationPage({
 
             {/* Select Interests Button */}
             <button
-              onClick={onSelectInterests}
+              onClick={() => {
+                // 관심사 선택 전에 partner 정보 삭제
+                clearPartner();
+                console.log("✅ 관심사 선택 - partner 정보 삭제 완료");
+                onSelectInterests();
+              }}
               className="flex-1 h-14 bg-orange-500 rounded-lg flex items-center justify-center"
             >
               <span className="text-white font-crimson text-xl font-bold">

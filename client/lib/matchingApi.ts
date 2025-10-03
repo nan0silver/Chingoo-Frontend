@@ -309,6 +309,35 @@ export class MatchingApiService {
   }
 
   /**
+   * 채널 나가기
+   * POST /api/v1/calls/{callId}/channel/leave
+   */
+  async leaveChannel(callId: string): Promise<void> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/calls/${callId}/channel/leave`;
+      console.log("채널 나가기 API 요청 URL:", url);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+      });
+
+      // HTTP 상태 코드가 200-299 범위면 성공으로 간주
+      await handleApiResponse(response);
+      console.log("✅ 채널 나가기 API 호출 성공");
+    } catch (error) {
+      console.error("채널 나가기 오류:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("채널 나가기 중 오류가 발생했습니다.");
+    }
+  }
+
+  /**
    * 통화 종료
    * POST /api/v1/calls/{callId}/end
    */

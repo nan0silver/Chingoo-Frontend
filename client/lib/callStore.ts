@@ -56,6 +56,9 @@ interface CallActions {
 
   // 상태 초기화
   reset: () => void;
+
+  // partner 정보 삭제 (평가 완료 후)
+  clearPartner: () => void;
 }
 
 /**
@@ -126,7 +129,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
     set({
       callId: null,
       matchingId: null,
-      partner: currentState.partner, // partner 정보 보존
+      partner: currentState.partner, // 평가 페이지에서 사용하기 위해 일시적으로 보존
       agoraChannelInfo: null,
       isInCall: false,
       isConnecting: false,
@@ -159,5 +162,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
   reset: () => {
     set(initialState);
+  },
+
+  clearPartner: () => {
+    console.log("partner 정보 삭제");
+    set({ partner: null });
   },
 }));

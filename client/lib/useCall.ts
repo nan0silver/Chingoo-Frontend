@@ -24,6 +24,7 @@ export const useCall = () => {
     updateConnectingState,
     updateAgoraState,
     setError,
+    clearPartner,
   } = useCallStore();
 
   // 디버깅: useCall 훅에서 partner 정보 확인
@@ -157,28 +158,46 @@ export const useCall = () => {
     try {
       console.log("통화 종료 요청");
 
-      // 백엔드에 통화 종료 API 호출
-      if (callId) {
-        console.log("📡 백엔드에 통화 종료 API 호출:", callId);
-        try {
-          await matchingApiService.endCall(callId);
-          console.log("✅ 백엔드 통화 종료 API 호출 성공");
-        } catch (apiError) {
-          // 409 Conflict (이미 종료된 통화)는 정상적인 상황으로 처리
-          if (
-            apiError instanceof Error &&
-            apiError.message.includes("이미 종료된 통화")
-          ) {
-            console.log("ℹ️ 통화가 이미 종료됨 - 정상적인 상황");
-          } else {
-            console.error("❌ 백엔드 통화 종료 API 호출 실패:", apiError);
-          }
-          // API 호출 실패해도 Agora 채널 퇴장은 계속 진행
+      if (!callId) {
+        console.log("❌ callId가 없어 통화 종료 불가");
+        return;
+      }
+
+      // 1. Agora 연결 해제
+      console.log("📞 1. Agora 채널에서 퇴장 시작");
+      await agoraService.leaveChannel();
+      console.log("✅ 1. Agora 채널 퇴장 완료");
+
+      // 2. 채널 나가기 API 호출
+      console.log("📡 2. 백엔드 채널 나가기 API 호출:", callId);
+      try {
+        await matchingApiService.leaveChannel(callId);
+        console.log("✅ 2. 채널 나가기 API 호출 성공");
+      } catch (apiError) {
+        console.error("❌ 2. 채널 나가기 API 호출 실패:", apiError);
+        // API 호출 실패해도 통화 종료는 계속 진행
+      }
+
+      // 3. 통화 종료 API 호출
+      console.log("📡 3. 백엔드 통화 종료 API 호출:", callId);
+      try {
+        await matchingApiService.endCall(callId);
+        console.log("✅ 3. 통화 종료 API 호출 성공");
+      } catch (apiError) {
+        // 409 Conflict (이미 종료된 통화)는 정상적인 상황으로 처리
+        if (
+          apiError instanceof Error &&
+          apiError.message.includes("이미 종료된 통화")
+        ) {
+          console.log("ℹ️ 통화가 이미 종료됨 - 정상적인 상황");
+        } else {
+          console.error("❌ 3. 통화 종료 API 호출 실패:", apiError);
         }
+        // API 호출 실패해도 통화 상태 초기화는 계속 진행
       }
 
       // 상대방에게 통화 종료 WebSocket 알림 전송
-      if (callId && partner?.id) {
+      if (partner?.id) {
         console.log("📡 상대방에게 통화 종료 알림 전송:", {
           callId,
           partnerId: partner.id,
@@ -192,18 +211,24 @@ export const useCall = () => {
         }
       }
 
-      // Agora 채널에서 퇴장
-      await agoraService.leaveChannel();
-
       // 통화 상태 초기화
       endCall();
+      console.log("✅ 통화 종료 완료");
     } catch (error) {
       console.error("통화 종료 실패:", error);
       setError(
         error instanceof Error ? error.message : "통화 종료에 실패했습니다.",
       );
     }
-  }, [agoraService, endCall, setError, callId, matchingApiService]);
+  }, [
+    agoraService,
+    endCall,
+    setError,
+    callId,
+    matchingApiService,
+    partner,
+    webSocketService,
+  ]);
 
   /**
    * 마이크 토글
@@ -353,5 +378,6 @@ export const useCall = () => {
     toggleSpeaker,
     setVolume,
     setError,
+    clearPartner,
   };
 };
