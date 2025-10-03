@@ -110,6 +110,10 @@ const AppRoutes = () => {
     navigate("/login");
   };
 
+  const handleGoHome = () => {
+    navigate("/");
+  };
+
   return (
     <Routes>
       <Route
@@ -192,6 +196,7 @@ const AppRoutes = () => {
                 selectedCategory={getCategoryName(categoryId)}
                 onCallAgain={handleCallAgain}
                 onSelectInterests={handleSelectInterests}
+                onGoHome={handleGoHome}
               />
             </div>
           </AuthGuard>

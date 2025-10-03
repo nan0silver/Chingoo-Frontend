@@ -6,12 +6,14 @@ interface CallEvaluationPageProps {
   selectedCategory: string | null;
   onCallAgain: () => void;
   onSelectInterests: () => void;
+  onGoHome: () => void;
 }
 
 export default function CallEvaluationPage({
   selectedCategory,
   onCallAgain,
   onSelectInterests,
+  onGoHome,
 }: CallEvaluationPageProps) {
   const [selectedRating, setSelectedRating] = useState<"good" | "bad" | null>(
     null,
@@ -58,9 +60,10 @@ export default function CallEvaluationPage({
       clearPartner();
       console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
 
-      // 2초 후 모달 자동 닫기
+      // 2초 후 홈페이지로 이동
       setTimeout(() => {
         setShowSuccessModal(false);
+        onGoHome();
       }, 2000);
     } catch (error) {
       console.error("❌ 평가 제출 실패:", error);
