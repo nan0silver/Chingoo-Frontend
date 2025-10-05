@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCall } from "@/lib/useCall";
 import { getMatchingApiService } from "@/lib/matchingApi";
+import { getStoredToken } from "@/lib/auth";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -52,6 +53,16 @@ export default function CallEvaluationPage({
       if (import.meta.env.DEV) {
         console.log("📤 평가 제출 시작:", evaluationData);
       }
+
+      // 토큰 설정 (갱신된 토큰 포함)
+      const token = getStoredToken();
+      if (token) {
+        matchingApiService.setToken(token);
+        console.log("🔑 matchingApiService에 토큰 설정 완료");
+      } else {
+        throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      }
+
       await matchingApiService.submitEvaluation(evaluationData);
       console.log("✅ 평가 제출 성공");
 

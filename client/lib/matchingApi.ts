@@ -36,9 +36,17 @@ const createHeaders = (token?: string): HeadersInit => {
  */
 const handleApiResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ message: "알 수 없는 오류가 발생했습니다." }));
+    console.error(
+      `❌ API 응답 에러: ${response.status} ${response.statusText}`,
+    );
+    console.error(`❌ 응답 URL: ${response.url}`);
+
+    const errorData = await response.json().catch((parseError) => {
+      console.error("❌ JSON 파싱 실패:", parseError);
+      return { message: "알 수 없는 오류가 발생했습니다." };
+    });
+
+    console.error("❌ 서버 에러 데이터:", errorData);
     throw new Error(
       errorData.message || `HTTP ${response.status}: ${response.statusText}`,
     );
@@ -544,6 +552,7 @@ export class MatchingApiService {
       if (import.meta.env.DEV) {
         console.log("통화 평가 API 요청 URL:", url);
         console.log("평가 요청 데이터:", request);
+        console.log("사용 중인 토큰:", this.token ? "토큰 있음" : "토큰 없음");
       }
 
       let response = await fetch(url, {
@@ -552,10 +561,14 @@ export class MatchingApiService {
         body: JSON.stringify(request),
       });
 
+      console.log(`📡 통화 평가 API 첫 번째 요청 응답: ${response.status}`);
+
       // 401 에러 시 토큰 갱신 후 재시도
       if (response.status === 401) {
+        console.log("🔑 통화 평가에서 401 에러 발생, 토큰 갱신 시도 중...");
         const newToken = await refreshToken();
         if (newToken) {
+          console.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
           // 토큰 갱신 성공 시 새 토큰으로 재시도
           this.token = newToken; // 클래스의 토큰도 업데이트
           response = await fetch(url, {
@@ -563,7 +576,9 @@ export class MatchingApiService {
             headers: createHeaders(newToken),
             body: JSON.stringify(request),
           });
+          console.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
         } else {
+          console.error("❌ 토큰 갱신 실패");
           // 토큰 갱신 실패 시 인증 오류로 처리
           throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
         }
