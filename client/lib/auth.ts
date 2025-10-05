@@ -447,10 +447,11 @@ export const isAuthenticated = (): boolean => {
   const valid = now < expiresAt;
 
   if (!valid) {
-    if (import.meta.env.DEV) console.log("인증 상태: 토큰 만료됨");
-    // 만료된 토큰 정리
-    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
-    localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
+    if (import.meta.env.DEV)
+      console.log("인증 상태: 토큰 만료됨 (하지만 토큰 갱신 가능)");
+    // 토큰이 만료되었어도 refresh_token으로 갱신 가능하므로 true 반환
+    // 실제 API 호출 시에 401 에러가 발생하면 그때 토큰 갱신을 시도함
+    return true;
   } else {
     if (import.meta.env.DEV) console.log("인증 상태: 유효한 토큰");
   }
@@ -483,8 +484,10 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
     clearTimeout(timeoutId);
 
     if (response.status === 401) {
+      console.log("🔑 프로필 조회에서 401 에러 발생, 토큰 갱신 시도 중...");
       const newToken = await refreshToken();
       if (newToken) {
+        console.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
         const controller2 = new AbortController();
         const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
@@ -497,7 +500,9 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
           signal: controller2.signal,
         });
         clearTimeout(timeoutId2);
+        console.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
       } else {
+        console.error("❌ 토큰 갱신 실패");
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
@@ -568,8 +573,10 @@ export const updateUserProfile = async (
     clearTimeout(timeoutId);
 
     if (response.status === 401) {
+      console.log("🔑 프로필 업데이트에서 401 에러 발생, 토큰 갱신 시도 중...");
       const newToken = await refreshToken();
       if (newToken) {
+        console.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
         const controller2 = new AbortController();
         const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
@@ -583,7 +590,9 @@ export const updateUserProfile = async (
           signal: controller2.signal,
         });
         clearTimeout(timeoutId2);
+        console.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
       } else {
+        console.error("❌ 토큰 갱신 실패");
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
@@ -624,12 +633,14 @@ export const updateUserProfile = async (
  */
 export const refreshToken = async (): Promise<string | null> => {
   try {
+    console.log("🔄 토큰 갱신 시작...");
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
     let response: Response;
     try {
+      console.log(`📡 토큰 갱신 API 호출: ${API_BASE_URL}/v1/auth/refresh`);
       response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
         method: "POST",
         headers: {
@@ -639,25 +650,31 @@ export const refreshToken = async (): Promise<string | null> => {
         credentials: "include", // 쿠키를 포함하여 요청
         signal: controller.signal,
       });
+      console.log(`📡 토큰 갱신 API 응답 상태: ${response.status}`);
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
       if (response.status === 401) {
-        console.warn("리프레시 토큰이 만료되었습니다.");
+        console.warn("❌ 리프레시 토큰이 만료되었습니다.");
         return null; // 상위에서 UX 처리하도록 null 반환
       }
+      console.error(
+        `❌ 토큰 갱신 실패: ${response.status} ${response.statusText}`,
+      );
       throw new Error(`토큰 갱신 실패: ${response.status}`);
     }
 
     const result = await response.json();
+    console.log("📦 토큰 갱신 응답 데이터:", result);
 
     // 새로운 access_token을 sessionStorage에 저장
     sessionStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
+    console.log("💾 새로운 access_token 저장 완료");
 
     // expires_at 업데이트 (새 토큰의 만료 시간 설정)
     if (typeof result.data.expires_in === "number") {
@@ -667,18 +684,21 @@ export const refreshToken = async (): Promise<string | null> => {
         OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
         String(expiresAt),
       );
+      console.log(
+        `⏰ 토큰 만료 시간 설정: ${new Date(expiresAt).toLocaleString()}`,
+      );
     }
 
     if (import.meta.env.DEV) {
-      console.log("토큰 갱신 성공(DEV)");
+      console.log("✅ 토큰 갱신 성공(DEV)");
     }
 
     return result.data.access_token;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      console.error("토큰 갱신 타임아웃:", error);
+      console.error("⏰ 토큰 갱신 타임아웃:", error);
     } else {
-      console.error("토큰 갱신 실패:", error);
+      console.error("❌ 토큰 갱신 실패:", error);
     }
 
     // 실패 시 즉시 로그아웃하지 않고 null 반환
