@@ -208,6 +208,16 @@ export const useCall = () => {
       // 2. 채널 나가기 API 호출
       console.log("📡 2. 백엔드 채널 나가기 API 호출:", callId);
       try {
+        // 토큰 설정 (갱신된 토큰 포함)
+        const { getStoredToken } = await import("./auth");
+        const token = getStoredToken();
+        if (token) {
+          matchingApiService.setToken(token);
+          console.log("🔑 matchingApiService에 토큰 설정 완료");
+        } else {
+          console.warn("⚠️ 토큰이 없어 API 호출을 건너뜁니다");
+        }
+
         await matchingApiService.leaveChannel(callId);
         console.log("✅ 2. 채널 나가기 API 호출 성공");
       } catch (apiError) {
@@ -218,6 +228,16 @@ export const useCall = () => {
       // 3. 통화 종료 API 호출
       console.log("📡 3. 백엔드 통화 종료 API 호출:", callId);
       try {
+        // 토큰 설정 (갱신된 토큰 포함)
+        const { getStoredToken } = await import("./auth");
+        const token = getStoredToken();
+        if (token) {
+          matchingApiService.setToken(token);
+          console.log("🔑 matchingApiService에 토큰 설정 완료");
+        } else {
+          console.warn("⚠️ 토큰이 없어 API 호출을 건너뜁니다");
+        }
+
         await matchingApiService.endCall(callId);
         console.log("✅ 3. 통화 종료 API 호출 성공");
       } catch (apiError) {
