@@ -12,6 +12,26 @@ export default defineConfig(({ mode }) => ({
       allow: ["./client", "./shared"],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
+    proxy: {
+      // API 요청을 백엔드 서버로 프록시
+      "/api": {
+        target: "http://43.202.193.103:8080",
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        timeout: 120000, // 타임아웃 120초로 증가 (기본값: 30초)
+        proxyTimeout: 120000, // 프록시 타임아웃도 120초로 증가
+      },
+      // WebSocket 요청을 백엔드 서버로 프록시
+      "/ws": {
+        target: "http://43.202.193.103:8080",
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        timeout: 120000, // 타임아웃 120초로 증가
+        proxyTimeout: 120000,
+      },
+    },
   },
   build: {
     outDir: "dist/spa",

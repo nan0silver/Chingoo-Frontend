@@ -18,12 +18,7 @@ import {
 // 백엔드 서버 포트를 실제 포트로 변경해주세요
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
-  : import.meta.env.DEV
-    ? "http://localhost:8080/api"
-    : "";
-if (!import.meta.env.DEV && !API_BASE_URL) {
-  throw new Error("환경 변수 VITE_API_BASE_URL가 설정되지 않았습니다.");
-}
+  : "/api"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
 
 /**
  * 보안 설정 안내:
@@ -58,7 +53,8 @@ export const getOAuthConfig = async (
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    // 타임아웃을 30초로 증가 (임시 조치 - 백엔드 최적화 필요)
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     let response: Response;
     try {
       response = await fetch(url, { signal: controller.signal });
@@ -192,17 +188,37 @@ export const processSocialLogin = async (
       device_info: `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
     };
 
-    if (import.meta.env.DEV) {
-      console.log("OAuth 로그인 요청(DEV):", {
-        provider,
-        code_length: code.length,
-        state_length: state.length,
-        code_verifier_length: codeVerifier.length,
-      });
-    }
+    // ✅ 실제 전송 데이터 확인
+    console.log("📤 전송할 데이터:", {
+      provider,
+      code_length: code?.length || 0,
+      state_length: state?.length || 0,
+      code_verifier_length: codeVerifier?.length || 0,
+      device_info_length: requestBody.device_info?.length || 0,
+    });
+
+    // ✅ 실제 값 일부만 출력 (보안상 전체는 출력 안함)
+    console.log("📤 실제 값 샘플:", {
+      code_sample: code?.substring(0, 20) + "...",
+      state_sample: state?.substring(0, 20) + "...",
+      code_verifier_sample: codeVerifier?.substring(0, 20) + "...",
+      device_info: requestBody.device_info,
+    });
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    // 타임아웃을 60초로 증가 (디버깅용)
+    const timeoutId = setTimeout(() => {
+      console.error("⏰ OAuth 요청 타임아웃 (60초 초과)");
+      controller.abort();
+    }, 60000);
+
+    const startTime = Date.now();
+    console.log("📡 OAuth 로그인 요청 시작:", {
+      provider,
+      url: `${API_BASE_URL}/v1/auth/oauth/${provider}`,
+      timestamp: new Date().toISOString(),
+    });
+
     let response: Response;
     try {
       response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
@@ -214,6 +230,13 @@ export const processSocialLogin = async (
         credentials: "include", // 쿠키를 포함하여 요청
         signal: controller.signal,
       });
+
+      const elapsedTime = Date.now() - startTime;
+      console.log(`✅ OAuth 로그인 요청 완료: ${elapsedTime}ms`);
+    } catch (fetchError) {
+      const elapsedTime = Date.now() - startTime;
+      console.error(`❌ OAuth 로그인 요청 실패: ${elapsedTime}ms`, fetchError);
+      throw fetchError;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -229,15 +252,25 @@ export const processSocialLogin = async (
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const errorData: ApiErrorResponse = await response.json();
-        console.error("에러 응답 데이터:", errorData);
+        console.error("❌ 백엔드 에러 응답:", errorData);
+
+        // 백엔드 팀을 위한 상세 정보
+        console.group("🔍 백엔드 디버깅 정보");
+        console.log("Provider:", provider);
+        console.log("Error Code:", errorData.code);
+        console.log("Error Message:", errorData.message);
+        console.log("Timestamp:", errorData.timestamp);
+        console.log("Request URL:", response.url);
+        console.log("Status:", response.status);
 
         // errors 배열이 있으면 상세 내용 출력
         if (errorData.errors && Array.isArray(errorData.errors)) {
-          console.error("상세 에러 목록:", errorData.errors);
+          console.log("상세 에러 목록:", errorData.errors);
           errorData.errors.forEach((error, index) => {
-            console.error(`에러 ${index + 1}:`, error);
+            console.log(`  에러 ${index + 1}:`, error);
           });
         }
+        console.groupEnd();
 
         throw new Error(errorData.message || "로그인에 실패했습니다.");
       } else {

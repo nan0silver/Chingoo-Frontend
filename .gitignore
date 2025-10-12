@@ -24,4 +24,10 @@ dist-ssr
 *.sw?
 
 .config/
-!.env
+
+# Environment variables (보안 중요!)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.test

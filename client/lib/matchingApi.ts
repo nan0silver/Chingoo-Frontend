@@ -12,9 +12,7 @@ import { refreshToken } from "./auth";
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
-  : import.meta.env.DEV
-    ? "http://localhost:8080/api"
-    : "/api";
+  : "/api"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
 
 /**
  * HTTP 요청 헤더 생성

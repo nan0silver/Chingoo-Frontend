@@ -31,7 +31,9 @@ export class WebSocketService {
 
   private setupClient() {
     // SockJS를 사용하여 WebSocket 연결 설정
-    const wsUrl = import.meta.env.DEV ? "http://localhost:8080/ws" : "/ws";
+    const wsUrl = import.meta.env.VITE_WS_BASE_URL
+      ? String(import.meta.env.VITE_WS_BASE_URL)
+      : "/ws"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
     console.log("🔗 WebSocket URL:", wsUrl);
     const socket = new SockJS(wsUrl);
 

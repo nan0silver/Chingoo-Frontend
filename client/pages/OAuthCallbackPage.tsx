@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { processOAuthCallback } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
@@ -10,13 +10,24 @@ export default function OAuthCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const navigate = useNavigate();
+  const hasProcessedRef = useRef(false); // 중복 실행 방지
 
   useEffect(() => {
+    // 이미 처리 중이면 중복 실행 방지
+    if (hasProcessedRef.current) {
+      console.log("⚠️ OAuth 콜백이 이미 처리 중입니다. 중복 실행 방지.");
+      return;
+    }
+
+    hasProcessedRef.current = true;
+    console.log("🚀 OAuth 콜백 처리 시작");
+
     const handleOAuthCallback = async () => {
       try {
         const result = await processOAuthCallback();
 
         if (result) {
+          console.log("✅ OAuth 콜백 처리 성공");
           setStatus("success");
           setUserInfo(result.data.user_info);
 
@@ -37,10 +48,11 @@ export default function OAuthCallbackPage() {
           }
         } else {
           // OAuth 콜백이 아닌 경우 메인 페이지로 리다이렉트
+          console.log("ℹ️ OAuth 콜백 파라미터 없음, 홈으로 이동");
           navigate("/");
         }
       } catch (error) {
-        console.error("OAuth 콜백 처리 실패:", error);
+        console.error("❌ OAuth 콜백 처리 실패:", error);
         setStatus("error");
         setErrorMessage(
           error instanceof Error
@@ -56,7 +68,13 @@ export default function OAuthCallbackPage() {
     };
 
     handleOAuthCallback();
-  }, [navigate]);
+
+    // Cleanup 함수: 컴포넌트 언마운트 시 실행
+    return () => {
+      console.log("🧹 OAuth 콜백 페이지 cleanup");
+      // 여기서는 특별히 할 일이 없지만, 필요시 타이머 정리 등 가능
+    };
+  }, []); // navigate를 의존성에서 제거 (한 번만 실행)
 
   if (status === "loading") {
     return (
