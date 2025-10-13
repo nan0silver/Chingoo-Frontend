@@ -45,34 +45,34 @@ export default function ProfileSetupPage() {
       try {
         // LocalStorage의 user_info 확인
         const storedUserInfo = getStoredUserInfo();
-        console.log("💾 LocalStorage user_info:", storedUserInfo);
 
         // API에서 최신 사용자 정보 가져오기
         const profileResponse = await getUserProfile();
-        console.log("📡 API 전체 응답:", profileResponse);
         const latestUserProfile = profileResponse.data;
-
-        console.log("🔍 ProfileSetupPage - 사용자 프로필:", latestUserProfile);
-        console.log("🔍 is_new_user:", latestUserProfile.is_new_user);
-        console.log(
-          "🔍 is_profile_complete:",
-          latestUserProfile.is_profile_complete,
-        );
 
         setUserProfile(latestUserProfile);
         setNickname(latestUserProfile.nickname || "");
 
+        // 기존 성별 정보가 있으면 설정
+        if (latestUserProfile.gender) {
+          setGender(latestUserProfile.gender);
+        }
+
+        // 기존 생년월일 정보가 있으면 설정
+        if (latestUserProfile.birth) {
+          const [year, month, day] = latestUserProfile.birth.split("-");
+          setBirthYear(year);
+          setBirthMonth(month);
+          setBirthDay(day);
+        }
+
         // is_new_user가 undefined인 경우 localStorage의 값 사용
         const isNewUser =
           latestUserProfile.is_new_user ?? storedUserInfo?.is_new_user ?? false;
-        console.log("🔍 최종 is_new_user 판단:", isNewUser);
 
         // 신규 유저인 경우 개인정보 수집 동의 모달 표시
         if (isNewUser) {
-          console.log("✅ 신규 유저 감지 - 개인정보 동의 모달 표시");
           setShowConsentModal(true);
-        } else {
-          console.log("❌ 기존 유저 - 모달 표시 안 함");
         }
       } catch (error) {
         console.error("사용자 프로필 가져오기 실패:", error);
@@ -105,15 +105,9 @@ export default function ProfileSetupPage() {
         setUserProfile(fallbackProfile);
         setNickname("");
 
-        console.log("🔍 ProfileSetupPage - Fallback 프로필:", fallbackProfile);
-        console.log("🔍 Fallback is_new_user:", fallbackProfile.is_new_user);
-
         // 신규 유저인 경우 개인정보 수집 동의 모달 표시
         if (fallbackProfile.is_new_user) {
-          console.log("✅ 신규 유저 감지 (Fallback) - 개인정보 동의 모달 표시");
           setShowConsentModal(true);
-        } else {
-          console.log("❌ 기존 유저 (Fallback) - 모달 표시 안 함");
         }
       }
     };
@@ -122,7 +116,6 @@ export default function ProfileSetupPage() {
   }, [navigate]);
 
   const handleConsent = () => {
-    console.log("✅ 사용자가 개인정보 수집에 동의함");
     setHasConsented(true);
     setShowConsentModal(false);
   };
@@ -168,24 +161,40 @@ export default function ProfileSetupPage() {
     // YYYY-MM-DD 형식으로 변환
     const birth = `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`;
 
+    // 변경 사항 확인
+    const hasNicknameChanged = userProfile && nickname !== userProfile.nickname;
+    const hasGenderChanged = userProfile && gender !== userProfile.gender;
+    const hasBirthChanged = userProfile && birth !== userProfile.birth;
+
+    // 변경된 필드만 포함하는 요청 바디 구성
+    const requestBody: {
+      nickname?: string;
+      gender?: string;
+      birth?: string;
+    } = {};
+
+    if (hasNicknameChanged) {
+      requestBody.nickname = nickname;
+    }
+
+    if (hasGenderChanged) {
+      requestBody.gender = gender;
+    }
+
+    if (hasBirthChanged) {
+      requestBody.birth = birth;
+    }
+
+    // 변경 사항이 없는 경우
+    if (Object.keys(requestBody).length === 0) {
+      updateUserInfo();
+      scheduleSuccessNavigate();
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // API 요청 바디 구성: 닉네임이 변경된 경우만 포함
-      const requestBody: {
-        nickname?: string;
-        gender: string;
-        birth: string;
-      } = {
-        gender,
-        birth,
-      };
-
-      // 닉네임이 변경된 경우에만 추가
-      if (userProfile && nickname !== userProfile.nickname) {
-        requestBody.nickname = nickname;
-      }
-
       // 실제 API 호출
       await updateUserProfile(requestBody);
 
@@ -216,11 +225,6 @@ export default function ProfileSetupPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-login-button"></div>
       </div>
     );
-  }
-
-  // 모달 상태 로깅
-  if (showConsentModal) {
-    console.log("🎭 모달 렌더링 중 - showConsentModal:", showConsentModal);
   }
 
   return (

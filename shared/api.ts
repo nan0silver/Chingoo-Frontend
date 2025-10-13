@@ -42,6 +42,8 @@ export interface UserProfile {
   id: number;
   email: string;
   nickname: string;
+  gender?: string; // 성별 (MALE, FEMALE)
+  birth?: string; // 생년월일 (YYYY-MM-DD)
   is_new_user?: boolean; // API에서 제공하지 않을 수 있음
   is_profile_complete?: boolean; // API에서 제공하지 않을 수 있음
 }
