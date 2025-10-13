@@ -276,30 +276,14 @@ export default function ProfileSetupPage() {
                   법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.
                 </p>
               </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  4. 동의를 거부할 권리 및 불이익
-                </h3>
-                <p className="text-sm">
-                  개인정보 수집에 대한 동의를 거부할 수 있으나, 동의하지 않을
-                  경우 서비스 이용이 제한됩니다.
-                </p>
-              </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="pt-2">
               <button
                 onClick={handleConsent}
                 className="w-full h-14 bg-login-button text-white font-crimson text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors"
               >
                 동의합니다
-              </button>
-              <button
-                onClick={() => navigate("/login")}
-                className="w-full h-12 border-2 border-gray-300 text-gray-600 font-crimson text-base font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                동의하지 않습니다
               </button>
             </div>
           </div>
