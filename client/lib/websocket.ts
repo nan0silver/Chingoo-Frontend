@@ -38,16 +38,13 @@ export class WebSocketService {
 
   private setupClient(token?: string) {
     // SockJS를 사용하여 WebSocket 연결 설정
-    let wsUrl = import.meta.env.VITE_WS_BASE_URL
+    const wsUrl = import.meta.env.VITE_WS_BASE_URL
       ? String(import.meta.env.VITE_WS_BASE_URL)
       : "/ws"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
 
-    // 🔑 토큰을 쿼리 파라미터로 추가 (SockJS /info 요청에도 적용됨)
-    if (token) {
-      const separator = wsUrl.includes("?") ? "&" : "?";
-      wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(token)}`;
-      console.log("🔗 WebSocket URL에 토큰 추가됨");
-    }
+    // ⚠️ 쿼리 파라미터로 토큰을 전달하지 않음 (SockJS /info 엔드포인트는 인증 불필요)
+    // 대신 STOMP CONNECT 헤더로 토큰을 전달합니다
+    console.log("🔗 WebSocket URL:", wsUrl);
 
     logger.log("🔗 WebSocket 연결 설정");
     const socket = new SockJS(wsUrl);
