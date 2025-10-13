@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { startSocialLogin } from "@/lib/auth";
 import { OAuthProvider } from "@shared/api";
+import { logger } from "@/lib/logger";
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -29,7 +30,7 @@ export default function LoginPage({
     try {
       await startSocialLogin(provider);
     } catch (error) {
-      console.error("소셜 로그인 시작 실패:", error);
+      logger.error("소셜 로그인 시작 실패:", error);
       alert("소셜 로그인에 실패했습니다. 다시 시도해주세요.");
     }
   };

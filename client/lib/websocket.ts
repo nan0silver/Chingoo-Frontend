@@ -6,6 +6,7 @@ import {
   CallStartNotification,
   WebSocketConnectionState,
 } from "@shared/api";
+import { logger } from "./logger";
 
 export class WebSocketService {
   private client: Client | null = null;
@@ -34,7 +35,7 @@ export class WebSocketService {
     const wsUrl = import.meta.env.VITE_WS_BASE_URL
       ? String(import.meta.env.VITE_WS_BASE_URL)
       : "/ws"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
-    console.log("🔗 WebSocket URL:", wsUrl);
+    logger.log("🔗 WebSocket 연결 설정");
     const socket = new SockJS(wsUrl);
 
     this.client = new Client({
