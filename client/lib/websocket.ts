@@ -18,13 +18,19 @@ export class WebSocketService {
     maxReconnectAttempts: 5,
   };
 
-  private onConnectionStateChange?: (state: WebSocketConnectionState) => void;
-  private onMatchingNotification?: (notification: MatchingNotification) => void;
-  private onCallStartNotification?: (
-    notification: CallStartNotification,
-  ) => void;
-  private onCallEndNotification?: (notification: any) => void;
-  private onError?: (error: string) => void;
+  // 여러 콜백을 지원하기 위해 배열로 변경
+  private onConnectionStateChangeCallbacks: Array<
+    (state: WebSocketConnectionState) => void
+  > = [];
+  private onMatchingNotificationCallbacks: Array<
+    (notification: MatchingNotification) => void
+  > = [];
+  private onCallStartNotificationCallbacks: Array<
+    (notification: CallStartNotification) => void
+  > = [];
+  private onCallEndNotificationCallbacks: Array<(notification: any) => void> =
+    [];
+  private onErrorCallbacks: Array<(error: string) => void> = [];
 
   constructor() {
     // setupClient는 connect 시점에 호출
@@ -69,7 +75,10 @@ export class WebSocketService {
         reconnectAttempts: 0,
         lastConnected: new Date().toISOString(),
       };
-      this.onConnectionStateChange?.(this.connectionState);
+      // 모든 연결 상태 변경 콜백 호출
+      this.onConnectionStateChangeCallbacks.forEach((callback) =>
+        callback(this.connectionState),
+      );
       console.log("📡 큐 구독 시작");
       this.subscribeToQueues();
 
@@ -89,10 +98,13 @@ export class WebSocketService {
         isConnected: false,
         isConnecting: false,
       };
-      this.onConnectionStateChange?.(this.connectionState);
-      this.onError?.(
-        `WebSocket 연결 실패: ${frame.headers.message || "알 수 없는 오류"}`,
+      // 모든 연결 상태 변경 콜백 호출
+      this.onConnectionStateChangeCallbacks.forEach((callback) =>
+        callback(this.connectionState),
       );
+      const errorMessage = `WebSocket 연결 실패: ${frame.headers.message || "알 수 없는 오류"}`;
+      // 모든 에러 콜백 호출
+      this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
     };
 
     // 연결 해제 시
@@ -103,7 +115,10 @@ export class WebSocketService {
         isConnected: false,
         isConnecting: false,
       };
-      this.onConnectionStateChange?.(this.connectionState);
+      // 모든 연결 상태 변경 콜백 호출
+      this.onConnectionStateChangeCallbacks.forEach((callback) =>
+        callback(this.connectionState),
+      );
     };
   }
 
@@ -122,7 +137,10 @@ export class WebSocketService {
         ...this.connectionState,
         isConnecting: true,
       };
-      this.onConnectionStateChange?.(this.connectionState);
+      // 모든 연결 상태 변경 콜백 호출
+      this.onConnectionStateChangeCallbacks.forEach((callback) =>
+        callback(this.connectionState),
+      );
 
       // 클라이언트가 없으면 새로 생성 (토큰 포함)
       if (!this.client) {
@@ -157,10 +175,13 @@ export class WebSocketService {
         isConnecting: false,
         reconnectAttempts: this.connectionState.reconnectAttempts + 1,
       };
-      this.onConnectionStateChange?.(this.connectionState);
-      this.onError?.(
-        `연결 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`,
+      // 모든 연결 상태 변경 콜백 호출
+      this.onConnectionStateChangeCallbacks.forEach((callback) =>
+        callback(this.connectionState),
       );
+      const errorMessage = `연결 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}`;
+      // 모든 에러 콜백 호출
+      this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
       throw error;
     }
   }
@@ -208,11 +229,19 @@ export class WebSocketService {
             message: notification.message,
             timestamp: notification.timestamp,
           });
-          this.onMatchingNotification?.(notification);
+          // 모든 매칭 알림 콜백 호출
+          console.log(
+            `🔔 [매칭] ${this.onMatchingNotificationCallbacks.length}개의 콜백 호출`,
+          );
+          this.onMatchingNotificationCallbacks.forEach((callback) =>
+            callback(notification),
+          );
         } catch (error) {
           console.error("❌ [매칭] 알림 파싱 오류:", error);
           console.error("❌ [매칭] 원본 메시지:", message.body);
-          this.onError?.("매칭 알림 처리 중 오류가 발생했습니다.");
+          const errorMessage = "매칭 알림 처리 중 오류가 발생했습니다.";
+          // 모든 에러 콜백 호출
+          this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
         }
       },
     );
@@ -239,11 +268,19 @@ export class WebSocketService {
             agoraUid: notification.agoraUid,
             timestamp: notification.timestamp,
           });
-          this.onCallStartNotification?.(notification);
+          // 모든 통화 시작 알림 콜백 호출
+          console.log(
+            `🔔 [통화] ${this.onCallStartNotificationCallbacks.length}개의 콜백 호출`,
+          );
+          this.onCallStartNotificationCallbacks.forEach((callback) =>
+            callback(notification),
+          );
         } catch (error) {
           console.error("❌ [통화] 알림 파싱 오류:", error);
           console.error("❌ [통화] 원본 메시지:", message.body);
-          this.onError?.("통화 시작 알림 처리 중 오류가 발생했습니다.");
+          const errorMessage = "통화 시작 알림 처리 중 오류가 발생했습니다.";
+          // 모든 에러 콜백 호출
+          this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
         }
       },
     );
@@ -266,11 +303,19 @@ export class WebSocketService {
             partnerId: notification.partnerId,
             timestamp: notification.timestamp,
           });
-          this.onCallEndNotification?.(notification);
+          // 모든 통화 종료 알림 콜백 호출
+          console.log(
+            `🔔 [통화종료] ${this.onCallEndNotificationCallbacks.length}개의 콜백 호출`,
+          );
+          this.onCallEndNotificationCallbacks.forEach((callback) =>
+            callback(notification),
+          );
         } catch (error) {
           console.error("❌ [통화종료] 알림 파싱 오류:", error);
           console.error("❌ [통화종료] 원본 메시지:", message.body);
-          this.onError?.("통화 종료 알림 처리 중 오류가 발생했습니다.");
+          const errorMessage = "통화 종료 알림 처리 중 오류가 발생했습니다.";
+          // 모든 에러 콜백 호출
+          this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
         }
       },
     );
@@ -299,44 +344,72 @@ export class WebSocketService {
   }
 
   /**
-   * 연결 상태 변경 콜백 설정
+   * 연결 상태 변경 콜백 설정 (여러 콜백 지원)
    */
   onConnectionStateChangeCallback(
     callback: (state: WebSocketConnectionState) => void,
   ): void {
-    this.onConnectionStateChange = callback;
+    // 중복 방지: 이미 등록된 콜백이 아니면 추가
+    if (!this.onConnectionStateChangeCallbacks.includes(callback)) {
+      this.onConnectionStateChangeCallbacks.push(callback);
+      console.log(
+        `✅ 연결 상태 변경 콜백 추가 (총 ${this.onConnectionStateChangeCallbacks.length}개)`,
+      );
+    }
   }
 
   /**
-   * 매칭 알림 콜백 설정
+   * 매칭 알림 콜백 설정 (여러 콜백 지원)
    */
   onMatchingNotificationCallback(
     callback: (notification: MatchingNotification) => void,
   ): void {
-    this.onMatchingNotification = callback;
+    // 중복 방지: 이미 등록된 콜백이 아니면 추가
+    if (!this.onMatchingNotificationCallbacks.includes(callback)) {
+      this.onMatchingNotificationCallbacks.push(callback);
+      console.log(
+        `✅ 매칭 알림 콜백 추가 (총 ${this.onMatchingNotificationCallbacks.length}개)`,
+      );
+    }
   }
 
   /**
-   * 통화 시작 알림 콜백 설정
+   * 통화 시작 알림 콜백 설정 (여러 콜백 지원)
    */
   onCallStartNotificationCallback(
     callback: (notification: CallStartNotification) => void,
   ): void {
-    this.onCallStartNotification = callback;
+    // 중복 방지: 이미 등록된 콜백이 아니면 추가
+    if (!this.onCallStartNotificationCallbacks.includes(callback)) {
+      this.onCallStartNotificationCallbacks.push(callback);
+      console.log(
+        `✅ 통화 시작 알림 콜백 추가 (총 ${this.onCallStartNotificationCallbacks.length}개)`,
+      );
+    }
   }
 
   /**
-   * 통화 종료 알림 콜백 설정
+   * 통화 종료 알림 콜백 설정 (여러 콜백 지원)
    */
   onCallEndNotificationCallback(callback: (notification: any) => void): void {
-    this.onCallEndNotification = callback;
+    // 중복 방지: 이미 등록된 콜백이 아니면 추가
+    if (!this.onCallEndNotificationCallbacks.includes(callback)) {
+      this.onCallEndNotificationCallbacks.push(callback);
+      console.log(
+        `✅ 통화 종료 알림 콜백 추가 (총 ${this.onCallEndNotificationCallbacks.length}개)`,
+      );
+    }
   }
 
   /**
-   * 에러 콜백 설정
+   * 에러 콜백 설정 (여러 콜백 지원)
    */
   onErrorCallback(callback: (error: string) => void): void {
-    this.onError = callback;
+    // 중복 방지: 이미 등록된 콜백이 아니면 추가
+    if (!this.onErrorCallbacks.includes(callback)) {
+      this.onErrorCallbacks.push(callback);
+      console.log(`✅ 에러 콜백 추가 (총 ${this.onErrorCallbacks.length}개)`);
+    }
   }
 
   /**
@@ -444,11 +517,13 @@ export class WebSocketService {
     this.disconnect();
     this.subscriptions.clear();
     this.client = null;
-    this.onConnectionStateChange = undefined;
-    this.onMatchingNotification = undefined;
-    this.onCallStartNotification = undefined;
-    this.onCallEndNotification = undefined;
-    this.onError = undefined;
+    // 모든 콜백 배열 초기화
+    this.onConnectionStateChangeCallbacks = [];
+    this.onMatchingNotificationCallbacks = [];
+    this.onCallStartNotificationCallbacks = [];
+    this.onCallEndNotificationCallbacks = [];
+    this.onErrorCallbacks = [];
+    console.log("🧹 WebSocket 서비스 정리 완료");
   }
 }
 

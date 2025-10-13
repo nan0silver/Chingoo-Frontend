@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useMatchingStore } from "@/lib/matchingStore";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
@@ -39,10 +39,9 @@ export default function ConnectingCallPage({
     }
   }, [isInCall, isConnecting, onConnected]);
 
-  // WebSocket 알림 수신 추적
-  useEffect(() => {
-    // 통화 시작 알림 콜백 설정
-    const handleCallStartNotification = (notification: any) => {
+  // 통화 시작 알림 핸들러 (useCallback으로 메모이제이션)
+  const handleCallStartNotification = useCallback(
+    (notification: any) => {
       console.log(
         "🔔 ConnectingCallPage에서 통화 시작 알림 수신:",
         notification,
@@ -51,22 +50,32 @@ export default function ConnectingCallPage({
       // useCall의 handleCallStart 함수 호출
       console.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
       handleCallStart(notification);
-    };
+    },
+    [handleCallStart],
+  );
 
-    // 매칭 알림 콜백 설정
-    const handleMatching = (notification: any) => {
-      console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
-    };
+  // 매칭 알림 핸들러 (useCallback으로 메모이제이션)
+  const handleMatchingNotification = useCallback((notification: any) => {
+    console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
+  }, []);
 
+  // WebSocket 알림 수신 추적
+  useEffect(() => {
+    console.log("🔧 ConnectingCallPage - WebSocket 콜백 등록");
     webSocketService.onCallStartNotificationCallback(
       handleCallStartNotification,
     );
-    webSocketService.onMatchingNotificationCallback(handleMatching);
+    webSocketService.onMatchingNotificationCallback(handleMatchingNotification);
 
     return () => {
+      console.log("🔧 ConnectingCallPage - 컴포넌트 언마운트");
       // 정리 함수는 필요시에만 구현
     };
-  }, [webSocketService]);
+  }, [
+    webSocketService,
+    handleCallStartNotification,
+    handleMatchingNotification,
+  ]);
 
   // 에러 발생 시 처리
   useEffect(() => {
