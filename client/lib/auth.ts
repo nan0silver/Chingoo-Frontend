@@ -342,7 +342,7 @@ export const logoutFromServer = async (): Promise<void> => {
     };
 
     if (accessToken) {
-      headers.Authorization = `Bearer ${logger.maskToken(accessToken)}`;
+      headers.Authorization = `Bearer ${accessToken}`; // ✅ 실제 토큰 사용
     }
 
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
