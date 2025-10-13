@@ -11,6 +11,7 @@ import {
   ApiErrorResponse,
   UserInfo,
 } from "@shared/api";
+import { logger } from "./logger";
 
 /**
  * API 설정
@@ -48,9 +49,7 @@ export const getOAuthConfig = async (
 ): Promise<OAuthConfigResponse> => {
   try {
     const url = `${API_BASE_URL}/v1/auth/oauth/${provider}/config`;
-    if (import.meta.env.DEV) {
-      console.log("OAuth 설정 요청 URL:", url);
-    }
+    logger.apiRequest("GET", `/v1/auth/oauth/${provider}/config`);
 
     const controller = new AbortController();
     // 타임아웃을 30초로 증가 (임시 조치 - 백엔드 최적화 필요)
@@ -72,7 +71,7 @@ export const getOAuthConfig = async (
         );
       } else {
         const text = await response.text();
-        console.error("예상치 못한 응답:", text);
+        logger.error("예상치 못한 응답:", text);
         throw new Error(
           `서버에서 예상치 못한 응답을 받았습니다. (${response.status})`,
         );
@@ -81,7 +80,7 @@ export const getOAuthConfig = async (
 
     return await response.json();
   } catch (error) {
-    console.error("OAuth 설정 가져오기 실패:", error);
+    logger.error("OAuth 설정 가져오기 실패:", error);
     throw error;
   }
 };
@@ -104,9 +103,10 @@ export const startSocialLogin = async (
     sessionStorage.setItem(OAUTH_STORAGE_KEYS.PROVIDER, provider);
 
     // 소셜 로그인 페이지로 리다이렉트
+    logger.log("소셜 로그인 리다이렉트 시작:", provider);
     window.location.href = config.data.authorization_url;
   } catch (error) {
-    console.error("소셜 로그인 시작 실패:", error);
+    logger.error("소셜 로그인 시작 실패:", error);
     throw error;
   }
 };
@@ -122,17 +122,15 @@ export const processOAuthCallback =
     const state = urlParams.get("state");
     const error = urlParams.get("error");
 
-    if (import.meta.env.DEV) {
-      console.log("OAuth 콜백 파라미터(DEV):", {
-        code_length: code?.length ?? 0,
-        state_length: state?.length ?? 0,
-        error,
-      });
-    }
+    logger.log("OAuth 콜백 파라미터:", {
+      code_length: code?.length ?? 0,
+      state_length: state?.length ?? 0,
+      has_error: !!error,
+    });
 
     // 에러가 있는 경우
     if (error) {
-      console.error("OAuth 에러:", error);
+      logger.error("OAuth 에러:", error);
       throw new Error(`OAuth 인증 중 오류가 발생했습니다: ${error}`);
     }
 
@@ -188,8 +186,7 @@ export const processSocialLogin = async (
       device_info: `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
     };
 
-    // ✅ 실제 전송 데이터 확인
-    console.log("📤 전송할 데이터:", {
+    logger.log("📤 전송할 데이터:", {
       provider,
       code_length: code?.length || 0,
       state_length: state?.length || 0,
@@ -197,27 +194,15 @@ export const processSocialLogin = async (
       device_info_length: requestBody.device_info?.length || 0,
     });
 
-    // ✅ 실제 값 일부만 출력 (보안상 전체는 출력 안함)
-    console.log("📤 실제 값 샘플:", {
-      code_sample: code?.substring(0, 20) + "...",
-      state_sample: state?.substring(0, 20) + "...",
-      code_verifier_sample: codeVerifier?.substring(0, 20) + "...",
-      device_info: requestBody.device_info,
-    });
-
     const controller = new AbortController();
     // 타임아웃을 60초로 증가 (디버깅용)
     const timeoutId = setTimeout(() => {
-      console.error("⏰ OAuth 요청 타임아웃 (60초 초과)");
+      logger.error("⏰ OAuth 요청 타임아웃 (60초 초과)");
       controller.abort();
     }, 60000);
 
     const startTime = Date.now();
-    console.log("📡 OAuth 로그인 요청 시작:", {
-      provider,
-      url: `${API_BASE_URL}/v1/auth/oauth/${provider}`,
-      timestamp: new Date().toISOString(),
-    });
+    logger.apiRequest("POST", `/v1/auth/oauth/${provider}`);
 
     let response: Response;
     try {
@@ -232,50 +217,41 @@ export const processSocialLogin = async (
       });
 
       const elapsedTime = Date.now() - startTime;
-      console.log(`✅ OAuth 로그인 요청 완료: ${elapsedTime}ms`);
+      logger.log(`✅ OAuth 로그인 요청 완료: ${elapsedTime}ms`);
     } catch (fetchError) {
       const elapsedTime = Date.now() - startTime;
-      console.error(`❌ OAuth 로그인 요청 실패: ${elapsedTime}ms`, fetchError);
+      logger.error(`❌ OAuth 로그인 요청 실패: ${elapsedTime}ms`, fetchError);
       throw fetchError;
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
-      console.error("OAuth 로그인 응답 에러:", {
+      logger.error("OAuth 로그인 응답 에러:", {
         status: response.status,
         statusText: response.statusText,
-        url: response.url,
       });
 
       // 응답이 JSON인지 확인
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const errorData: ApiErrorResponse = await response.json();
-        console.error("❌ 백엔드 에러 응답:", errorData);
+        logger.error("❌ 백엔드 에러 응답:", errorData);
 
         // 백엔드 팀을 위한 상세 정보
-        console.group("🔍 백엔드 디버깅 정보");
-        console.log("Provider:", provider);
-        console.log("Error Code:", errorData.code);
-        console.log("Error Message:", errorData.message);
-        console.log("Timestamp:", errorData.timestamp);
-        console.log("Request URL:", response.url);
-        console.log("Status:", response.status);
-
-        // errors 배열이 있으면 상세 내용 출력
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          console.log("상세 에러 목록:", errorData.errors);
-          errorData.errors.forEach((error, index) => {
-            console.log(`  에러 ${index + 1}:`, error);
-          });
-        }
-        console.groupEnd();
+        logger.debugGroup("백엔드 디버깅 정보", {
+          provider,
+          error_code: errorData.code,
+          error_message: errorData.message,
+          timestamp: errorData.timestamp,
+          status: response.status,
+          errors: errorData.errors || [],
+        });
 
         throw new Error(errorData.message || "로그인에 실패했습니다.");
       } else {
         const text = await response.text();
-        console.error("예상치 못한 에러 응답:", text);
+        logger.error("예상치 못한 에러 응답:", text);
         throw new Error(`서버 에러: ${response.status} ${response.statusText}`);
       }
     }
@@ -316,7 +292,7 @@ export const processSocialLogin = async (
 
     return result;
   } catch (error) {
-    console.error("소셜 로그인 처리 실패:", error);
+    logger.error("소셜 로그인 처리 실패:", error);
     throw error;
   }
 };
@@ -349,7 +325,7 @@ export const getStoredUserInfo = (): UserInfo | null => {
   try {
     return JSON.parse(userInfoStr);
   } catch (error) {
-    console.error("사용자 정보 파싱 실패:", error);
+    logger.error("사용자 정보 파싱 실패:", error);
     return null;
   }
 };
@@ -366,7 +342,7 @@ export const logoutFromServer = async (): Promise<void> => {
     };
 
     if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
+      headers.Authorization = `Bearer ${logger.maskToken(accessToken)}`;
     }
 
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
@@ -375,9 +351,7 @@ export const logoutFromServer = async (): Promise<void> => {
       logout_all: true,
     };
 
-    if (import.meta.env.DEV) {
-      console.log("로그아웃 요청 데이터:", requestBody);
-    }
+    logger.apiRequest("POST", "/v1/auth/logout", requestBody);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -398,13 +372,13 @@ export const logoutFromServer = async (): Promise<void> => {
       const ct = response.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const errorData: ApiErrorResponse = await response.json();
-        console.error("로그아웃 API 오류:", errorData);
+        logger.error("로그아웃 API 오류:", errorData);
         throw new Error(
           `로그아웃 실패: ${errorData.message || response.statusText}`,
         );
       } else {
         const text = await response.text();
-        console.error("로그아웃 API 오류(텍스트):", text);
+        logger.error("로그아웃 API 오류(텍스트):", text);
         throw new Error(
           `로그아웃 실패: ${response.status} ${response.statusText}`,
         );
@@ -412,12 +386,9 @@ export const logoutFromServer = async (): Promise<void> => {
     }
 
     const data: LogoutResponse = await response.json();
-
-    if (import.meta.env.DEV) {
-      console.log("로그아웃 성공(DEV):", data);
-    }
+    logger.apiResponse("POST", "/v1/auth/logout", response.status, data);
   } catch (error) {
-    console.error("서버 로그아웃 중 오류 발생:", error);
+    logger.error("서버 로그아웃 중 오류 발생:", error);
     // 서버 로그아웃이 실패해도 로컬 로그아웃은 진행
     throw error;
   }
@@ -431,7 +402,7 @@ export const logout = async (): Promise<void> => {
     // 서버에 로그아웃 요청
     await logoutFromServer();
   } catch (error) {
-    console.error("서버 로그아웃 실패, 로컬 로그아웃만 진행:", error);
+    logger.error("서버 로그아웃 실패, 로컬 로그아웃만 진행:", error);
   } finally {
     // 서버 로그아웃 성공/실패와 관계없이 로컬 정리는 항상 수행
     try {
@@ -446,9 +417,9 @@ export const logout = async (): Promise<void> => {
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
 
-      if (import.meta.env.DEV) console.log("로컬 로그아웃 완료");
+      logger.log("로컬 로그아웃 완료");
     } catch (error) {
-      console.error("로컬 로그아웃 중 오류 발생:", error);
+      logger.error("로컬 로그아웃 중 오류 발생:", error);
     }
   }
 };
@@ -460,7 +431,7 @@ export const logout = async (): Promise<void> => {
 export const isAuthenticated = (): boolean => {
   const token = getStoredToken();
   if (!token) {
-    if (import.meta.env.DEV) console.log("인증 상태: 토큰 없음");
+    logger.log("인증 상태: 토큰 없음");
     return false;
   }
 
@@ -470,8 +441,7 @@ export const isAuthenticated = (): boolean => {
 
   // expires_at이 없으면 토큰이 있다고 가정 (하위 호환성)
   if (!expStr) {
-    if (import.meta.env.DEV)
-      console.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
+    logger.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
     return true;
   }
 
@@ -480,13 +450,12 @@ export const isAuthenticated = (): boolean => {
   const valid = now < expiresAt;
 
   if (!valid) {
-    if (import.meta.env.DEV)
-      console.log("인증 상태: 토큰 만료됨 (하지만 토큰 갱신 가능)");
+    logger.log("인증 상태: 토큰 만료됨 (하지만 토큰 갱신 가능)");
     // 토큰이 만료되었어도 refresh_token으로 갱신 가능하므로 true 반환
     // 실제 API 호출 시에 401 에러가 발생하면 그때 토큰 갱신을 시도함
     return true;
   } else {
-    if (import.meta.env.DEV) console.log("인증 상태: 유효한 토큰");
+    logger.log("인증 상태: 유효한 토큰");
   }
 
   return valid;
@@ -503,6 +472,8 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
       throw new Error("액세스 토큰이 없습니다.");
     }
 
+    logger.apiRequest("GET", "/v1/auth/me");
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
@@ -517,10 +488,10 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
     clearTimeout(timeoutId);
 
     if (response.status === 401) {
-      console.log("🔑 프로필 조회에서 401 에러 발생, 토큰 갱신 시도 중...");
+      logger.log("🔑 프로필 조회에서 401 에러 발생, 토큰 갱신 시도 중...");
       const newToken = await refreshToken();
       if (newToken) {
-        console.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
+        logger.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
         const controller2 = new AbortController();
         const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
@@ -533,9 +504,9 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
           signal: controller2.signal,
         });
         clearTimeout(timeoutId2);
-        console.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
+        logger.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
       } else {
-        console.error("❌ 토큰 갱신 실패");
+        logger.error("❌ 토큰 갱신 실패");
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
@@ -545,13 +516,13 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
       const ct = response.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const errorData: ApiErrorResponse = await response.json();
-        console.error("프로필 조회 API 오류:", errorData);
+        logger.error("프로필 조회 API 오류:", errorData);
         throw new Error(
           `프로필 조회 실패: ${errorData.message || response.statusText}`,
         );
       } else {
         const text = await response.text();
-        console.error("프로필 조회 API 오류(텍스트):", text);
+        logger.error("프로필 조회 API 오류(텍스트):", text);
         throw new Error(
           `프로필 조회 실패: ${response.status} ${response.statusText}`,
         );
@@ -559,13 +530,11 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
     }
 
     const data: UserProfileResponse = await response.json();
-    if (import.meta.env.DEV) {
-      console.log("사용자 프로필 조회 성공(DEV):", data);
-    }
+    logger.apiResponse("GET", "/v1/auth/me", response.status, data);
 
     return data;
   } catch (error) {
-    console.error("사용자 프로필 조회 중 오류 발생:", error);
+    logger.error("사용자 프로필 조회 중 오류 발생:", error);
     throw error;
   }
 };
@@ -587,9 +556,7 @@ export const updateUserProfile = async (
       nickname: nickname,
     };
 
-    if (import.meta.env.DEV) {
-      console.log("프로필 업데이트 요청 데이터:", requestBody);
-    }
+    logger.apiRequest("PUT", "/v1/users/profile", requestBody);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -606,10 +573,10 @@ export const updateUserProfile = async (
     clearTimeout(timeoutId);
 
     if (response.status === 401) {
-      console.log("🔑 프로필 업데이트에서 401 에러 발생, 토큰 갱신 시도 중...");
+      logger.log("🔑 프로필 업데이트에서 401 에러 발생, 토큰 갱신 시도 중...");
       const newToken = await refreshToken();
       if (newToken) {
-        console.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
+        logger.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
         const controller2 = new AbortController();
         const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
         response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
@@ -623,9 +590,9 @@ export const updateUserProfile = async (
           signal: controller2.signal,
         });
         clearTimeout(timeoutId2);
-        console.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
+        logger.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
       } else {
-        console.error("❌ 토큰 갱신 실패");
+        logger.error("❌ 토큰 갱신 실패");
         // 토큰 갱신 실패 시 인증 오류로 처리
         throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
       }
@@ -635,13 +602,13 @@ export const updateUserProfile = async (
       const ct = response.headers.get("content-type") || "";
       if (ct.includes("application/json")) {
         const errorData: ApiErrorResponse = await response.json();
-        console.error("프로필 업데이트 API 오류:", errorData);
+        logger.error("프로필 업데이트 API 오류:", errorData);
         throw new Error(
           `프로필 업데이트 실패: ${errorData.message || response.statusText}`,
         );
       } else {
         const text = await response.text();
-        console.error("프로필 업데이트 API 오류(텍스트):", text);
+        logger.error("프로필 업데이트 API 오류(텍스트):", text);
         throw new Error(
           `프로필 업데이트 실패: ${response.status} ${response.statusText}`,
         );
@@ -649,13 +616,11 @@ export const updateUserProfile = async (
     }
 
     const data: UpdateProfileResponse = await response.json();
-    if (import.meta.env.DEV) {
-      console.log("프로필 업데이트 성공(DEV):", data);
-    }
+    logger.apiResponse("PUT", "/v1/users/profile", response.status, data);
 
     return data;
   } catch (error) {
-    console.error("프로필 업데이트 중 오류 발생:", error);
+    logger.error("프로필 업데이트 중 오류 발생:", error);
     throw error;
   }
 };
@@ -666,14 +631,14 @@ export const updateUserProfile = async (
  */
 export const refreshToken = async (): Promise<string | null> => {
   try {
-    console.log("🔄 토큰 갱신 시작...");
+    logger.log("🔄 토큰 갱신 시작...");
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     // refresh_token은 HttpOnly 쿠키로 자동 전송됨
     let response: Response;
     try {
-      console.log(`📡 토큰 갱신 API 호출: ${API_BASE_URL}/v1/auth/refresh`);
+      logger.apiRequest("POST", "/v1/auth/refresh");
       response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
         method: "POST",
         headers: {
@@ -683,31 +648,31 @@ export const refreshToken = async (): Promise<string | null> => {
         credentials: "include", // 쿠키를 포함하여 요청
         signal: controller.signal,
       });
-      console.log(`📡 토큰 갱신 API 응답 상태: ${response.status}`);
+      logger.log(`📡 토큰 갱신 API 응답 상태: ${response.status}`);
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
       if (response.status === 401) {
-        console.warn("❌ 리프레시 토큰이 만료되었습니다.");
+        logger.warn("❌ 리프레시 토큰이 만료되었습니다.");
         return null; // 상위에서 UX 처리하도록 null 반환
       }
-      console.error(
+      logger.error(
         `❌ 토큰 갱신 실패: ${response.status} ${response.statusText}`,
       );
       throw new Error(`토큰 갱신 실패: ${response.status}`);
     }
 
     const result = await response.json();
-    console.log("📦 토큰 갱신 응답 데이터:", result);
+    logger.log("📦 토큰 갱신 응답 데이터:", result);
 
     // 새로운 access_token을 sessionStorage에 저장
     sessionStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
-    console.log("💾 새로운 access_token 저장 완료");
+    logger.log("💾 새로운 access_token 저장 완료");
 
     // expires_at 업데이트 (새 토큰의 만료 시간 설정)
     if (typeof result.data.expires_in === "number") {
@@ -717,21 +682,19 @@ export const refreshToken = async (): Promise<string | null> => {
         OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
         String(expiresAt),
       );
-      console.log(
+      logger.log(
         `⏰ 토큰 만료 시간 설정: ${new Date(expiresAt).toLocaleString()}`,
       );
     }
 
-    if (import.meta.env.DEV) {
-      console.log("✅ 토큰 갱신 성공(DEV)");
-    }
+    logger.log("✅ 토큰 갱신 성공");
 
     return result.data.access_token;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      console.error("⏰ 토큰 갱신 타임아웃:", error);
+      logger.error("⏰ 토큰 갱신 타임아웃:", error);
     } else {
-      console.error("❌ 토큰 갱신 실패:", error);
+      logger.error("❌ 토큰 갱신 실패:", error);
     }
 
     // 실패 시 즉시 로그아웃하지 않고 null 반환

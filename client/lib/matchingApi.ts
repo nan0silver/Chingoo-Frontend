@@ -6,6 +6,7 @@ import {
   CategoriesResponse,
 } from "@shared/api";
 import { refreshToken } from "./auth";
+import { logger } from "./logger";
 
 /**
  * API 기본 설정
@@ -34,17 +35,14 @@ const createHeaders = (token?: string): HeadersInit => {
  */
 const handleApiResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
-    console.error(
-      `❌ API 응답 에러: ${response.status} ${response.statusText}`,
-    );
-    console.error(`❌ 응답 URL: ${response.url}`);
+    logger.error(`❌ API 응답 에러: ${response.status} ${response.statusText}`);
 
     const errorData = await response.json().catch((parseError) => {
-      console.error("❌ JSON 파싱 실패:", parseError);
+      logger.error("❌ JSON 파싱 실패:", parseError);
       return { message: "알 수 없는 오류가 발생했습니다." };
     });
 
-    console.error("❌ 서버 에러 데이터:", errorData);
+    logger.error("❌ 서버 에러 데이터:", errorData);
     throw new Error(
       errorData.message || `HTTP ${response.status}: ${response.statusText}`,
     );
@@ -98,11 +96,7 @@ export class MatchingApiService {
     }
 
     const url = `${this.baseUrl}/v1/calls/match`;
-    if (import.meta.env.DEV) {
-      console.log("매칭 API 요청 URL:", url);
-      console.log("API_BASE_URL:", API_BASE_URL);
-      console.log("this.baseUrl:", this.baseUrl);
-    }
+    logger.apiRequest("POST", "/v1/calls/match", request);
 
     try {
       let response = await fetch(url, {
@@ -448,7 +442,7 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/calls/${callId}/channel/leave`;
-      console.log("채널 나가기 API 요청 URL:", url);
+      logger.apiRequest("POST", `/v1/calls/${callId}/channel/leave`);
 
       let response = await fetch(url, {
         method: "POST",
@@ -493,11 +487,7 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/calls/${callId}/end`;
-      if (import.meta.env.DEV) {
-        console.log("통화 종료 API 요청 URL:", url);
-        console.log("API_BASE_URL:", API_BASE_URL);
-        console.log("this.baseUrl:", this.baseUrl);
-      }
+      logger.apiRequest("POST", `/v1/calls/${callId}/end`);
 
       let response = await fetch(url, {
         method: "POST",
@@ -547,11 +537,7 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/evaluations`;
-      if (import.meta.env.DEV) {
-        console.log("통화 평가 API 요청 URL:", url);
-        console.log("평가 요청 데이터:", request);
-        console.log("사용 중인 토큰:", this.token ? "토큰 있음" : "토큰 없음");
-      }
+      logger.apiRequest("POST", "/v1/evaluations", request);
 
       let response = await fetch(url, {
         method: "POST",
