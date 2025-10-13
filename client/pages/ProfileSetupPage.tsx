@@ -16,6 +16,8 @@ export default function ProfileSetupPage() {
   const [birthDay, setBirthDay] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [hasConsented, setHasConsented] = useState(false);
   const navigate = useNavigate();
 
   // 공통 성공 처리 함수
@@ -41,12 +43,37 @@ export default function ProfileSetupPage() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
+        // LocalStorage의 user_info 확인
+        const storedUserInfo = getStoredUserInfo();
+        console.log("💾 LocalStorage user_info:", storedUserInfo);
+
         // API에서 최신 사용자 정보 가져오기
         const profileResponse = await getUserProfile();
+        console.log("📡 API 전체 응답:", profileResponse);
         const latestUserProfile = profileResponse.data;
+
+        console.log("🔍 ProfileSetupPage - 사용자 프로필:", latestUserProfile);
+        console.log("🔍 is_new_user:", latestUserProfile.is_new_user);
+        console.log(
+          "🔍 is_profile_complete:",
+          latestUserProfile.is_profile_complete,
+        );
 
         setUserProfile(latestUserProfile);
         setNickname(latestUserProfile.nickname || "");
+
+        // is_new_user가 undefined인 경우 localStorage의 값 사용
+        const isNewUser =
+          latestUserProfile.is_new_user ?? storedUserInfo?.is_new_user ?? false;
+        console.log("🔍 최종 is_new_user 판단:", isNewUser);
+
+        // 신규 유저인 경우 개인정보 수집 동의 모달 표시
+        if (isNewUser) {
+          console.log("✅ 신규 유저 감지 - 개인정보 동의 모달 표시");
+          setShowConsentModal(true);
+        } else {
+          console.log("❌ 기존 유저 - 모달 표시 안 함");
+        }
       } catch (error) {
         console.error("사용자 프로필 가져오기 실패:", error);
 
@@ -77,11 +104,28 @@ export default function ProfileSetupPage() {
         };
         setUserProfile(fallbackProfile);
         setNickname("");
+
+        console.log("🔍 ProfileSetupPage - Fallback 프로필:", fallbackProfile);
+        console.log("🔍 Fallback is_new_user:", fallbackProfile.is_new_user);
+
+        // 신규 유저인 경우 개인정보 수집 동의 모달 표시
+        if (fallbackProfile.is_new_user) {
+          console.log("✅ 신규 유저 감지 (Fallback) - 개인정보 동의 모달 표시");
+          setShowConsentModal(true);
+        } else {
+          console.log("❌ 기존 유저 (Fallback) - 모달 표시 안 함");
+        }
       }
     };
 
     fetchUserProfile();
   }, [navigate]);
+
+  const handleConsent = () => {
+    console.log("✅ 사용자가 개인정보 수집에 동의함");
+    setHasConsented(true);
+    setShowConsentModal(false);
+  };
 
   const handleSaveProfile = async () => {
     // 필수 입력 검증
@@ -174,11 +218,94 @@ export default function ProfileSetupPage() {
     );
   }
 
+  // 모달 상태 로깅
+  if (showConsentModal) {
+    console.log("🎭 모달 렌더링 중 - showConsentModal:", showConsentModal);
+  }
+
   return (
     <div
       className="min-h-screen bg-white flex flex-col items-center relative"
       aria-busy={showSuccessMessage}
     >
+      {/* Privacy Consent Modal */}
+      {showConsentModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="consent-title"
+        >
+          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <h2
+              id="consent-title"
+              className="text-xl md:text-2xl font-crimson font-bold text-gray-900 mb-4"
+            >
+              개인정보 수집 및 이용 동의
+            </h2>
+
+            <div className="space-y-4 mb-6 text-gray-700">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  1. 수집하는 개인정보 항목
+                </h3>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>필수 항목: 이메일, 닉네임, 성별, 생년월일</li>
+                  <li>자동 수집: 서비스 이용 기록, 접속 로그</li>
+                </ul>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  2. 개인정보의 수집 및 이용 목적
+                </h3>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>회원 관리 및 본인 확인</li>
+                  <li>음성 통화 매칭 서비스 제공</li>
+                  <li>서비스 이용 통계 분석</li>
+                  <li>고객 문의 대응</li>
+                </ul>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  3. 개인정보의 보유 및 이용 기간
+                </h3>
+                <p className="text-sm">
+                  회원 탈퇴 시까지 보유하며, 탈퇴 후 즉시 파기합니다. 단, 관련
+                  법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  4. 동의를 거부할 권리 및 불이익
+                </h3>
+                <p className="text-sm">
+                  개인정보 수집에 대한 동의를 거부할 수 있으나, 동의하지 않을
+                  경우 서비스 이용이 제한됩니다.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleConsent}
+                className="w-full h-14 bg-login-button text-white font-crimson text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+              >
+                동의합니다
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="w-full h-12 border-2 border-gray-300 text-gray-600 font-crimson text-base font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                동의하지 않습니다
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Success Message Overlay */}
       {showSuccessMessage && (
         <div
@@ -271,7 +398,8 @@ export default function ProfileSetupPage() {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="닉네임을 입력해주세요"
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+            disabled={userProfile?.is_new_user && !hasConsented}
+            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
         </div>
 
@@ -284,22 +412,24 @@ export default function ProfileSetupPage() {
             <button
               type="button"
               onClick={() => setGender("MALE")}
+              disabled={userProfile?.is_new_user && !hasConsented}
               className={`h-12 md:h-14 px-4 border rounded-lg font-crimson text-lg md:text-xl transition-all ${
                 gender === "MALE"
                   ? "border-login-button bg-login-button/10 text-login-button"
                   : "border-border-gray text-gray-700 hover:border-login-button/50"
-              }`}
+              } disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50`}
             >
               남성
             </button>
             <button
               type="button"
               onClick={() => setGender("FEMALE")}
+              disabled={userProfile?.is_new_user && !hasConsented}
               className={`h-12 md:h-14 px-4 border rounded-lg font-crimson text-lg md:text-xl transition-all ${
                 gender === "FEMALE"
                   ? "border-login-button bg-login-button/10 text-login-button"
                   : "border-border-gray text-gray-700 hover:border-login-button/50"
-              }`}
+              } disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50`}
             >
               여성
             </button>
@@ -319,7 +449,8 @@ export default function ProfileSetupPage() {
               placeholder="YYYY"
               min="1900"
               max={new Date().getFullYear()}
-              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center"
+              disabled={userProfile?.is_new_user && !hasConsented}
+              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <input
               type="number"
@@ -328,7 +459,8 @@ export default function ProfileSetupPage() {
               placeholder="MM"
               min="1"
               max="12"
-              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center"
+              disabled={userProfile?.is_new_user && !hasConsented}
+              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
             <input
               type="number"
@@ -337,7 +469,8 @@ export default function ProfileSetupPage() {
               placeholder="DD"
               min="1"
               max="31"
-              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center"
+              disabled={userProfile?.is_new_user && !hasConsented}
+              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
         </div>

@@ -42,8 +42,8 @@ export interface UserProfile {
   id: number;
   email: string;
   nickname: string;
-  is_new_user: boolean;
-  is_profile_complete: boolean;
+  is_new_user?: boolean; // API에서 제공하지 않을 수 있음
+  is_profile_complete?: boolean; // API에서 제공하지 않을 수 있음
 }
 
 /**
