@@ -11,7 +11,9 @@ export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
   const [gender, setGender] = useState("");
-  const [birth, setBirth] = useState("");
+  const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthDay, setBirthDay] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
@@ -93,10 +95,34 @@ export default function ProfileSetupPage() {
       return;
     }
 
-    if (!birth) {
-      alert("생일을 입력해주세요.");
+    if (!birthYear || !birthMonth || !birthDay) {
+      alert("생년월일을 모두 입력해주세요.");
       return;
     }
+
+    // 생년월일 유효성 검증
+    const year = parseInt(birthYear);
+    const month = parseInt(birthMonth);
+    const day = parseInt(birthDay);
+
+    const currentYear = new Date().getFullYear();
+    if (year < 1900 || year > currentYear) {
+      alert("올바른 연도를 입력해주세요.");
+      return;
+    }
+
+    if (month < 1 || month > 12) {
+      alert("올바른 월을 입력해주세요.");
+      return;
+    }
+
+    if (day < 1 || day > 31) {
+      alert("올바른 일을 입력해주세요.");
+      return;
+    }
+
+    // YYYY-MM-DD 형식으로 변환
+    const birth = `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`;
 
     setIsLoading(true);
 
@@ -285,13 +311,35 @@ export default function ProfileSetupPage() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             생년월일 *
           </label>
-          <input
-            type="date"
-            value={birth}
-            onChange={(e) => setBirth(e.target.value)}
-            max={new Date().toISOString().split("T")[0]}
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
-          />
+          <div className="grid grid-cols-3 gap-3">
+            <input
+              type="number"
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
+              placeholder="YYYY"
+              min="1900"
+              max={new Date().getFullYear()}
+              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center"
+            />
+            <input
+              type="number"
+              value={birthMonth}
+              onChange={(e) => setBirthMonth(e.target.value)}
+              placeholder="MM"
+              min="1"
+              max="12"
+              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center"
+            />
+            <input
+              type="number"
+              value={birthDay}
+              onChange={(e) => setBirthDay(e.target.value)}
+              placeholder="DD"
+              min="1"
+              max="31"
+              className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center"
+            />
+          </div>
         </div>
 
         {/* Save Button */}
@@ -302,7 +350,9 @@ export default function ProfileSetupPage() {
               isLoading ||
               !nickname.trim() ||
               !gender ||
-              !birth ||
+              !birthYear ||
+              !birthMonth ||
+              !birthDay ||
               showSuccessMessage
             }
             className="w-full h-14 md:h-16 bg-login-button text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
