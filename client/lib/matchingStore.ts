@@ -153,10 +153,9 @@ export const useMatchingStore = create<MatchingStore>()(
                 await get().connectWebSocket();
                 console.log("✅ WebSocket 연결 성공");
               } catch (wsError) {
-                console.warn(
-                  "❌ WebSocket 연결 실패, 매칭은 계속 진행:",
-                  wsError,
-                );
+                console.warn("❌ WebSocket 연결 실패, 폴링으로 대체:", wsError);
+                // ⚠️ WebSocket 연결 실패 시 폴링으로 대체
+                console.log("🔄 폴링 모드 시작 (3초마다 상태 확인)");
                 // WebSocket 연결 실패해도 매칭은 계속 진행
               }
             } else {
@@ -169,7 +168,7 @@ export const useMatchingStore = create<MatchingStore>()(
                 try {
                   await get().connectWebSocket();
                 } catch (wsError) {
-                  console.warn("❌ 재연결 실패:", wsError);
+                  console.warn("❌ 재연결 실패, 폴링으로 대체:", wsError);
                 }
               }
             }

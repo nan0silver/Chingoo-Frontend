@@ -30,11 +30,19 @@ export class WebSocketService {
     // setupClient는 connect 시점에 호출
   }
 
-  private setupClient() {
+  private setupClient(token?: string) {
     // SockJS를 사용하여 WebSocket 연결 설정
-    const wsUrl = import.meta.env.VITE_WS_BASE_URL
+    let wsUrl = import.meta.env.VITE_WS_BASE_URL
       ? String(import.meta.env.VITE_WS_BASE_URL)
       : "/ws"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
+
+    // 🔑 토큰을 쿼리 파라미터로 추가 (SockJS /info 요청에도 적용됨)
+    if (token) {
+      const separator = wsUrl.includes("?") ? "&" : "?";
+      wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(token)}`;
+      console.log("🔗 WebSocket URL에 토큰 추가됨");
+    }
+
     logger.log("🔗 WebSocket 연결 설정");
     const socket = new SockJS(wsUrl);
 
@@ -116,17 +124,17 @@ export class WebSocketService {
       };
       this.onConnectionStateChange?.(this.connectionState);
 
-      // 클라이언트가 없으면 새로 생성
+      // 클라이언트가 없으면 새로 생성 (토큰 포함)
       if (!this.client) {
         console.log("📱 WebSocket 클라이언트 생성");
-        this.setupClient();
+        this.setupClient(token); // 🔑 토큰을 전달
       }
 
-      // JWT 토큰을 헤더에 포함하여 연결
+      // JWT 토큰을 헤더에도 포함 (STOMP CONNECT 프레임용)
       this.client!.connectHeaders = {
         Authorization: `Bearer ${token}`,
       };
-      console.log("🔑 JWT 토큰 설정 완료");
+      console.log("🔑 JWT 토큰 설정 완료 (URL + 헤더)");
       if (import.meta.env.DEV) {
         console.log("🔑 토큰 길이:", token.length);
         console.log("🔑 토큰 앞 10자리:", token.substring(0, 10) + "...");
@@ -424,6 +432,7 @@ export class WebSocketService {
     );
 
     this.disconnect();
+    this.client = null; // 🔑 클라이언트를 null로 설정하여 새 토큰으로 재생성
     await new Promise((resolve) => setTimeout(resolve, 2000)); // 2초 대기
     await this.connect(token);
   }
