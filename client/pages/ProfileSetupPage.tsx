@@ -53,22 +53,25 @@ export default function ProfileSetupPage() {
         setUserProfile(latestUserProfile);
         setNickname(latestUserProfile.nickname || "");
 
-        // 기존 성별 정보가 있으면 설정
-        if (latestUserProfile.gender) {
-          setGender(latestUserProfile.gender);
-        }
-
-        // 기존 생년월일 정보가 있으면 설정
-        if (latestUserProfile.birth) {
-          const [year, month, day] = latestUserProfile.birth.split("-");
-          setBirthYear(year);
-          setBirthMonth(month);
-          setBirthDay(day);
-        }
-
         // is_new_user가 undefined인 경우 localStorage의 값 사용
         const isNewUser =
           latestUserProfile.is_new_user ?? storedUserInfo?.is_new_user ?? false;
+
+        // 기존 유저인 경우에만 성별, 생년월일 정보 설정
+        if (!isNewUser) {
+          // 기존 성별 정보가 있으면 설정
+          if (latestUserProfile.gender) {
+            setGender(latestUserProfile.gender);
+          }
+
+          // 기존 생년월일 정보가 있으면 설정
+          if (latestUserProfile.birth) {
+            const [year, month, day] = latestUserProfile.birth.split("-");
+            setBirthYear(year);
+            setBirthMonth(month);
+            setBirthDay(day);
+          }
+        }
 
         // 신규 유저인 경우 개인정보 수집 동의 모달 표시
         if (isNewUser) {
