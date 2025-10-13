@@ -10,6 +10,8 @@ import { UserInfo, UserProfile } from "@shared/api";
 export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
+  const [gender, setGender] = useState("");
+  const [birth, setBirth] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const navigate = useNavigate();
@@ -80,23 +82,42 @@ export default function ProfileSetupPage() {
   }, [navigate]);
 
   const handleSaveProfile = async () => {
+    // 필수 입력 검증
     if (!nickname.trim()) {
       alert("닉네임을 입력해주세요.");
       return;
     }
 
-    // 기존 닉네임과 동일한 경우 API 요청 없이 바로 메인 페이지로 이동
-    if (userProfile && nickname === userProfile.nickname) {
-      updateUserInfo();
-      scheduleSuccessNavigate();
+    if (!gender) {
+      alert("성별을 선택해주세요.");
+      return;
+    }
+
+    if (!birth) {
+      alert("생일을 입력해주세요.");
       return;
     }
 
     setIsLoading(true);
 
     try {
+      // API 요청 바디 구성: 닉네임이 변경된 경우만 포함
+      const requestBody: {
+        nickname?: string;
+        gender: string;
+        birth: string;
+      } = {
+        gender,
+        birth,
+      };
+
+      // 닉네임이 변경된 경우에만 추가
+      if (userProfile && nickname !== userProfile.nickname) {
+        requestBody.nickname = nickname;
+      }
+
       // 실제 API 호출
-      await updateUserProfile(nickname);
+      await updateUserProfile(requestBody);
 
       updateUserInfo();
       scheduleSuccessNavigate();
@@ -228,32 +249,67 @@ export default function ProfileSetupPage() {
           />
         </div>
 
+        {/* Gender Selection */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            성별 *
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setGender("MALE")}
+              className={`h-12 md:h-14 px-4 border rounded-lg font-crimson text-lg md:text-xl transition-all ${
+                gender === "MALE"
+                  ? "border-login-button bg-login-button/10 text-login-button"
+                  : "border-border-gray text-gray-700 hover:border-login-button/50"
+              }`}
+            >
+              남성
+            </button>
+            <button
+              type="button"
+              onClick={() => setGender("FEMALE")}
+              className={`h-12 md:h-14 px-4 border rounded-lg font-crimson text-lg md:text-xl transition-all ${
+                gender === "FEMALE"
+                  ? "border-login-button bg-login-button/10 text-login-button"
+                  : "border-border-gray text-gray-700 hover:border-login-button/50"
+              }`}
+            >
+              여성
+            </button>
+          </div>
+        </div>
+
+        {/* Birth Date Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            생년월일 *
+          </label>
+          <input
+            type="date"
+            value={birth}
+            onChange={(e) => setBirth(e.target.value)}
+            max={new Date().toISOString().split("T")[0]}
+            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+          />
+        </div>
+
         {/* Save Button */}
         <div className="pt-4">
           <button
             onClick={handleSaveProfile}
-            disabled={isLoading || !nickname.trim() || showSuccessMessage}
+            disabled={
+              isLoading ||
+              !nickname.trim() ||
+              !gender ||
+              !birth ||
+              showSuccessMessage
+            }
             className="w-full h-14 md:h-16 bg-login-button text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             {isLoading ? "저장 중..." : "프로필 저장"}
           </button>
         </div>
-
-        {/* Skip Button for existing users */}
-        {!userProfile.is_new_user && (
-          <div className="text-center">
-            <button
-              onClick={() => {
-                updateUserInfo();
-                navigate("/", { replace: true });
-              }}
-              disabled={showSuccessMessage}
-              className="text-gray-600 underline hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              나중에 설정하기
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

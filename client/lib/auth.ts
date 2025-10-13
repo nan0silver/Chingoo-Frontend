@@ -543,7 +543,7 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
  * 사용자 프로필을 업데이트하는 함수
  */
 export const updateUserProfile = async (
-  nickname: string,
+  profileData: UpdateProfileRequest,
 ): Promise<UpdateProfileResponse> => {
   try {
     const accessToken = getStoredToken("access_token");
@@ -552,9 +552,7 @@ export const updateUserProfile = async (
       throw new Error("액세스 토큰이 없습니다.");
     }
 
-    const requestBody: UpdateProfileRequest = {
-      nickname: nickname,
-    };
+    const requestBody: UpdateProfileRequest = profileData;
 
     logger.apiRequest("PUT", "/v1/users/profile", requestBody);
 

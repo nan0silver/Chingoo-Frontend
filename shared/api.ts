@@ -97,7 +97,9 @@ export interface UserProfileResponse {
  * Update Profile Request
  */
 export interface UpdateProfileRequest {
-  nickname: string;
+  nickname?: string;
+  gender?: string;
+  birth?: string; // YYYY-MM-DD 형식
 }
 
 /**
@@ -106,7 +108,9 @@ export interface UpdateProfileRequest {
 export interface UpdateProfileResponse {
   message: string;
   data?: {
-    nickname: string;
+    nickname?: string;
+    gender?: string;
+    birth?: string;
   };
 }
 
