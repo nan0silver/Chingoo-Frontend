@@ -6,14 +6,9 @@ import { logger } from "@/lib/logger";
 interface LoginPageProps {
   onLogin: () => void;
   onSignUp: () => void;
-  onEnterDemoMode?: () => void;
 }
 
-export default function LoginPage({
-  onLogin,
-  onSignUp,
-  onEnterDemoMode,
-}: LoginPageProps) {
+export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -161,32 +156,6 @@ export default function LoginPage({
             </span>
           </button>
         </div>
-
-        {/* Demo Mode Section */}
-        {onEnterDemoMode && (
-          <>
-            <div className="flex items-center justify-center pt-6 pb-4">
-              <div className="flex-1 h-px bg-border-gray"></div>
-              <span className="px-4 text-text-gray font-crimson text-base md:text-lg">
-                또는
-              </span>
-              <div className="flex-1 h-px bg-border-gray"></div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={onEnterDemoMode}
-                className="w-full h-12 md:h-14 bg-gradient-to-r from-yellow-300 to-red-gradient text-white font-crimson text-base md:text-lg font-bold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
-                <span>🎯</span>
-                <span>데모 모드로 체험하기</span>
-              </button>
-              <p className="text-center text-text-gray font-crimson text-sm md:text-base mt-2">
-                백엔드 배포 전 시연을 위해 데모 모드로 체험해보세요
-              </p>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

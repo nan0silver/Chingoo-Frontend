@@ -7,15 +7,11 @@ import { CATEGORIES } from "@shared/api";
 interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
-  isDemoMode?: boolean;
-  onExitDemoMode?: () => void;
 }
 
 export default function HomePage({
   onStartCall,
   onOpenSettings,
-  isDemoMode = false,
-  onExitDemoMode,
 }: HomePageProps) {
   const navigate = useNavigate();
   const { startMatching, status, error } = useMatchingStore();
@@ -27,12 +23,6 @@ export default function HomePage({
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
-    // 시연 모드에서는 프로필 로딩을 건너뛰고 기본 닉네임 사용
-    if (isDemoMode) {
-      setIsLoadingProfile(false);
-      return;
-    }
-
     let mounted = true;
     const fetchUserProfile = async () => {
       try {
@@ -60,7 +50,7 @@ export default function HomePage({
     return () => {
       mounted = false;
     };
-  }, [isDemoMode]);
+  }, []);
 
   // CATEGORIES 상수를 사용하여 카테고리 배열 생성
   const categories = Object.values(CATEGORIES).map((category) => ({
@@ -83,22 +73,15 @@ export default function HomePage({
     try {
       console.log("🏠 HomePage: handleStartCall 호출됨");
       console.log("🏠 선택된 카테고리:", selectedCategory);
-      console.log("🏠 데모 모드:", isDemoMode);
       setIsStartingMatching(true);
 
-      // 시연 모드가 아닌 경우 실제 매칭 API 호출
-      if (!isDemoMode) {
-        console.log("🏠 실제 매칭 시작");
-        await startMatching({ category_id: parseInt(selectedCategory) });
+      // 실제 매칭 API 호출
+      console.log("🏠 실제 매칭 시작");
+      await startMatching({ category_id: parseInt(selectedCategory) });
 
-        // 매칭 성공 시 연결 페이지로 이동
-        console.log("🏠 ConnectingCallPage로 이동");
-        navigate("/connecting-call");
-      } else {
-        // 시연 모드에서는 기존 로직 사용
-        console.log("🏠 데모 모드 - onStartCall 호출");
-        onStartCall(selectedCategory);
-      }
+      // 매칭 성공 시 연결 페이지로 이동
+      console.log("🏠 ConnectingCallPage로 이동");
+      navigate("/connecting-call");
     } catch (error) {
       console.error("🏠 매칭 시작 실패:", error);
       // 에러는 matchingStore에서 관리됨
@@ -139,15 +122,6 @@ export default function HomePage({
 
         {/* Right side buttons */}
         <div className="flex items-center gap-2">
-          {isDemoMode && (
-            <button
-              type="button"
-              onClick={onExitDemoMode}
-              className="px-3 py-1 bg-orange-accent text-white font-crimson text-sm font-bold rounded"
-            >
-              데모 종료
-            </button>
-          )}
           <button
             type="button"
             className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded"

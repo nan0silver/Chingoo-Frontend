@@ -5,13 +5,6 @@
  */
 
 /**
- * Example response type for /api/demo
- */
-export interface DemoResponse {
-  message: string;
-}
-
-/**
  * OAuth Provider Types
  */
 export type OAuthProvider = "kakao" | "google" | "naver";

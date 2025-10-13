@@ -26,15 +26,9 @@ const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const navigate = useNavigate();
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const { categoryId, cancelMatching, resetMatching, status, matchingId } =
     useMatchingStore();
   const previousStatusRef = useRef<string | null>(null);
-
-  const handleEnterDemoMode = () => {
-    setIsDemoMode(true);
-    navigate("/");
-  };
 
   // 매칭 상태 변화 감지하여 자동 페이지 이동
   useEffect(() => {
@@ -116,21 +110,12 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <Index isDemoMode={isDemoMode} setIsDemoMode={setIsDemoMode} />
-        }
-      />
+      <Route path="/" element={<Index />} />
       <Route
         path="/login"
         element={
           <div className="max-w-md mx-auto">
-            <LoginPage
-              onLogin={() => {}}
-              onSignUp={() => {}}
-              onEnterDemoMode={handleEnterDemoMode}
-            />
+            <LoginPage onLogin={() => {}} onSignUp={() => {}} />
           </div>
         }
       />
