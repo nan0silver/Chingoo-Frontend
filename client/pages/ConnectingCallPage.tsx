@@ -42,6 +42,14 @@ export default function ConnectingCallPage({
   // 통화 시작 알림 핸들러 (useCallback으로 메모이제이션)
   const handleCallStartNotification = useCallback(
     (notification: any) => {
+      // 이미 통화 중이거나 연결 중인지 확인
+      if (isInCall || isConnecting) {
+        if (import.meta.env.DEV) {
+          console.log("⚠️ ConnectingCallPage: 이미 통화 중 - 알림 무시");
+        }
+        return;
+      }
+
       if (import.meta.env.DEV) {
         console.log("🔔 ConnectingCallPage에서 통화 시작 알림 수신");
       }
@@ -52,7 +60,7 @@ export default function ConnectingCallPage({
       }
       handleCallStart(notification);
     },
-    [handleCallStart],
+    [handleCallStart, isInCall, isConnecting],
   );
 
   // 매칭 알림 핸들러 (useCallback으로 메모이제이션)

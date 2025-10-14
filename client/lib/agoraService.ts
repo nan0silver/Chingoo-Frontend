@@ -100,6 +100,17 @@ export class AgoraService {
         });
       }
 
+      // 이미 연결 중이거나 연결된 상태인지 확인
+      if (this.callState.isConnecting || this.callState.isConnected) {
+        if (import.meta.env.DEV) {
+          console.log(
+            "⚠️ 이미 연결 중이거나 연결된 상태 - 기존 연결 정리 후 재시도",
+          );
+        }
+        // 기존 연결을 완전히 정리
+        await this.forceLeaveChannel();
+      }
+
       this.callState.isConnecting = true;
       this.currentChannelInfo = channelInfo;
 
@@ -167,6 +178,59 @@ export class AgoraService {
       this.callState.isConnecting = false;
       this.callbacks.onError?.(error as Error);
       throw error;
+    }
+  }
+
+  /**
+   * 강제로 채널에서 퇴장 (중복 입장 방지용)
+   */
+  private async forceLeaveChannel(): Promise<void> {
+    try {
+      if (import.meta.env.DEV) {
+        console.log("🔄 강제 채널 퇴장 시작");
+      }
+
+      // 로컬 오디오 트랙 정리
+      if (this.callState.localAudioTrack) {
+        try {
+          if (this.client) {
+            await this.client.unpublish([this.callState.localAudioTrack]);
+          }
+        } catch (error) {
+          // 에러 무시 (이미 정리된 상태일 수 있음)
+        }
+        this.callState.localAudioTrack.stop();
+        this.callState.localAudioTrack.close();
+        this.callState.localAudioTrack = null;
+      }
+
+      // 클라이언트 퇴장
+      if (this.client) {
+        try {
+          await this.client.leave();
+        } catch (error) {
+          // 에러 무시 (이미 퇴장된 상태일 수 있음)
+        }
+        this.client = null;
+      }
+
+      // 상태 초기화
+      this.callState.isConnected = false;
+      this.callState.isConnecting = false;
+      this.callState.connectionState = "DISCONNECTED";
+      this.currentChannelInfo = null;
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 강제 채널 퇴장 완료");
+      }
+    } catch (error) {
+      console.error("❌ 강제 채널 퇴장 실패:", error);
+      // 실패해도 상태는 초기화
+      this.callState.isConnected = false;
+      this.callState.isConnecting = false;
+      this.callState.connectionState = "DISCONNECTED";
+      this.currentChannelInfo = null;
+      this.client = null;
     }
   }
 

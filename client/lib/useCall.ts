@@ -44,6 +44,14 @@ export const useCall = () => {
   const handleCallStart = useCallback(
     async (notification: CallStartNotification) => {
       try {
+        // 이미 통화 중이거나 연결 중인지 확인
+        if (isInCall || isConnecting) {
+          if (import.meta.env.DEV) {
+            console.log("⚠️ 이미 통화 중이거나 연결 중 - 통화 시작 건너뜀");
+          }
+          return;
+        }
+
         if (import.meta.env.DEV) {
           console.log("🎯 통화 시작 알림 수신");
           console.log("📋 알림 상세 정보:", {
@@ -205,6 +213,8 @@ export const useCall = () => {
       updateAgoraState,
       endCall,
       setError,
+      isInCall,
+      isConnecting,
     ],
   );
 
