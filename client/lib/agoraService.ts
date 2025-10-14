@@ -125,6 +125,16 @@ export class AgoraService {
       );
 
       console.log("✅ Agora 채널 입장 성공");
+
+      // 로컬 오디오 트랙을 채널에 발행 (publish)
+      console.log("📢 로컬 오디오 트랙을 채널에 발행 중...");
+      if (this.callState.localAudioTrack) {
+        await this.client.publish([this.callState.localAudioTrack]);
+        console.log("✅ 로컬 오디오 트랙 발행 성공");
+      } else {
+        console.error("❌ 로컬 오디오 트랙이 없어서 발행할 수 없음");
+      }
+
       this.callState.isConnected = true;
       this.callState.isConnecting = false;
 
@@ -146,8 +156,16 @@ export class AgoraService {
     try {
       console.log("Agora 채널 퇴장");
 
-      // 로컬 오디오 트랙 해제
-      if (this.callState.localAudioTrack) {
+      // 로컬 오디오 트랙 발행 해제 및 해제
+      if (this.callState.localAudioTrack && this.client) {
+        console.log("📢 로컬 오디오 트랙 발행 해제 중...");
+        try {
+          await this.client.unpublish([this.callState.localAudioTrack]);
+          console.log("✅ 로컬 오디오 트랙 발행 해제 완료");
+        } catch (error) {
+          console.error("❌ 로컬 오디오 트랙 발행 해제 실패:", error);
+        }
+
         this.callState.localAudioTrack.stop();
         this.callState.localAudioTrack.close();
         this.callState.localAudioTrack = null;
@@ -349,10 +367,20 @@ export class AgoraService {
 
     // 오디오 트랙 구독
     this.client.on("user-published", async (user, mediaType) => {
-      console.log("사용자 오디오 트랙 발행:", user.uid);
+      console.log("👤 사용자 오디오 트랙 발행:", user.uid, "타입:", mediaType);
 
       if (mediaType === "audio") {
+        console.log("🔊 오디오 트랙 구독 시작...");
         await this.client!.subscribe(user, mediaType);
+        console.log("✅ 오디오 트랙 구독 완료");
+
+        // 구독한 오디오 트랙 자동 재생
+        const remoteAudioTrack = user.audioTrack;
+        if (remoteAudioTrack) {
+          console.log("🔊 원격 오디오 트랙 재생 시작...");
+          remoteAudioTrack.play();
+          console.log("✅ 원격 오디오 트랙 재생 성공");
+        }
       }
     });
 
