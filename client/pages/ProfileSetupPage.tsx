@@ -437,7 +437,7 @@ export default function ProfileSetupPage() {
               type="number"
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
-              placeholder="YYYY"
+              placeholder="년(4자)"
               min="1900"
               max={new Date().getFullYear()}
               disabled={userProfile?.is_new_user && !hasConsented}
@@ -447,7 +447,7 @@ export default function ProfileSetupPage() {
               type="number"
               value={birthMonth}
               onChange={(e) => setBirthMonth(e.target.value)}
-              placeholder="MM"
+              placeholder="월"
               min="1"
               max="12"
               disabled={userProfile?.is_new_user && !hasConsented}
@@ -457,7 +457,7 @@ export default function ProfileSetupPage() {
               type="number"
               value={birthDay}
               onChange={(e) => setBirthDay(e.target.value)}
-              placeholder="DD"
+              placeholder="일"
               min="1"
               max="31"
               disabled={userProfile?.is_new_user && !hasConsented}
