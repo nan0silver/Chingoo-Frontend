@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useCallStore } from "./callStore";
 import { getAgoraService, AgoraCallbacks } from "./agoraService";
 import { getWebSocketService } from "./websocket";
@@ -27,6 +27,9 @@ export const useCall = () => {
     clearPartner,
   } = useCallStore();
 
+  // 중복 알림 방지를 위한 ref
+  const processedCallIds = useRef<Set<number>>(new Set());
+
   // 디버깅: partner 정보 변경 시에만 로그 출력 (개발 환경에서만)
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -44,12 +47,31 @@ export const useCall = () => {
   const handleCallStart = useCallback(
     async (notification: CallStartNotification) => {
       try {
+        // 중복 알림 방지 - callId 기반 체크
+        if (
+          notification.callId &&
+          processedCallIds.current.has(notification.callId)
+        ) {
+          if (import.meta.env.DEV) {
+            console.log(
+              "⚠️ useCall: 이미 처리된 알림 - 무시",
+              notification.callId,
+            );
+          }
+          return;
+        }
+
         // 이미 통화 중이거나 연결 중인지 확인
         if (isInCall || isConnecting) {
           if (import.meta.env.DEV) {
             console.log("⚠️ 이미 통화 중이거나 연결 중 - 통화 시작 건너뜀");
           }
           return;
+        }
+
+        // 알림 처리 표시
+        if (notification.callId) {
+          processedCallIds.current.add(notification.callId);
         }
 
         if (import.meta.env.DEV) {

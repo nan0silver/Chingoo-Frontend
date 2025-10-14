@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useMatchingStore } from "@/lib/matchingStore";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
@@ -19,6 +19,9 @@ export default function ConnectingCallPage({
   const { isInCall, isConnecting, error, callId, partner, handleCallStart } =
     useCall();
   const webSocketService = getWebSocketService();
+
+  // 중복 알림 방지를 위한 ref
+  const processedNotifications = useRef<Set<number>>(new Set());
 
   // Animate loading dots
   useEffect(() => {
@@ -42,12 +45,31 @@ export default function ConnectingCallPage({
   // 통화 시작 알림 핸들러 (useCallback으로 메모이제이션)
   const handleCallStartNotification = useCallback(
     (notification: any) => {
+      // 중복 알림 방지 - callId 기반 체크
+      if (
+        notification.callId &&
+        processedNotifications.current.has(notification.callId)
+      ) {
+        if (import.meta.env.DEV) {
+          console.log(
+            "⚠️ ConnectingCallPage: 이미 처리된 알림 - 무시",
+            notification.callId,
+          );
+        }
+        return;
+      }
+
       // 이미 통화 중이거나 연결 중인지 확인
       if (isInCall || isConnecting) {
         if (import.meta.env.DEV) {
           console.log("⚠️ ConnectingCallPage: 이미 통화 중 - 알림 무시");
         }
         return;
+      }
+
+      // 알림 처리 표시
+      if (notification.callId) {
+        processedNotifications.current.add(notification.callId);
       }
 
       if (import.meta.env.DEV) {

@@ -64,6 +64,7 @@ export class AgoraService {
   };
   private callbacks: AgoraCallbacks = {};
   private currentChannelInfo: AgoraChannelInfo | null = null;
+  private isJoining = false; // 중복 입장 방지 플래그
 
   constructor() {
     // Agora SDK 초기화
@@ -109,7 +110,17 @@ export class AgoraService {
    * 채널에 입장
    */
   async joinChannel(channelInfo: AgoraChannelInfo): Promise<void> {
+    // 중복 입장 방지
+    if (this.isJoining) {
+      if (import.meta.env.DEV) {
+        console.log("⚠️ 이미 입장 중 - 중복 요청 무시");
+      }
+      return;
+    }
+
     try {
+      this.isJoining = true;
+
       // 개발 환경에서만 상세 로그 출력 (보안상 프로덕션에서는 민감 정보 숨김)
       if (import.meta.env.DEV) {
         console.log("🎯 Agora 채널 입장 시도");
@@ -224,9 +235,13 @@ export class AgoraService {
       if (import.meta.env.DEV) {
         console.log("✅ onCallStarted 콜백 호출 완료");
       }
+
+      // 입장 완료 - 플래그 해제
+      this.isJoining = false;
     } catch (error) {
       console.error("❌ Agora 채널 입장 실패:", error);
       this.callState.isConnecting = false;
+      this.isJoining = false; // 에러 시에도 플래그 해제
       this.callbacks.onError?.(error as Error);
       throw error;
     }
@@ -305,6 +320,7 @@ export class AgoraService {
       this.callState.connectionState = "DISCONNECTED";
       this.callState.remoteAudioTrack = null;
       this.currentChannelInfo = null;
+      this.isJoining = false;
 
       // 4. 잠시 대기 (리소스 정리 시간 확보)
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -322,6 +338,7 @@ export class AgoraService {
       this.callState.remoteAudioTrack = null;
       this.currentChannelInfo = null;
       this.client = null;
+      this.isJoining = false;
     }
   }
 
@@ -391,6 +408,7 @@ export class AgoraService {
         volume: 100,
         connectionState: "DISCONNECTED",
       };
+      this.isJoining = false;
 
       this.currentChannelInfo = null;
       this.callbacks.onCallEnded?.();
