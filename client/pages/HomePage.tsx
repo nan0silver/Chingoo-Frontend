@@ -181,7 +181,7 @@ export default function HomePage({
       </div>
 
       {/* Categories Grid */}
-      <div className="flex-1 px-8">
+      <div className="px-8">
         <div className="grid grid-cols-2 gap-6 mb-8">
           {categories.map((category) => (
             <button
@@ -213,7 +213,7 @@ export default function HomePage({
       )}
 
       {/* Subscription Section */}
-      <div className="px-8 mb-8">
+      {/* <div className="px-8 mb-8">
         <div className="relative bg-orange-subscription rounded-2xl p-8 flex items-center justify-between">
           <div>
             <p className="text-white font-crimson text-lg font-bold leading-6">
@@ -224,7 +224,7 @@ export default function HomePage({
           </div>
           <div className="text-5xl">🔗</div>
         </div>
-      </div>
+      </div> */}
 
       {/* Start Call Button */}
       <div className="px-8 pb-12">
