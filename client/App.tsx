@@ -19,6 +19,7 @@ import CallEvaluationPage from "./pages/CallEvaluationPage";
 import MyActivityPage from "./pages/MyActivityPage";
 import SettingsPage from "./pages/SettingsPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import SupportPage from "./pages/SupportPage";
 import AuthGuard from "./components/AuthGuard";
 import { useMatchingStore } from "./lib/matchingStore";
 import { CATEGORIES } from "@shared/api";
@@ -116,6 +117,10 @@ const AppRoutes = () => {
 
   const handleNavigateToComingSoon = (featureName: string) => {
     navigate(`/coming-soon?feature=${encodeURIComponent(featureName)}`);
+  };
+
+  const handleNavigateToSupport = () => {
+    navigate("/support");
   };
 
   const handleLogout = async () => {
@@ -238,6 +243,7 @@ const AppRoutes = () => {
                 onNavigateToActivity={handleNavigateToActivity}
                 onNavigateToProfileEdit={handleNavigateToProfileEdit}
                 onNavigateToComingSoon={handleNavigateToComingSoon}
+                onNavigateToSupport={handleNavigateToSupport}
                 onLogout={handleLogout}
               />
             </div>
@@ -250,6 +256,16 @@ const AppRoutes = () => {
           <AuthGuard>
             <div className="max-w-md mx-auto">
               <ComingSoonPage />
+            </div>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/support"
+        element={
+          <AuthGuard>
+            <div className="max-w-md mx-auto">
+              <SupportPage onBack={handleBack} />
             </div>
           </AuthGuard>
         }

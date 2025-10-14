@@ -3,6 +3,7 @@ interface SettingsPageProps {
   onNavigateToActivity: () => void;
   onNavigateToProfileEdit: () => void;
   onNavigateToComingSoon: (featureName: string) => void;
+  onNavigateToSupport: () => void;
   onLogout: () => void;
 }
 
@@ -11,6 +12,7 @@ export default function SettingsPage({
   onNavigateToActivity,
   onNavigateToProfileEdit,
   onNavigateToComingSoon,
+  onNavigateToSupport,
   onLogout,
 }: SettingsPageProps) {
   const settingsOptions = [
@@ -86,7 +88,7 @@ export default function SettingsPage({
     } else if (optionId === "notifications") {
       onNavigateToComingSoon("보호자 알림");
     } else if (optionId === "support") {
-      onNavigateToComingSoon("고객센터");
+      onNavigateToSupport();
     } else {
       // For other options, just log for now
       console.log(`Clicked: ${optionId}`);

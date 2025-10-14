@@ -8,6 +8,7 @@ import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
 import MyActivityPage from "./MyActivityPage";
 import ComingSoonPage from "./ComingSoonPage";
+import SupportPage from "./SupportPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -19,6 +20,7 @@ export default function Index() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
   const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
+  const [showSupport, setShowSupport] = useState<boolean>(false);
   const [comingSoonFeature, setComingSoonFeature] = useState<string>("");
   const navigate = useNavigate();
 
@@ -160,6 +162,16 @@ export default function Index() {
     setShowSettings(true);
   };
 
+  const handleNavigateToSupport = () => {
+    setShowSupport(true);
+    setShowSettings(false);
+  };
+
+  const handleBackFromSupport = () => {
+    setShowSupport(false);
+    setShowSettings(true);
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -177,7 +189,9 @@ export default function Index() {
   // Render appropriate page based on authentication status and call state
   return (
     <div className="max-w-md mx-auto">
-      {!isLoggedIn ? null : showComingSoon ? (
+      {!isLoggedIn ? null : showSupport ? (
+        <SupportPage onBack={handleBackFromSupport} />
+      ) : showComingSoon ? (
         <ComingSoonPage
           featureName={comingSoonFeature}
           onBack={handleBackFromComingSoon}
@@ -190,6 +204,7 @@ export default function Index() {
           onNavigateToActivity={handleNavigateToActivity}
           onNavigateToProfileEdit={handleNavigateToProfileEdit}
           onNavigateToComingSoon={handleNavigateToComingSoon}
+          onNavigateToSupport={handleNavigateToSupport}
           onLogout={handleLogout}
         />
       ) : callState === "connecting" ? (
