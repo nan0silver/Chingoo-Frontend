@@ -71,16 +71,22 @@ export default function HomePage({
     if (!selectedCategory || isStartingMatching) return;
 
     try {
-      console.log("🏠 HomePage: handleStartCall 호출됨");
-      console.log("🏠 선택된 카테고리:", selectedCategory);
+      if (import.meta.env.DEV) {
+        console.log("🏠 HomePage: handleStartCall 호출됨");
+        console.log("🏠 선택된 카테고리:", selectedCategory);
+      }
       setIsStartingMatching(true);
 
       // 실제 매칭 API 호출
-      console.log("🏠 실제 매칭 시작");
+      if (import.meta.env.DEV) {
+        console.log("🏠 실제 매칭 시작");
+      }
       await startMatching({ category_id: parseInt(selectedCategory) });
 
       // 매칭 성공 시 연결 페이지로 이동
-      console.log("🏠 ConnectingCallPage로 이동");
+      if (import.meta.env.DEV) {
+        console.log("🏠 ConnectingCallPage로 이동");
+      }
       navigate("/connecting-call");
     } catch (error) {
       console.error("🏠 매칭 시작 실패:", error);

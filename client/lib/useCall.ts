@@ -27,9 +27,11 @@ export const useCall = () => {
     clearPartner,
   } = useCallStore();
 
-  // 디버깅: partner 정보 변경 시에만 로그 출력
+  // 디버깅: partner 정보 변경 시에만 로그 출력 (개발 환경에서만)
   useEffect(() => {
-    console.log("🎣 useCall 훅 - partner 정보:", partner);
+    if (import.meta.env.DEV) {
+      console.log("🎣 useCall 훅 - partner 정보:", partner);
+    }
   }, [partner]);
 
   const agoraService = getAgoraService();
@@ -63,41 +65,50 @@ export const useCall = () => {
         // Agora 콜백 설정
         const agoraCallbacks: AgoraCallbacks = {
           onConnectionStateChange: (state) => {
-            console.log("Agora 연결 상태 변경:", state);
+            if (import.meta.env.DEV) {
+              console.log("Agora 연결 상태 변경:", state);
+            }
             updateAgoraState(agoraService.getCallState());
           },
           onUserJoined: (userId) => {
-            console.log("사용자 입장:", userId);
+            if (import.meta.env.DEV) {
+              console.log("사용자 입장:", userId);
+            }
           },
           onUserLeft: (userId) => {
-            console.log("사용자 퇴장:", userId);
+            if (import.meta.env.DEV) {
+              console.log("사용자 퇴장:", userId);
+            }
 
             // 현재 상태를 직접 가져와서 클로저 문제 해결
             const currentState = useCallStore.getState();
-            console.log("🔍 현재 partner 정보:", currentState.partner);
-            console.log("🔍 퇴장한 userId:", userId);
+            if (import.meta.env.DEV) {
+              console.log("🔍 현재 partner 정보:", currentState.partner);
+              console.log("🔍 퇴장한 userId:", userId);
+            }
 
             // 상대방이 퇴장한 경우 통화 종료 처리
             if (
               currentState.partner?.id &&
               String(userId) === String(currentState.partner.id)
             ) {
-              console.log("📞 상대방이 퇴장했습니다 - 통화 종료 처리 시작");
+              if (import.meta.env.DEV) {
+                console.log("📞 상대방이 퇴장했습니다 - 통화 종료 처리 시작");
+              }
 
               // 상대방 퇴장 시에도 WebSocket 알림 전송 (상대방이 예상치 못하게 퇴장한 경우)
               if (currentState.callId && currentState.partner.id) {
                 if (import.meta.env.DEV) {
-                  console.log("📡 상대방 퇴장으로 인한 WebSocket 알림 전송:", {
-                    callId: currentState.callId,
-                    partnerId: currentState.partner.id,
-                  });
+                  console.log("📡 상대방 퇴장으로 인한 WebSocket 알림 전송");
                 }
                 try {
                   webSocketService.sendCallEndNotification(
                     currentState.callId,
                     currentState.partner.id,
                   );
-                  console.log("✅ 상대방 퇴장 WebSocket 알림 전송 성공");
+                  if (import.meta.env.DEV) {
+                    console.log("✅ 상대방 퇴장 WebSocket 알림 전송 성공");
+                  }
                 } catch (wsError) {
                   console.error(
                     "❌ 상대방 퇴장 WebSocket 알림 전송 실패:",
@@ -113,26 +124,38 @@ export const useCall = () => {
 
               // 통화 상태 초기화
               endCall();
-              console.log("📞 상대방 퇴장으로 인한 통화 종료 처리 완료");
+              if (import.meta.env.DEV) {
+                console.log("📞 상대방 퇴장으로 인한 통화 종료 처리 완료");
+              }
             } else {
-              console.log("⚠️ partner 정보가 없거나 다른 사용자 퇴장 - 무시");
+              if (import.meta.env.DEV) {
+                console.log("⚠️ partner 정보가 없거나 다른 사용자 퇴장 - 무시");
+              }
             }
           },
           onAudioTrackSubscribed: (userId, audioTrack) => {
-            console.log("오디오 트랙 구독:", userId);
+            if (import.meta.env.DEV) {
+              console.log("오디오 트랙 구독:", userId);
+            }
             updateAgoraState(agoraService.getCallState());
           },
           onAudioTrackUnsubscribed: (userId) => {
-            console.log("오디오 트랙 구독 해제:", userId);
+            if (import.meta.env.DEV) {
+              console.log("오디오 트랙 구독 해제:", userId);
+            }
             updateAgoraState(agoraService.getCallState());
           },
           onCallStarted: () => {
-            console.log("Agora 통화 시작");
+            if (import.meta.env.DEV) {
+              console.log("Agora 통화 시작");
+            }
             updateConnectingState(false);
             updateAgoraState(agoraService.getCallState());
           },
           onCallEnded: () => {
-            console.log("Agora 통화 종료");
+            if (import.meta.env.DEV) {
+              console.log("Agora 통화 종료");
+            }
             // onCallEnded는 Agora SDK에서 호출되는 콜백이므로
             // 여기서는 단순히 상태만 초기화하고 WebSocket 알림은 handleEndCall에서 처리
             endCall();
@@ -190,10 +213,14 @@ export const useCall = () => {
    */
   const handleEndCall = useCallback(async () => {
     try {
-      console.log("통화 종료 요청");
+      if (import.meta.env.DEV) {
+        console.log("통화 종료 요청");
+      }
 
       if (!callId) {
-        console.log("❌ callId가 없어 통화 종료 불가");
+        if (import.meta.env.DEV) {
+          console.log("❌ callId가 없어 통화 종료 불가");
+        }
         return;
       }
 
@@ -201,52 +228,74 @@ export const useCall = () => {
       const currentPartner = partner;
 
       // 1. Agora 연결 해제
-      console.log("📞 1. Agora 채널에서 퇴장 시작");
+      if (import.meta.env.DEV) {
+        console.log("📞 1. Agora 채널에서 퇴장 시작");
+      }
       await agoraService.leaveChannel();
-      console.log("✅ 1. Agora 채널 퇴장 완료");
+      if (import.meta.env.DEV) {
+        console.log("✅ 1. Agora 채널 퇴장 완료");
+      }
 
       // 2. 채널 나가기 API 호출
-      console.log("📡 2. 백엔드 채널 나가기 API 호출:", callId);
+      if (import.meta.env.DEV) {
+        console.log("📡 2. 백엔드 채널 나가기 API 호출");
+      }
       try {
         // 토큰 설정 (갱신된 토큰 포함)
         const { getStoredToken } = await import("./auth");
         const token = getStoredToken();
         if (token) {
           matchingApiService.setToken(token);
-          console.log("🔑 matchingApiService에 토큰 설정 완료");
+          if (import.meta.env.DEV) {
+            console.log("🔑 matchingApiService에 토큰 설정 완료");
+          }
         } else {
-          console.warn("⚠️ 토큰이 없어 API 호출을 건너뜁니다");
+          if (import.meta.env.DEV) {
+            console.warn("⚠️ 토큰이 없어 API 호출을 건너뜁니다");
+          }
         }
 
         await matchingApiService.leaveChannel(callId);
-        console.log("✅ 2. 채널 나가기 API 호출 성공");
+        if (import.meta.env.DEV) {
+          console.log("✅ 2. 채널 나가기 API 호출 성공");
+        }
       } catch (apiError) {
         console.error("❌ 2. 채널 나가기 API 호출 실패:", apiError);
         // API 호출 실패해도 통화 종료는 계속 진행
       }
 
       // 3. 통화 종료 API 호출
-      console.log("📡 3. 백엔드 통화 종료 API 호출:", callId);
+      if (import.meta.env.DEV) {
+        console.log("📡 3. 백엔드 통화 종료 API 호출");
+      }
       try {
         // 토큰 설정 (갱신된 토큰 포함)
         const { getStoredToken } = await import("./auth");
         const token = getStoredToken();
         if (token) {
           matchingApiService.setToken(token);
-          console.log("🔑 matchingApiService에 토큰 설정 완료");
+          if (import.meta.env.DEV) {
+            console.log("🔑 matchingApiService에 토큰 설정 완료");
+          }
         } else {
-          console.warn("⚠️ 토큰이 없어 API 호출을 건너뜁니다");
+          if (import.meta.env.DEV) {
+            console.warn("⚠️ 토큰이 없어 API 호출을 건너뜁니다");
+          }
         }
 
         await matchingApiService.endCall(callId);
-        console.log("✅ 3. 통화 종료 API 호출 성공");
+        if (import.meta.env.DEV) {
+          console.log("✅ 3. 통화 종료 API 호출 성공");
+        }
       } catch (apiError) {
         // 409 Conflict (이미 종료된 통화)는 정상적인 상황으로 처리
         if (
           apiError instanceof Error &&
           apiError.message.includes("이미 종료된 통화")
         ) {
-          console.log("ℹ️ 통화가 이미 종료됨 - 정상적인 상황");
+          if (import.meta.env.DEV) {
+            console.log("ℹ️ 통화가 이미 종료됨 - 정상적인 상황");
+          }
         } else {
           console.error("❌ 3. 통화 종료 API 호출 실패:", apiError);
         }
@@ -256,16 +305,16 @@ export const useCall = () => {
       // 4. 상대방에게 통화 종료 WebSocket 알림 전송 (저장된 partner 정보 사용)
       if (currentPartner?.id) {
         if (import.meta.env.DEV) {
-          console.log("📡 상대방에게 통화 종료 알림 전송:", {
-            callId,
-            partnerId: currentPartner.id,
-          });
+          console.log("📡 상대방에게 통화 종료 알림 전송");
         }
 
         // WebSocket 연결 상태 확인
         const wsConnectionState = webSocketService.getConnectionState();
         if (import.meta.env.DEV) {
-          console.log("🔍 WebSocket 연결 상태:", wsConnectionState);
+          console.log(
+            "🔍 WebSocket 연결 상태:",
+            wsConnectionState.isConnected ? "연결됨" : "연결 안됨",
+          );
         }
 
         if (!wsConnectionState.isConnected) {
@@ -273,15 +322,18 @@ export const useCall = () => {
         } else {
           try {
             webSocketService.sendCallEndNotification(callId, currentPartner.id);
-            console.log("✅ 통화 종료 WebSocket 알림 전송 성공");
+            if (import.meta.env.DEV) {
+              console.log("✅ 통화 종료 WebSocket 알림 전송 성공");
+            }
           } catch (wsError) {
             console.error("❌ 통화 종료 WebSocket 알림 전송 실패:", wsError);
             // WebSocket 전송 실패해도 통화 종료는 계속 진행
           }
         }
       } else {
-        console.log("⚠️ partner 정보가 없어 WebSocket 알림 전송 건너뜀");
-        console.log("🔍 currentPartner:", currentPartner);
+        if (import.meta.env.DEV) {
+          console.log("⚠️ partner 정보가 없어 WebSocket 알림 전송 건너뜀");
+        }
       }
 
       // 5. 통화 상태 초기화
@@ -289,9 +341,13 @@ export const useCall = () => {
 
       // 6. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
       agoraService.setCallbacks({});
-      console.log("✅ Agora 콜백 정리 완료");
+      if (import.meta.env.DEV) {
+        console.log("✅ Agora 콜백 정리 완료");
+      }
 
-      console.log("✅ 통화 종료 완료");
+      if (import.meta.env.DEV) {
+        console.log("✅ 통화 종료 완료");
+      }
     } catch (error) {
       console.error("통화 종료 실패:", error);
       setError(
@@ -371,27 +427,37 @@ export const useCall = () => {
    */
   const handleCallEndNotification = useCallback(
     (notification: any) => {
-      console.log("🔔 useCall - 통화 종료 알림 수신:", notification);
-      console.log("🔔 현재 callId:", callId);
-      console.log("🔔 알림 callId:", notification.callId);
+      if (import.meta.env.DEV) {
+        console.log("🔔 useCall - 통화 종료 알림 수신");
+        console.log("🔔 현재 callId:", callId);
+        console.log("🔔 알림 callId:", notification.callId);
+      }
 
       // 상대방이 통화를 종료한 경우 처리
       if (notification.type === "call_end" && notification.callId === callId) {
-        console.log("📞 상대방이 통화를 종료했습니다 - 처리 시작");
+        if (import.meta.env.DEV) {
+          console.log("📞 상대방이 통화를 종료했습니다 - 처리 시작");
+        }
 
         // Agora 채널에서 퇴장 (에러 무시)
         agoraService.leaveChannel().catch((error) => {
-          console.log(
-            "Agora 채널 퇴장 중 에러 (정상적인 상황일 수 있음):",
-            error,
-          );
+          if (import.meta.env.DEV) {
+            console.log(
+              "Agora 채널 퇴장 중 에러 (정상적인 상황일 수 있음):",
+              error,
+            );
+          }
         });
 
         // 통화 상태 초기화
         endCall();
-        console.log("📞 통화 종료 처리 완료");
+        if (import.meta.env.DEV) {
+          console.log("📞 통화 종료 처리 완료");
+        }
       } else {
-        console.log("📞 통화 종료 알림이지만 현재 통화와 다름 - 무시");
+        if (import.meta.env.DEV) {
+          console.log("📞 통화 종료 알림이지만 현재 통화와 다름 - 무시");
+        }
       }
     },
     [callId, agoraService, endCall],
@@ -414,12 +480,16 @@ export const useCall = () => {
    * WebSocket 통화 종료 알림 구독
    */
   useEffect(() => {
-    console.log("🔔 useCall - 통화 종료 알림 콜백 설정");
+    if (import.meta.env.DEV) {
+      console.log("🔔 useCall - 통화 종료 알림 콜백 설정");
+    }
     // 통화 종료 알림 콜백 설정
     webSocketService.onCallEndNotificationCallback(handleCallEndNotification);
 
     return () => {
-      console.log("🔔 useCall - 통화 종료 알림 콜백 정리");
+      if (import.meta.env.DEV) {
+        console.log("🔔 useCall - 통화 종료 알림 콜백 정리");
+      }
       // 정리 함수는 필요시에만 구현
     };
   }, [webSocketService, handleCallEndNotification]);

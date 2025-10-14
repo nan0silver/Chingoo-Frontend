@@ -23,24 +23,30 @@ export default function CallConnectedPage({
     setError,
   } = useCall();
 
-  // 디버깅: partner 정보 확인
+  // 디버깅: partner 정보 확인 (개발 환경만)
   useEffect(() => {
-    console.log("🔍 CallConnectedPage - partner 정보:", partner);
+    if (import.meta.env.DEV) {
+      console.log("🔍 CallConnectedPage - partner 정보:", partner);
 
-    // WebSocket 구독 상태 확인
-    const webSocketService = getWebSocketService();
-    console.log(
-      "🔍 CallConnectedPage - WebSocket 구독 상태:",
-      webSocketService.getSubscriptionStatus(),
-    );
+      // WebSocket 구독 상태 확인
+      const webSocketService = getWebSocketService();
+      console.log(
+        "🔍 CallConnectedPage - WebSocket 구독 상태:",
+        webSocketService.getSubscriptionStatus(),
+      );
+    }
   }, [partner]);
 
   // 통화 종료 감지 - isInCall이 false가 되면 평가 화면으로 이동
   useEffect(() => {
-    console.log("🔍 CallConnectedPage - isInCall 상태:", isInCall);
+    if (import.meta.env.DEV) {
+      console.log("🔍 CallConnectedPage - isInCall 상태:", isInCall);
+    }
 
     if (!isInCall && partner) {
-      console.log("📞 통화가 종료됨 - 평가 화면으로 이동");
+      if (import.meta.env.DEV) {
+        console.log("📞 통화가 종료됨 - 평가 화면으로 이동");
+      }
       // 통화가 종료되면 평가 화면으로 이동 (partner 정보가 있을 때만)
       setTimeout(() => {
         onEndCall();
@@ -59,11 +65,17 @@ export default function CallConnectedPage({
 
   // 통화 종료 핸들러
   const handleEndCallClick = async () => {
-    console.log("🔴 통화 종료 버튼 클릭됨 - handleEndCallClick 시작");
+    if (import.meta.env.DEV) {
+      console.log("🔴 통화 종료 버튼 클릭됨 - handleEndCallClick 시작");
+    }
     try {
-      console.log("🔴 handleEndCall 호출 전");
+      if (import.meta.env.DEV) {
+        console.log("🔴 handleEndCall 호출 전");
+      }
       await handleEndCall();
-      console.log("🔴 handleEndCall 호출 후");
+      if (import.meta.env.DEV) {
+        console.log("🔴 handleEndCall 호출 후");
+      }
       onEndCall();
     } catch (error) {
       console.error("통화 종료 실패:", error);
@@ -72,7 +84,9 @@ export default function CallConnectedPage({
         error instanceof Error &&
         error.message.includes("이미 종료된 통화")
       ) {
-        console.log("통화가 이미 종료됨 - 평가 화면으로 이동");
+        if (import.meta.env.DEV) {
+          console.log("통화가 이미 종료됨 - 평가 화면으로 이동");
+        }
         onEndCall();
       } else {
         setError("통화 종료에 실패했습니다.");

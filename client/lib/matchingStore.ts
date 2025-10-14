@@ -100,14 +100,18 @@ export const useMatchingStore = create<MatchingStore>()(
         // 매칭 시작
         startMatching: async (request: MatchingRequest) => {
           try {
-            console.log("🎯 startMatching 함수 호출됨:", request);
+            if (import.meta.env.DEV) {
+              console.log("🎯 startMatching 함수 호출됨:", request);
+            }
             set({
               error: null,
               status: "waiting",
             });
 
             const token = getStoredToken();
-            console.log("🔑 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
+            if (import.meta.env.DEV) {
+              console.log("🔑 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
+            }
             if (!token) {
               throw new Error("인증 토큰이 필요합니다.");
             }
@@ -116,9 +120,13 @@ export const useMatchingStore = create<MatchingStore>()(
             matchingApiService.setToken(token);
 
             // 매칭 참가 요청
-            console.log("📡 매칭 API 호출 시작");
+            if (import.meta.env.DEV) {
+              console.log("📡 매칭 API 호출 시작");
+            }
             const response = await matchingApiService.joinMatching(request);
-            console.log("✅ 매칭 API 응답:", response);
+            if (import.meta.env.DEV) {
+              console.log("✅ 매칭 API 응답:", response);
+            }
 
             set({
               matchingId: response.queue_id,
@@ -137,38 +145,62 @@ export const useMatchingStore = create<MatchingStore>()(
             });
 
             // WebSocket 연결 시도 (실패해도 매칭은 계속 진행)
-            console.log("🔍 WebSocket 연결 상태 확인:", get().connectionState);
+            if (import.meta.env.DEV) {
+              console.log(
+                "🔍 WebSocket 연결 상태 확인:",
+                get().connectionState,
+              );
+            }
 
             // WebSocket 서비스의 실제 연결 상태도 확인
             const wsService = getWebSocketService();
             const actualWsState = wsService.getConnectionState();
-            console.log("🔍 실제 WebSocket 상태:", actualWsState);
+            if (import.meta.env.DEV) {
+              console.log("🔍 실제 WebSocket 상태:", actualWsState);
+            }
 
             if (
               !get().connectionState.isConnected ||
               !actualWsState.isConnected
             ) {
-              console.log("🚀 WebSocket 연결 시도 시작");
+              if (import.meta.env.DEV) {
+                console.log("🚀 WebSocket 연결 시도 시작");
+              }
               try {
                 await get().connectWebSocket();
-                console.log("✅ WebSocket 연결 성공");
+                if (import.meta.env.DEV) {
+                  console.log("✅ WebSocket 연결 성공");
+                }
               } catch (wsError) {
-                console.warn("❌ WebSocket 연결 실패, 폴링으로 대체:", wsError);
+                if (import.meta.env.DEV) {
+                  console.warn(
+                    "❌ WebSocket 연결 실패, 폴링으로 대체:",
+                    wsError,
+                  );
+                  console.log("🔄 폴링 모드 시작 (3초마다 상태 확인)");
+                }
                 // ⚠️ WebSocket 연결 실패 시 폴링으로 대체
-                console.log("🔄 폴링 모드 시작 (3초마다 상태 확인)");
                 // WebSocket 연결 실패해도 매칭은 계속 진행
               }
             } else {
-              console.log("ℹ️ WebSocket 이미 연결됨");
+              if (import.meta.env.DEV) {
+                console.log("ℹ️ WebSocket 이미 연결됨");
+              }
               // 연결되어 있지만 구독이 안되어 있을 수 있으므로 구독 상태 확인
               const subscriptionStatus = wsService.getSubscriptionStatus();
-              console.log("🔍 구독 상태 확인:", subscriptionStatus);
+              if (import.meta.env.DEV) {
+                console.log("🔍 구독 상태 확인:", subscriptionStatus);
+              }
               if (Object.keys(subscriptionStatus).length === 0) {
-                console.log("⚠️ 구독이 없음 - WebSocket 재연결 시도");
+                if (import.meta.env.DEV) {
+                  console.log("⚠️ 구독이 없음 - WebSocket 재연결 시도");
+                }
                 try {
                   await get().connectWebSocket();
                 } catch (wsError) {
-                  console.warn("❌ 재연결 실패, 폴링으로 대체:", wsError);
+                  if (import.meta.env.DEV) {
+                    console.warn("❌ 재연결 실패, 폴링으로 대체:", wsError);
+                  }
                 }
               }
             }
@@ -264,9 +296,13 @@ export const useMatchingStore = create<MatchingStore>()(
         // WebSocket 연결
         connectWebSocket: async () => {
           try {
-            console.log("🔌 connectWebSocket 함수 호출됨");
+            if (import.meta.env.DEV) {
+              console.log("🔌 connectWebSocket 함수 호출됨");
+            }
             const token = getStoredToken();
-            console.log("🔌 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
+            if (import.meta.env.DEV) {
+              console.log("🔌 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
+            }
             if (!token) {
               throw new Error("인증 토큰이 필요합니다.");
             }
@@ -279,31 +315,45 @@ export const useMatchingStore = create<MatchingStore>()(
               },
             });
 
-            console.log("🔌 WebSocket 콜백 설정 시작");
+            if (import.meta.env.DEV) {
+              console.log("🔌 WebSocket 콜백 설정 시작");
+            }
             // WebSocket 서비스 콜백 설정
             webSocketService.onConnectionStateChangeCallback((state) => {
-              console.log("🔌 연결 상태 변경:", state);
+              if (import.meta.env.DEV) {
+                console.log("🔌 연결 상태 변경:", state);
+              }
               get().setConnectionState(state);
             });
 
             webSocketService.onMatchingNotificationCallback((notification) => {
-              console.log("🔌 매칭 알림 수신:", notification);
+              if (import.meta.env.DEV) {
+                console.log("🔌 매칭 알림 수신:", notification);
+              }
               get().handleMatchingNotification(notification);
             });
 
             webSocketService.onCallStartNotificationCallback((notification) => {
-              console.log("🔌 통화 시작 알림 수신:", notification);
+              if (import.meta.env.DEV) {
+                console.log("🔌 통화 시작 알림 수신:", notification);
+              }
               get().handleCallStartNotification(notification);
             });
 
             webSocketService.onErrorCallback((error) => {
-              console.log("🔌 WebSocket 에러:", error);
+              if (import.meta.env.DEV) {
+                console.log("🔌 WebSocket 에러:", error);
+              }
               get().setError(error);
             });
 
-            console.log("🔌 WebSocket 연결 시도");
+            if (import.meta.env.DEV) {
+              console.log("🔌 WebSocket 연결 시도");
+            }
             await webSocketService.connect(token);
-            console.log("🔌 WebSocket 연결 완료");
+            if (import.meta.env.DEV) {
+              console.log("🔌 WebSocket 연결 완료");
+            }
           } catch (error) {
             console.error("🔌 connectWebSocket 에러:", error);
             const errorMessage =

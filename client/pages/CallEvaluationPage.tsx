@@ -24,10 +24,12 @@ export default function CallEvaluationPage({
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
 
-  // 디버깅: partner 정보 및 callId 확인
+  // 디버깅: partner 정보 및 callId 확인 (개발 환경만)
   useEffect(() => {
-    console.log("🔍 CallEvaluationPage - partner 정보:", partner);
-    console.log("🔍 CallEvaluationPage - callId:", callId);
+    if (import.meta.env.DEV) {
+      console.log("🔍 CallEvaluationPage - partner 정보:", partner);
+      console.log("🔍 CallEvaluationPage - callId:", callId);
+    }
   }, [partner, callId]);
 
   // 평가 제출 함수
@@ -58,20 +60,26 @@ export default function CallEvaluationPage({
       const token = getStoredToken();
       if (token) {
         matchingApiService.setToken(token);
-        console.log("🔑 matchingApiService에 토큰 설정 완료");
+        if (import.meta.env.DEV) {
+          console.log("🔑 matchingApiService에 토큰 설정 완료");
+        }
       } else {
         throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
       }
 
       await matchingApiService.submitEvaluation(evaluationData);
-      console.log("✅ 평가 제출 성공");
+      if (import.meta.env.DEV) {
+        console.log("✅ 평가 제출 성공");
+      }
 
       // 성공 모달 표시
       setShowSuccessModal(true);
 
       // 평가 제출 후 partner 정보 삭제
       clearPartner();
-      console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
+      if (import.meta.env.DEV) {
+        console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
+      }
 
       // 2초 후 홈페이지로 이동
       setTimeout(() => {
@@ -241,7 +249,9 @@ export default function CallEvaluationPage({
               onClick={() => {
                 // 다시 통화하기 전에 partner 정보 삭제
                 clearPartner();
-                console.log("✅ 다시 통화하기 - partner 정보 삭제 완료");
+                if (import.meta.env.DEV) {
+                  console.log("✅ 다시 통화하기 - partner 정보 삭제 완료");
+                }
                 onCallAgain();
               }}
               className="flex-1 h-14 border border-orange-500 rounded-lg flex items-center justify-center bg-white"
@@ -256,7 +266,9 @@ export default function CallEvaluationPage({
               onClick={() => {
                 // 관심사 선택 전에 partner 정보 삭제
                 clearPartner();
-                console.log("✅ 관심사 선택 - partner 정보 삭제 완료");
+                if (import.meta.env.DEV) {
+                  console.log("✅ 관심사 선택 - partner 정보 삭제 완료");
+                }
                 onSelectInterests();
               }}
               className="flex-1 h-14 bg-orange-500 rounded-lg flex items-center justify-center"

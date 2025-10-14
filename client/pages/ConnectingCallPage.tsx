@@ -42,13 +42,14 @@ export default function ConnectingCallPage({
   // 통화 시작 알림 핸들러 (useCallback으로 메모이제이션)
   const handleCallStartNotification = useCallback(
     (notification: any) => {
-      console.log(
-        "🔔 ConnectingCallPage에서 통화 시작 알림 수신:",
-        notification,
-      );
+      if (import.meta.env.DEV) {
+        console.log("🔔 ConnectingCallPage에서 통화 시작 알림 수신");
+      }
 
       // useCall의 handleCallStart 함수 호출
-      console.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
+      if (import.meta.env.DEV) {
+        console.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
+      }
       handleCallStart(notification);
     },
     [handleCallStart],
@@ -56,19 +57,25 @@ export default function ConnectingCallPage({
 
   // 매칭 알림 핸들러 (useCallback으로 메모이제이션)
   const handleMatchingNotification = useCallback((notification: any) => {
-    console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
+    if (import.meta.env.DEV) {
+      console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
+    }
   }, []);
 
   // WebSocket 알림 수신 추적
   useEffect(() => {
-    console.log("🔧 ConnectingCallPage - WebSocket 콜백 등록");
+    if (import.meta.env.DEV) {
+      console.log("🔧 ConnectingCallPage - WebSocket 콜백 등록");
+    }
     webSocketService.onCallStartNotificationCallback(
       handleCallStartNotification,
     );
     webSocketService.onMatchingNotificationCallback(handleMatchingNotification);
 
     return () => {
-      console.log("🔧 ConnectingCallPage - 컴포넌트 언마운트");
+      if (import.meta.env.DEV) {
+        console.log("🔧 ConnectingCallPage - 컴포넌트 언마운트");
+      }
       // 정리 함수는 필요시에만 구현
     };
   }, [

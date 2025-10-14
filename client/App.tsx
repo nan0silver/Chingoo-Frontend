@@ -37,10 +37,14 @@ const AppRoutes = () => {
   // 앱 초기화: refresh token으로 access token 발급
   useEffect(() => {
     const initialize = async () => {
-      console.log("🚀 앱 시작: 인증 초기화 중...");
+      if (import.meta.env.DEV) {
+        console.log("🚀 앱 시작: 인증 초기화 중...");
+      }
       await initializeAuth();
       setIsAuthInitialized(true);
-      console.log("✅ 인증 초기화 완료");
+      if (import.meta.env.DEV) {
+        console.log("✅ 인증 초기화 완료");
+      }
     };
 
     initialize();
@@ -54,11 +58,15 @@ const AppRoutes = () => {
     if (previousStatus !== null && previousStatus !== status) {
       if (status === "matched" && matchingId) {
         // 매칭 성공 시 자동으로 통화 화면으로 이동 (matchingId가 있어야 함)
-        console.log("매칭 성공, 통화 화면으로 이동:", { status, matchingId });
+        if (import.meta.env.DEV) {
+          console.log("매칭 성공, 통화 화면으로 이동:", { status, matchingId });
+        }
         navigate("/call-connected");
       } else if (status === "cancelled" || status === "timeout") {
         // 매칭 취소 또는 타임아웃 시 홈으로 이동
-        console.log("매칭 취소/타임아웃, 홈으로 이동:", { status });
+        if (import.meta.env.DEV) {
+          console.log("매칭 취소/타임아웃, 홈으로 이동:", { status });
+        }
         navigate("/");
       }
     }

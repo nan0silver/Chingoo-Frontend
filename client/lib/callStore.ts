@@ -97,17 +97,15 @@ export const useCallStore = create<CallStore>((set, get) => ({
   ...initialState,
 
   startCall: (notification: CallStartNotification) => {
-    console.log("🏪 callStore.startCall 호출 - notification:", notification);
+    if (import.meta.env.DEV) {
+      console.log("🏪 callStore.startCall 호출");
+    }
 
     // 백엔드 데이터를 프론트엔드 형식으로 변환
     const partner = {
       id: String(notification.partnerId), // number를 string으로 변환
       nickname: notification.partnerNickname,
     };
-
-    console.log("🏪 변환된 partner 객체:", partner);
-    console.log("🏪 partnerId:", notification.partnerId);
-    console.log("🏪 partnerNickname:", notification.partnerNickname);
 
     set({
       callId: String(notification.callId), // number를 string으로 변환
@@ -119,11 +117,15 @@ export const useCallStore = create<CallStore>((set, get) => ({
       error: null,
     });
 
-    console.log("🏪 callStore 상태 업데이트 완료");
+    if (import.meta.env.DEV) {
+      console.log("🏪 callStore 상태 업데이트 완료");
+    }
   },
 
   endCall: () => {
-    console.log("통화 종료");
+    if (import.meta.env.DEV) {
+      console.log("통화 종료");
+    }
     const currentState = get();
 
     set({
@@ -165,7 +167,9 @@ export const useCallStore = create<CallStore>((set, get) => ({
   },
 
   clearPartner: () => {
-    console.log("partner 정보 및 callId 삭제");
+    if (import.meta.env.DEV) {
+      console.log("partner 정보 및 callId 삭제");
+    }
     set({ partner: null, callId: null });
   },
 }));

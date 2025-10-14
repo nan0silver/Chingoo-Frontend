@@ -91,7 +91,9 @@ export default function SettingsPage({
       onNavigateToSupport();
     } else {
       // For other options, just log for now
-      console.log(`Clicked: ${optionId}`);
+      if (import.meta.env.DEV) {
+        console.log(`Clicked: ${optionId}`);
+      }
     }
   };
 
