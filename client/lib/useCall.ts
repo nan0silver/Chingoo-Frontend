@@ -346,14 +346,17 @@ export const useCall = () => {
         }
       }
 
-      // 5. 통화 상태 초기화
-      endCall();
-
-      // 6. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
+      // 5. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
       agoraService.setCallbacks({});
       if (import.meta.env.DEV) {
         console.log("✅ Agora 콜백 정리 완료");
       }
+
+      // 6. 통화 상태 초기화
+      endCall();
+
+      // 7. 추가 대기 시간 (상태 정리 완료 보장)
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (import.meta.env.DEV) {
         console.log("✅ 통화 종료 완료");

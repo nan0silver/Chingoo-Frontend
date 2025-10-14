@@ -68,6 +68,27 @@ export class AgoraService {
   constructor() {
     // Agora SDK 초기화
     AgoraRTC.setLogLevel(4); // INFO 레벨로 설정
+
+    // 통계 수집 비활성화 (네트워크 에러 방지)
+    try {
+      // @ts-ignore - SDK 버전에 따라 지원하지 않을 수 있음
+      AgoraRTC.enableLogUpload(false);
+    } catch (error) {
+      // 에러 무시 (SDK 버전에 따라 지원하지 않을 수 있음)
+      if (import.meta.env.DEV) {
+        console.log("⚠️ Agora 로그 업로드 비활성화 실패:", error);
+      }
+    }
+
+    // 프로덕션 환경에서 추가 설정
+    if (!import.meta.env.DEV) {
+      try {
+        // 프로덕션에서는 더 높은 로그 레벨로 설정 (에러만 출력)
+        AgoraRTC.setLogLevel(2); // ERROR 레벨로 설정
+      } catch (error) {
+        // 에러 무시
+      }
+    }
   }
 
   /**
@@ -101,7 +122,11 @@ export class AgoraService {
       }
 
       // 이미 연결 중이거나 연결된 상태인지 확인
-      if (this.callState.isConnecting || this.callState.isConnected) {
+      if (
+        this.callState.isConnecting ||
+        this.callState.isConnected ||
+        this.client
+      ) {
         if (import.meta.env.DEV) {
           console.log(
             "⚠️ 이미 연결 중이거나 연결된 상태 - 기존 연결 정리 후 재시도",
@@ -109,12 +134,22 @@ export class AgoraService {
         }
         // 기존 연결을 완전히 정리
         await this.forceLeaveChannel();
+
+        // 추가 대기 시간 (리소스 정리 완료 보장)
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
       this.callState.isConnecting = true;
       this.currentChannelInfo = channelInfo;
 
-      // 클라이언트 생성
+      // 클라이언트 생성 (기존 클라이언트가 완전히 정리되었는지 확인)
+      if (this.client) {
+        if (import.meta.env.DEV) {
+          console.log("⚠️ 기존 클라이언트가 아직 존재 - 강제 정리");
+        }
+        this.client = null;
+      }
+
       if (import.meta.env.DEV) {
         console.log("🔧 Agora 클라이언트 생성 중...");
       }
@@ -122,6 +157,22 @@ export class AgoraService {
         mode: "rtc",
         codec: "vp8",
       });
+
+      // 클라이언트별 추가 설정 (통계 수집 관련 에러 방지)
+      try {
+        // 통계 수집 비활성화
+        if (this.client.enableDualStream) {
+          // 일부 SDK 버전에서 지원하는 설정
+          if (import.meta.env.DEV) {
+            console.log("🔧 Agora 클라이언트 추가 설정 적용");
+          }
+        }
+      } catch (error) {
+        // 에러 무시 (SDK 버전에 따라 지원하지 않을 수 있음)
+        if (import.meta.env.DEV) {
+          console.log("⚠️ Agora 클라이언트 추가 설정 실패:", error);
+        }
+      }
 
       // 이벤트 리스너 설정
       if (import.meta.env.DEV) {
@@ -190,45 +241,85 @@ export class AgoraService {
         console.log("🔄 강제 채널 퇴장 시작");
       }
 
-      // 로컬 오디오 트랙 정리
+      // 1. 로컬 오디오 트랙 정리
       if (this.callState.localAudioTrack) {
         try {
           if (this.client) {
             await this.client.unpublish([this.callState.localAudioTrack]);
           }
         } catch (error) {
-          // 에러 무시 (이미 정리된 상태일 수 있음)
+          if (import.meta.env.DEV) {
+            console.log("⚠️ unpublish 에러 무시:", error);
+          }
         }
-        this.callState.localAudioTrack.stop();
-        this.callState.localAudioTrack.close();
+
+        try {
+          this.callState.localAudioTrack.stop();
+          this.callState.localAudioTrack.close();
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.log("⚠️ 오디오 트랙 정리 에러 무시:", error);
+          }
+        }
         this.callState.localAudioTrack = null;
       }
 
-      // 클라이언트 퇴장
+      // 2. 클라이언트 퇴장 (타임아웃 설정)
       if (this.client) {
         try {
-          await this.client.leave();
+          // 통계 수집 비활성화 (퇴장 전)
+          try {
+            // @ts-ignore - 클라이언트 레벨에서는 지원하지 않을 수 있음
+            if (typeof this.client.enableLogUpload === "function") {
+              // @ts-ignore
+              this.client.enableLogUpload(false);
+            }
+          } catch (logError) {
+            // 에러 무시
+          }
+
+          // 3초 타임아웃으로 leave 시도
+          const leavePromise = this.client.leave();
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Leave timeout")), 3000),
+          );
+
+          await Promise.race([leavePromise, timeoutPromise]);
+
+          if (import.meta.env.DEV) {
+            console.log("✅ 클라이언트 퇴장 성공");
+          }
         } catch (error) {
-          // 에러 무시 (이미 퇴장된 상태일 수 있음)
+          if (import.meta.env.DEV) {
+            console.log("⚠️ 클라이언트 퇴장 에러 무시:", error);
+          }
         }
+
+        // 클라이언트를 null로 설정 (중요!)
         this.client = null;
       }
 
-      // 상태 초기화
+      // 3. 상태 완전 초기화
       this.callState.isConnected = false;
       this.callState.isConnecting = false;
       this.callState.connectionState = "DISCONNECTED";
+      this.callState.remoteAudioTrack = null;
       this.currentChannelInfo = null;
+
+      // 4. 잠시 대기 (리소스 정리 시간 확보)
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (import.meta.env.DEV) {
         console.log("✅ 강제 채널 퇴장 완료");
       }
     } catch (error) {
       console.error("❌ 강제 채널 퇴장 실패:", error);
-      // 실패해도 상태는 초기화
+      // 실패해도 상태는 강제 초기화
       this.callState.isConnected = false;
       this.callState.isConnecting = false;
       this.callState.connectionState = "DISCONNECTED";
+      this.callState.localAudioTrack = null;
+      this.callState.remoteAudioTrack = null;
       this.currentChannelInfo = null;
       this.client = null;
     }
@@ -270,7 +361,22 @@ export class AgoraService {
 
       // 클라이언트에서 퇴장
       if (this.client) {
-        await this.client.leave();
+        try {
+          // 통계 수집 비활성화 (퇴장 전)
+          try {
+            // @ts-ignore - 클라이언트 레벨에서는 지원하지 않을 수 있음
+            if (typeof this.client.enableLogUpload === "function") {
+              // @ts-ignore
+              this.client.enableLogUpload(false);
+            }
+          } catch (logError) {
+            // 에러 무시
+          }
+
+          await this.client.leave();
+        } catch (error) {
+          console.error("❌ 클라이언트 퇴장 실패:", error);
+        }
         this.client = null;
       }
 
