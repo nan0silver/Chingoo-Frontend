@@ -21,6 +21,7 @@ import SettingsPage from "./pages/SettingsPage";
 import AuthGuard from "./components/AuthGuard";
 import { useMatchingStore } from "./lib/matchingStore";
 import { CATEGORIES } from "@shared/api";
+import { initializeAuth } from "./lib/auth";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,19 @@ const AppRoutes = () => {
   const { categoryId, cancelMatching, resetMatching, status, matchingId } =
     useMatchingStore();
   const previousStatusRef = useRef<string | null>(null);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
+
+  // 앱 초기화: refresh token으로 access token 발급
+  useEffect(() => {
+    const initialize = async () => {
+      console.log("🚀 앱 시작: 인증 초기화 중...");
+      await initializeAuth();
+      setIsAuthInitialized(true);
+      console.log("✅ 인증 초기화 완료");
+    };
+
+    initialize();
+  }, []);
 
   // 매칭 상태 변화 감지하여 자동 페이지 이동
   useEffect(() => {
@@ -107,6 +121,18 @@ const AppRoutes = () => {
   const handleGoHome = () => {
     navigate("/");
   };
+
+  // 인증 초기화 중에는 로딩 화면 표시
+  if (!isAuthInitialized) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>

@@ -132,15 +132,20 @@ Spring Boot 서버와 연동하려면:
 2. **소셜 로그인 시작**: 사용자가 소셜 로그인 버튼 클릭
 3. **인증 페이지 리다이렉트**: 카카오/구글 인증 페이지로 이동
 4. **콜백 처리**: `POST /api/v1/auth/oauth/{provider}`로 인가 코드 전송
-5. **토큰 저장**: JWT 액세스/리프레시 토큰을 localStorage에 저장
+5. **토큰 저장**:
+   - Access Token은 메모리에만 저장 (XSS 공격 방어)
+   - Refresh Token은 HttpOnly 쿠키로 서버에서 관리
 6. **페이지 이동**: 사용자 상태에 따라 프로필 설정 또는 대시보드로 이동
 
 ### 보안 특징
 
+- **메모리 기반 토큰 관리**: Access Token을 메모리에만 저장하여 XSS 공격 방어
+- **자동 토큰 재발급**: 앱 부팅 시 refresh token으로 access token 자동 재발급
+- **API 인터셉터**: 401 에러 시 자동으로 토큰 갱신 후 재시도
 - **PKCE (Proof Key for Code Exchange)**: OAuth 2.0 보안 강화
 - **State 검증**: CSRF 공격 방지
 - **SessionStorage 활용**: 임시 OAuth 데이터 보안 저장
-- **토큰 자동 갱신**: 리프레시 토큰을 통한 자동 토큰 갱신
+- **HttpOnly 쿠키**: Refresh Token을 XSS/CSRF로부터 안전하게 보호
 
 ## 🚀 배포
 

@@ -24,13 +24,21 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 /**
  * 보안 설정 안내:
  *
- * 1. access_token: localStorage에 저장 (여러 탭/창에서 로그인 유지)
- *    - XSS 공격에 취약할 수 있으므로 외부 스크립트 로딩 시 주의 필요
- *    - CSP(Content Security Policy) 설정 권장
+ * 1. access_token: 메모리(in-memory)에만 저장 (XSS 공격 방어)
+ *    - 페이지 새로고침 시 refresh token으로 자동 재발급
+ *    - localStorage/sessionStorage에 저장하지 않음
  * 2. refresh_token: HttpOnly Secure SameSite=Strict 쿠키로 서버에서 설정 필요
  *    - XSS, CSRF 공격 방어
  *
  */
+
+/**
+ * 메모리 기반 토큰 저장소
+ */
+let inMemoryAccessToken: string | null = null;
+let tokenExpiresAt: number | null = null;
+let isRefreshingToken = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
 
 /**
  * OAuth 관련 상수
@@ -39,10 +47,61 @@ const OAUTH_STORAGE_KEYS = {
   STATE: "oauth_state",
   CODE_VERIFIER: "oauth_code_verifier",
   PROVIDER: "oauth_provider",
-  ACCESS_TOKEN: "access_token",
   USER_INFO: "user_info",
-  ACCESS_TOKEN_EXPIRES_AT: "access_token_expires_at",
 } as const;
+
+/**
+ * 메모리에 access token 저장
+ */
+const setInMemoryToken = (token: string, expiresIn?: number): void => {
+  inMemoryAccessToken = token;
+
+  if (expiresIn) {
+    const skewed = Math.max(0, expiresIn - 30); // 30초 여유
+    tokenExpiresAt = Date.now() + skewed * 1000;
+  }
+
+  logger.log("💾 Access token을 메모리에 저장 완료");
+};
+
+/**
+ * 메모리에서 access token 가져오기
+ */
+const getInMemoryToken = (): string | null => {
+  return inMemoryAccessToken;
+};
+
+/**
+ * 메모리에서 access token 삭제
+ */
+const clearInMemoryToken = (): void => {
+  inMemoryAccessToken = null;
+  tokenExpiresAt = null;
+  logger.log("🗑️ 메모리에서 access token 삭제 완료");
+};
+
+/**
+ * 토큰 만료 여부 확인
+ */
+const isTokenExpired = (): boolean => {
+  if (!tokenExpiresAt) return true;
+  return Date.now() >= tokenExpiresAt;
+};
+
+/**
+ * refresh 구독자 추가 (여러 요청이 동시에 refresh를 시도할 때 중복 방지)
+ */
+const subscribeTokenRefresh = (callback: (token: string) => void): void => {
+  refreshSubscribers.push(callback);
+};
+
+/**
+ * refresh 구독자들에게 새 토큰 전달
+ */
+const onTokenRefreshed = (token: string): void => {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+};
 
 /**
  * OAuth 설정 정보를 가져오는 함수
@@ -262,11 +321,8 @@ export const processSocialLogin = async (
     const result: OAuthLoginResponse = await response.json();
 
     // 토큰 저장
-    // access_token은 localStorage에 저장 (여러 탭/창에서 로그인 유지)
-    localStorage.setItem(
-      OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
-      result.data.access_token,
-    );
+    // access_token은 메모리에만 저장 (XSS 공격 방어)
+    setInMemoryToken(result.data.access_token, result.data.expires_in);
     // refresh_token은 서버에서 HttpOnly 쿠키로 설정됨
     // 프론트엔드에서는 저장하지 않음
 
@@ -279,13 +335,6 @@ export const processSocialLogin = async (
     localStorage.setItem(
       OAUTH_STORAGE_KEYS.USER_INFO,
       JSON.stringify(minimalUserInfo),
-    );
-
-    const skewed = Math.max(0, (result.data.expires_in ?? 0) - 30);
-    const expiresAt = Date.now() + skewed * 1000;
-    localStorage.setItem(
-      OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
-      String(expiresAt),
     );
 
     // sessionStorage 정리
@@ -302,14 +351,14 @@ export const processSocialLogin = async (
 
 /**
  * 저장된 토큰을 가져오는 함수
- * access_token: localStorage에서 조회 (여러 탭/창에서 로그인 유지)
+ * access_token: 메모리에서 조회
  * refresh_token: HttpOnly 쿠키에서 조회 (서버에서 설정됨)
  */
 export const getStoredToken = (
   tokenType: "access_token" | "refresh_token" = "access_token",
 ): string | null => {
   if (tokenType === "access_token") {
-    return localStorage.getItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+    return getInMemoryToken();
   } else {
     // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로
     // 프론트엔드에서는 직접 접근할 수 없음
@@ -410,10 +459,9 @@ export const logout = async (): Promise<void> => {
     // 서버 로그아웃 성공/실패와 관계없이 로컬 정리는 항상 수행
     try {
       // 토큰과 사용자 정보 삭제
-      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+      clearInMemoryToken(); // 메모리에서 access token 삭제
       // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로 프론트엔드에서 삭제 불가
       localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
-      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
 
       // 세션 스토리지도 정리 (OAuth 임시 데이터)
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
@@ -429,39 +477,19 @@ export const logout = async (): Promise<void> => {
 
 /**
  * 인증 상태를 확인하는 함수
- * 토큰 존재 여부와 만료 시간을 모두 확인
+ * 메모리에 토큰이 있으면 인증된 것으로 간주
+ * (토큰 만료 시 API 호출 시점에 자동으로 갱신됨)
  */
 export const isAuthenticated = (): boolean => {
-  const token = getStoredToken();
+  const token = getInMemoryToken();
+
   if (!token) {
     logger.log("인증 상태: 토큰 없음");
     return false;
   }
 
-  const expStr = localStorage.getItem(
-    OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
-  );
-
-  // expires_at이 없으면 토큰이 있다고 가정 (하위 호환성)
-  if (!expStr) {
-    logger.log("인증 상태: 토큰 있음, 만료 시간 정보 없음");
-    return true;
-  }
-
-  const now = Date.now();
-  const expiresAt = Number(expStr);
-  const valid = now < expiresAt;
-
-  if (!valid) {
-    logger.log("인증 상태: 토큰 만료됨 (하지만 토큰 갱신 가능)");
-    // 토큰이 만료되었어도 refresh_token으로 갱신 가능하므로 true 반환
-    // 실제 API 호출 시에 401 에러가 발생하면 그때 토큰 갱신을 시도함
-    return true;
-  } else {
-    logger.log("인증 상태: 유효한 토큰");
-  }
-
-  return valid;
+  logger.log("인증 상태: 토큰 존재");
+  return true;
 };
 
 /**
@@ -627,16 +655,58 @@ export const updateUserProfile = async (
 };
 
 /**
+ * 앱 초기화 시 토큰을 로드하는 함수
+ * refresh token(쿠키)을 사용하여 access token을 발급받아 메모리에 저장
+ */
+export const initializeAuth = async (): Promise<boolean> => {
+  try {
+    logger.log("🚀 앱 초기화: 인증 상태 확인...");
+
+    // 이미 메모리에 토큰이 있으면 스킵
+    if (getInMemoryToken()) {
+      logger.log("✅ 메모리에 토큰이 이미 존재 - 초기화 스킵");
+      return true;
+    }
+
+    // refresh token으로 새 access token 발급
+    const token = await refreshToken();
+
+    if (token) {
+      logger.log("✅ 앱 초기화 성공: 토큰 발급 완료");
+      return true;
+    } else {
+      logger.log("ℹ️ 앱 초기화: 저장된 refresh token 없음 (로그인 필요)");
+      return false;
+    }
+  } catch (error) {
+    logger.error("❌ 앱 초기화 실패:", error);
+    return false;
+  }
+};
+
+/**
  * 토큰 갱신 함수
  * 네트워크 타임아웃과 실패 시 적절한 처리 포함
  */
 export const refreshToken = async (): Promise<string | null> => {
+  // 이미 갱신 중이면 기존 요청이 완료될 때까지 대기
+  if (isRefreshingToken) {
+    logger.log("🔄 이미 토큰 갱신 중 - 대기...");
+    return new Promise((resolve) => {
+      subscribeTokenRefresh((token: string) => {
+        resolve(token);
+      });
+    });
+  }
+
   try {
+    isRefreshingToken = true;
     logger.log("🔄 토큰 갱신 시작...");
+
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    // refresh_token은 HttpOnly 쿠키로 자동 전송됨
+
     let response: Response;
     try {
       logger.apiRequest("POST", "/v1/auth/refresh");
@@ -657,7 +727,10 @@ export const refreshToken = async (): Promise<string | null> => {
     if (!response.ok) {
       if (response.status === 401) {
         logger.warn("❌ 리프레시 토큰이 만료되었습니다.");
-        return null; // 상위에서 UX 처리하도록 null 반환
+        clearInMemoryToken(); // 메모리 토큰 삭제
+        isRefreshingToken = false;
+        onTokenRefreshed(""); // 대기 중인 요청들에게 알림
+        return null;
       }
       logger.error(
         `❌ 토큰 갱신 실패: ${response.status} ${response.statusText}`,
@@ -668,38 +741,86 @@ export const refreshToken = async (): Promise<string | null> => {
     const result = await response.json();
     logger.log("📦 토큰 갱신 응답 데이터:", result);
 
-    // 새로운 access_token을 localStorage에 저장 (여러 탭/창에서 로그인 유지)
-    localStorage.setItem(
-      OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
-      result.data.access_token,
-    );
-    logger.log("💾 새로운 access_token 저장 완료");
-
-    // expires_at 업데이트 (새 토큰의 만료 시간 설정)
-    if (typeof result.data.expires_in === "number") {
-      const skewed = Math.max(0, result.data.expires_in - 30); // 30초 여유
-      const expiresAt = Date.now() + skewed * 1000;
-      localStorage.setItem(
-        OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT,
-        String(expiresAt),
-      );
-      logger.log(
-        `⏰ 토큰 만료 시간 설정: ${new Date(expiresAt).toLocaleString()}`,
-      );
-    }
+    // 새로운 access_token을 메모리에 저장
+    setInMemoryToken(result.data.access_token, result.data.expires_in);
+    logger.log("💾 새로운 access_token 메모리 저장 완료");
 
     logger.log("✅ 토큰 갱신 성공");
 
+    // 대기 중인 다른 요청들에게 새 토큰 전달
+    isRefreshingToken = false;
+    onTokenRefreshed(result.data.access_token);
+
     return result.data.access_token;
   } catch (error) {
+    isRefreshingToken = false;
+    onTokenRefreshed(""); // 실패를 알림
+
     if (error instanceof Error && error.name === "AbortError") {
       logger.error("⏰ 토큰 갱신 타임아웃:", error);
     } else {
       logger.error("❌ 토큰 갱신 실패:", error);
     }
 
-    // 실패 시 즉시 로그아웃하지 않고 null 반환
-    // 상위에서 UX 처리하도록 함
+    // 실패 시 메모리 토큰 삭제
+    clearInMemoryToken();
+
     return null;
   }
+};
+
+/**
+ * 인증이 필요한 API 호출을 위한 fetch 래퍼 함수
+ * - 자동으로 메모리에서 access token을 가져와 헤더에 추가
+ * - 401 에러 시 자동으로 토큰 갱신 후 재시도 (1회만)
+ */
+export const authenticatedFetch = async (
+  url: string,
+  options: RequestInit = {},
+): Promise<Response> => {
+  // 첫 번째 시도
+  const token = getInMemoryToken();
+
+  const headers = new Headers(options.headers || {});
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const requestOptions: RequestInit = {
+    ...options,
+    headers,
+    credentials: "include", // 쿠키 포함 (refresh token용)
+  };
+
+  let response = await fetch(url, requestOptions);
+
+  // 401 에러 시 토큰 갱신 후 재시도
+  if (response.status === 401) {
+    logger.log("🔐 401 에러 발생 - 토큰 갱신 시도...");
+
+    const newToken = await refreshToken();
+
+    if (!newToken) {
+      logger.error("❌ 토큰 갱신 실패 - 로그인 필요");
+      return response; // 원래 401 응답 반환
+    }
+
+    // 새 토큰으로 재시도
+    logger.log("🔄 새 토큰으로 요청 재시도...");
+    headers.set("Authorization", `Bearer ${newToken}`);
+
+    const retryOptions: RequestInit = {
+      ...options,
+      headers,
+      credentials: "include",
+    };
+
+    response = await fetch(url, retryOptions);
+
+    if (response.ok) {
+      logger.log("✅ 토큰 갱신 후 요청 성공");
+    }
+  }
+
+  return response;
 };
