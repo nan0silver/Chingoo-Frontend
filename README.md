@@ -146,6 +146,9 @@ Spring Boot 서버와 연동하려면:
 - **State 검증**: CSRF 공격 방지
 - **SessionStorage 활용**: 임시 OAuth 데이터 보안 저장
 - **HttpOnly 쿠키**: Refresh Token을 XSS/CSRF로부터 안전하게 보호
+- **환경별 로깅 정책**:
+  - 개발 환경: 상세 디버깅 로그 출력
+  - 프로덕션: 민감한 정보(토큰, App ID, 채널명 등) 로그 제거
 
 ## 🚀 배포
 

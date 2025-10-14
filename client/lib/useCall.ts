@@ -42,25 +42,22 @@ export const useCall = () => {
   const handleCallStart = useCallback(
     async (notification: CallStartNotification) => {
       try {
-        console.log("🎯 통화 시작 알림 수신:", notification);
-        console.log("📋 알림 상세 정보:", {
-          type: notification.type,
-          callId: notification.callId,
-          matchingId: notification.matchingId,
-          partnerId: notification.partnerId,
-          partnerNickname: notification.partnerNickname,
-          channelName: notification.channelName,
-          agoraUid: notification.agoraUid,
-          timestamp: notification.timestamp,
-        });
+        if (import.meta.env.DEV) {
+          console.log("🎯 통화 시작 알림 수신");
+          console.log("📋 알림 상세 정보:", {
+            type: notification.type,
+            callId: notification.callId,
+            matchingId: notification.matchingId,
+            partnerNickname: notification.partnerNickname,
+            timestamp: notification.timestamp,
+          });
+        }
 
         // 통화 상태 업데이트
-        console.log(
-          "🔄 useCall에서 startCall 호출 전 - notification:",
-          notification,
-        );
+        if (import.meta.env.DEV) {
+          console.log("🔄 useCall에서 startCall 호출");
+        }
         startCall(notification);
-        console.log("🔄 useCall에서 startCall 호출 후");
         updateConnectingState(true);
 
         // Agora 콜백 설정
@@ -156,13 +153,16 @@ export const useCall = () => {
           uid: String(notification.agoraUid),
         };
 
-        console.log("🔄 변환된 Agora 채널 정보:", agoraChannelInfo);
+        if (import.meta.env.DEV) {
+          console.log("🔄 Agora 채널 입장 시작");
+        }
 
         // Agora 채널에 입장
-        console.log("🎯 Agora 채널 입장 시작:", agoraChannelInfo);
         try {
           await agoraService.joinChannel(agoraChannelInfo);
-          console.log("✅ Agora 채널 입장 완료");
+          if (import.meta.env.DEV) {
+            console.log("✅ Agora 채널 입장 완료");
+          }
         } catch (agoraError) {
           console.error("❌ Agora 채널 입장 실패:", agoraError);
           throw agoraError;

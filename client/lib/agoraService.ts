@@ -89,34 +89,45 @@ export class AgoraService {
    */
   async joinChannel(channelInfo: AgoraChannelInfo): Promise<void> {
     try {
-      console.log("🎯 Agora 채널 입장 시도:", channelInfo);
-      console.log("📋 채널 정보 상세:", {
-        appId: channelInfo.appId,
-        channelName: channelInfo.channelName,
-        token: channelInfo.token ? "토큰 있음" : "토큰 없음",
-        uid: channelInfo.uid,
-      });
+      // 개발 환경에서만 상세 로그 출력 (보안상 프로덕션에서는 민감 정보 숨김)
+      if (import.meta.env.DEV) {
+        console.log("🎯 Agora 채널 입장 시도");
+        console.log("📋 채널 정보 상세:", {
+          appId: channelInfo.appId ? "앱 ID 있음" : "앱 ID 없음",
+          channelName: channelInfo.channelName ? "채널명 있음" : "채널명 없음",
+          token: channelInfo.token ? "토큰 있음" : "토큰 없음",
+          uid: channelInfo.uid,
+        });
+      }
 
       this.callState.isConnecting = true;
       this.currentChannelInfo = channelInfo;
 
       // 클라이언트 생성
-      console.log("🔧 Agora 클라이언트 생성 중...");
+      if (import.meta.env.DEV) {
+        console.log("🔧 Agora 클라이언트 생성 중...");
+      }
       this.client = AgoraRTC.createClient({
         mode: "rtc",
         codec: "vp8",
       });
 
       // 이벤트 리스너 설정
-      console.log("📡 이벤트 리스너 설정 중...");
+      if (import.meta.env.DEV) {
+        console.log("📡 이벤트 리스너 설정 중...");
+      }
       this.setupEventListeners();
 
       // 마이크 권한 요청 및 오디오 트랙 생성
-      console.log("🎤 마이크 권한 요청 및 오디오 트랙 생성 중...");
+      if (import.meta.env.DEV) {
+        console.log("🎤 마이크 권한 요청 및 오디오 트랙 생성 중...");
+      }
       await this.createLocalAudioTrack();
 
       // 채널에 입장
-      console.log("🚪 Agora 채널에 입장 중...");
+      if (import.meta.env.DEV) {
+        console.log("🚪 Agora 채널에 입장 중...");
+      }
       await this.client.join(
         channelInfo.appId,
         channelInfo.channelName,
@@ -124,13 +135,19 @@ export class AgoraService {
         channelInfo.uid,
       );
 
-      console.log("✅ Agora 채널 입장 성공");
+      if (import.meta.env.DEV) {
+        console.log("✅ Agora 채널 입장 성공");
+      }
 
       // 로컬 오디오 트랙을 채널에 발행 (publish)
-      console.log("📢 로컬 오디오 트랙을 채널에 발행 중...");
+      if (import.meta.env.DEV) {
+        console.log("📢 로컬 오디오 트랙을 채널에 발행 중...");
+      }
       if (this.callState.localAudioTrack) {
         await this.client.publish([this.callState.localAudioTrack]);
-        console.log("✅ 로컬 오디오 트랙 발행 성공");
+        if (import.meta.env.DEV) {
+          console.log("✅ 로컬 오디오 트랙 발행 성공");
+        }
       } else {
         console.error("❌ 로컬 오디오 트랙이 없어서 발행할 수 없음");
       }
@@ -138,9 +155,13 @@ export class AgoraService {
       this.callState.isConnected = true;
       this.callState.isConnecting = false;
 
-      console.log("🔔 onCallStarted 콜백 호출 중...");
+      if (import.meta.env.DEV) {
+        console.log("🔔 onCallStarted 콜백 호출 중...");
+      }
       this.callbacks.onCallStarted?.();
-      console.log("✅ onCallStarted 콜백 호출 완료");
+      if (import.meta.env.DEV) {
+        console.log("✅ onCallStarted 콜백 호출 완료");
+      }
     } catch (error) {
       console.error("❌ Agora 채널 입장 실패:", error);
       this.callState.isConnecting = false;
