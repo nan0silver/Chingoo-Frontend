@@ -7,6 +7,7 @@ import CallConnectedPage from "./CallConnectedPage";
 import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
 import MyActivityPage from "./MyActivityPage";
+import ComingSoonPage from "./ComingSoonPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -17,6 +18,8 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
+  const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
+  const [comingSoonFeature, setComingSoonFeature] = useState<string>("");
   const navigate = useNavigate();
 
   // Check authentication status on component mount
@@ -146,6 +149,17 @@ export default function Index() {
     setShowActivity(false);
   };
 
+  const handleNavigateToComingSoon = (featureName: string) => {
+    setComingSoonFeature(featureName);
+    setShowComingSoon(true);
+    setShowSettings(false);
+  };
+
+  const handleBackFromComingSoon = () => {
+    setShowComingSoon(false);
+    setShowSettings(true);
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -163,13 +177,19 @@ export default function Index() {
   // Render appropriate page based on authentication status and call state
   return (
     <div className="max-w-md mx-auto">
-      {!isLoggedIn ? null : showActivity ? (
+      {!isLoggedIn ? null : showComingSoon ? (
+        <ComingSoonPage
+          featureName={comingSoonFeature}
+          onBack={handleBackFromComingSoon}
+        />
+      ) : showActivity ? (
         <MyActivityPage onBack={handleBackFromActivity} />
       ) : showSettings ? (
         <SettingsPage
           onBack={handleCloseSettings}
           onNavigateToActivity={handleNavigateToActivity}
           onNavigateToProfileEdit={handleNavigateToProfileEdit}
+          onNavigateToComingSoon={handleNavigateToComingSoon}
           onLogout={handleLogout}
         />
       ) : callState === "connecting" ? (

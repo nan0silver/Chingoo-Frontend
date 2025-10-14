@@ -2,6 +2,7 @@ interface SettingsPageProps {
   onBack: () => void;
   onNavigateToActivity: () => void;
   onNavigateToProfileEdit: () => void;
+  onNavigateToComingSoon: (featureName: string) => void;
   onLogout: () => void;
 }
 
@@ -9,6 +10,7 @@ export default function SettingsPage({
   onBack,
   onNavigateToActivity,
   onNavigateToProfileEdit,
+  onNavigateToComingSoon,
   onLogout,
 }: SettingsPageProps) {
   const settingsOptions = [
@@ -79,6 +81,12 @@ export default function SettingsPage({
       onNavigateToActivity();
     } else if (optionId === "profile-edit") {
       onNavigateToProfileEdit();
+    } else if (optionId === "subscription") {
+      onNavigateToComingSoon("구독 알아보기");
+    } else if (optionId === "notifications") {
+      onNavigateToComingSoon("보호자 알림");
+    } else if (optionId === "support") {
+      onNavigateToComingSoon("고객센터");
     } else {
       // For other options, just log for now
       console.log(`Clicked: ${optionId}`);
