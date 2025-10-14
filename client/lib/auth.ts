@@ -24,8 +24,11 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 /**
  * 보안 설정 안내:
  *
- * 1. access_token: sessionStorage에 저장 (XSS 보호)
+ * 1. access_token: localStorage에 저장 (여러 탭/창에서 로그인 유지)
+ *    - XSS 공격에 취약할 수 있으므로 외부 스크립트 로딩 시 주의 필요
+ *    - CSP(Content Security Policy) 설정 권장
  * 2. refresh_token: HttpOnly Secure SameSite=Strict 쿠키로 서버에서 설정 필요
+ *    - XSS, CSRF 공격 방어
  *
  */
 
@@ -259,8 +262,8 @@ export const processSocialLogin = async (
     const result: OAuthLoginResponse = await response.json();
 
     // 토큰 저장
-    // access_token은 sessionStorage에 저장 (XSS 보호)
-    sessionStorage.setItem(
+    // access_token은 localStorage에 저장 (여러 탭/창에서 로그인 유지)
+    localStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
@@ -299,14 +302,14 @@ export const processSocialLogin = async (
 
 /**
  * 저장된 토큰을 가져오는 함수
- * access_token: sessionStorage에서 조회
+ * access_token: localStorage에서 조회 (여러 탭/창에서 로그인 유지)
  * refresh_token: HttpOnly 쿠키에서 조회 (서버에서 설정됨)
  */
 export const getStoredToken = (
   tokenType: "access_token" | "refresh_token" = "access_token",
 ): string | null => {
   if (tokenType === "access_token") {
-    return sessionStorage.getItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+    return localStorage.getItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
   } else {
     // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로
     // 프론트엔드에서는 직접 접근할 수 없음
@@ -407,12 +410,12 @@ export const logout = async (): Promise<void> => {
     // 서버 로그아웃 성공/실패와 관계없이 로컬 정리는 항상 수행
     try {
       // 토큰과 사용자 정보 삭제
-      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
       // refresh_token은 HttpOnly 쿠키로 서버에서 관리되므로 프론트엔드에서 삭제 불가
       localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
       localStorage.removeItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN_EXPIRES_AT);
 
-      // 세션 스토리지도 정리
+      // 세션 스토리지도 정리 (OAuth 임시 데이터)
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
       sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
@@ -665,8 +668,8 @@ export const refreshToken = async (): Promise<string | null> => {
     const result = await response.json();
     logger.log("📦 토큰 갱신 응답 데이터:", result);
 
-    // 새로운 access_token을 sessionStorage에 저장
-    sessionStorage.setItem(
+    // 새로운 access_token을 localStorage에 저장 (여러 탭/창에서 로그인 유지)
+    localStorage.setItem(
       OAUTH_STORAGE_KEYS.ACCESS_TOKEN,
       result.data.access_token,
     );
