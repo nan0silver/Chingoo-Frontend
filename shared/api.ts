@@ -270,3 +270,40 @@ export const CATEGORIES = {
 
 export type CategoryId = (typeof CATEGORIES)[keyof typeof CATEGORIES]["id"];
 export type CategoryName = (typeof CATEGORIES)[keyof typeof CATEGORIES]["name"];
+
+/**
+ * 사용자 활동 통계
+ */
+export interface ActivityStats {
+  weeklyStats: {
+    callCount: number;
+    totalDurationMinutes: number;
+    startDate: string;
+    endDate: string;
+  };
+  quarterlyStats: {
+    callCount: number;
+    totalDurationMinutes: number;
+    startDate: string;
+    endDate: string;
+    quarter: number;
+  };
+  additionalStats: {
+    averageCallDurationMinutes: number;
+    mostUsedCategory: {
+      id: number;
+      name: string;
+    };
+    totalDataUsageMb: number;
+    averageNetworkQuality: number;
+  };
+}
+
+/**
+ * 활동 통계 응답
+ */
+export interface ActivityStatsResponse {
+  data: ActivityStats;
+  message: string;
+  timestamp: string;
+}

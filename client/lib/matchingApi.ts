@@ -4,6 +4,7 @@ import {
   Category,
   MatchingResponse,
   CategoriesResponse,
+  ActivityStats,
 } from "@shared/api";
 import { refreshToken } from "./auth";
 import { logger } from "./logger";
@@ -521,6 +522,109 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("RTC 토큰 갱신에 실패했습니다.");
+    }
+  }
+
+  /**
+   * 사용자 활동 통계 조회
+   * GET /api/v1/users/me/activity-stats
+   */
+  async getActivityStats(period?: "week" | "quarter"): Promise<ActivityStats> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const queryParams = period ? `?period=${period}` : "";
+      const url = `${this.baseUrl}/v1/users/me/activity-stats${queryParams}`;
+      logger.apiRequest("GET", `/v1/users/me/activity-stats${queryParams}`, {});
+
+      let response = await fetch(url, {
+        method: "GET",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "GET",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: {
+        data: {
+          weekly_stats: {
+            call_count: number;
+            total_duration_minutes: number;
+            start_date: string;
+            end_date: string;
+          };
+          quarterly_stats: {
+            call_count: number;
+            total_duration_minutes: number;
+            start_date: string;
+            end_date: string;
+            quarter: number;
+          };
+          additional_stats: {
+            average_call_duration_minutes: number;
+            most_used_category: {
+              id: number;
+              name: string;
+            };
+            total_data_usage_mb: number;
+            average_network_quality: number;
+          };
+        };
+        message?: string;
+        timestamp?: string;
+      } = await handleApiResponse(response);
+
+      if (import.meta.env.DEV) {
+        logger.log("✅ 활동 통계 조회 성공");
+      }
+
+      // snake_case를 camelCase로 변환
+      const activityStats: ActivityStats = {
+        weeklyStats: {
+          callCount: result.data.weekly_stats.call_count,
+          totalDurationMinutes: result.data.weekly_stats.total_duration_minutes,
+          startDate: result.data.weekly_stats.start_date,
+          endDate: result.data.weekly_stats.end_date,
+        },
+        quarterlyStats: {
+          callCount: result.data.quarterly_stats.call_count,
+          totalDurationMinutes:
+            result.data.quarterly_stats.total_duration_minutes,
+          startDate: result.data.quarterly_stats.start_date,
+          endDate: result.data.quarterly_stats.end_date,
+          quarter: result.data.quarterly_stats.quarter,
+        },
+        additionalStats: {
+          averageCallDurationMinutes:
+            result.data.additional_stats.average_call_duration_minutes,
+          mostUsedCategory: result.data.additional_stats.most_used_category,
+          totalDataUsageMb: result.data.additional_stats.total_data_usage_mb,
+          averageNetworkQuality:
+            result.data.additional_stats.average_network_quality,
+        },
+      };
+
+      return activityStats;
+    } catch (error) {
+      logger.error("활동 통계 조회 오류:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("활동 통계 조회에 실패했습니다.");
     }
   }
 
