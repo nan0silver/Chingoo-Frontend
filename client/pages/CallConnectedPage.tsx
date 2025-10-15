@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
+import { NetworkQuality } from "@/lib/agoraService";
 
 interface CallConnectedPageProps {
   selectedCategory: string | null;
@@ -140,6 +141,26 @@ export default function CallConnectedPage({
     return () => clearInterval(interval);
   }, []);
 
+  // 네트워크 품질을 아이콘과 색상으로 변환
+  const getNetworkQualityDisplay = (quality: NetworkQuality) => {
+    if (quality === 0) {
+      return { color: "text-gray-400", bars: 0, label: "측정중" };
+    } else if (quality === 1 || quality === 2) {
+      return { color: "text-green-400", bars: 3, label: "좋음" };
+    } else if (quality === 3) {
+      return { color: "text-yellow-400", bars: 2, label: "보통" };
+    } else if (quality === 4) {
+      return { color: "text-orange-400", bars: 1, label: "나쁨" };
+    } else {
+      return { color: "text-red-400", bars: 1, label: "매우나쁨" };
+    }
+  };
+
+  // 현재 네트워크 품질 (다운링크가 더 중요하므로 다운링크 기준)
+  const networkQuality = getNetworkQualityDisplay(
+    agoraState.networkQuality?.downlinkNetworkQuality || 0,
+  );
+
   const getCategoryDisplayName = (category: string | null) => {
     if (!category) return "알 수 없음";
 
@@ -183,6 +204,30 @@ export default function CallConnectedPage({
           <span className="text-orange-500 font-crimson text-xl font-bold">
             관심사 : {getCategoryDisplayName(selectedCategory)}
           </span>
+        </div>
+      </div>
+
+      {/* Network Quality Indicator */}
+      <div className="absolute top-8 right-8">
+        <div className="flex items-center gap-2 bg-black bg-opacity-30 px-3 py-2 rounded-full">
+          {/* Signal Bars */}
+          <div className="flex items-end gap-0.5 h-4">
+            <div
+              className={`w-1 h-2 rounded-sm ${networkQuality.bars >= 1 ? networkQuality.color : "bg-gray-600"}`}
+            />
+            <div
+              className={`w-1 h-3 rounded-sm ${networkQuality.bars >= 2 ? networkQuality.color : "bg-gray-600"}`}
+            />
+            <div
+              className={`w-1 h-4 rounded-sm ${networkQuality.bars >= 3 ? networkQuality.color : "bg-gray-600"}`}
+            />
+          </div>
+          {/* Quality Label (나쁠 때만 표시) */}
+          {(agoraState.networkQuality?.downlinkNetworkQuality || 0) >= 4 && (
+            <span className={`text-xs font-pretendard ${networkQuality.color}`}>
+              {networkQuality.label}
+            </span>
+          )}
         </div>
       </div>
 

@@ -7,6 +7,27 @@ import AgoraRTC, {
 } from "agora-rtc-sdk-ng";
 
 /**
+ * 네트워크 품질 등급
+ * Agora SDK 기준:
+ * 0 = UNKNOWN (측정 중)
+ * 1 = EXCELLENT (최고)
+ * 2 = GOOD (좋음)
+ * 3 = POOR (보통)
+ * 4 = BAD (나쁨)
+ * 5 = VERY_BAD (매우 나쁨)
+ * 6 = DOWN (연결 끊김)
+ */
+export type NetworkQuality = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * 네트워크 품질 상태
+ */
+export interface NetworkQualityState {
+  uplinkNetworkQuality: NetworkQuality; // 업링크 (송신) 품질
+  downlinkNetworkQuality: NetworkQuality; // 다운링크 (수신) 품질
+}
+
+/**
  * Agora 통화 상태
  */
 export interface AgoraCallState {
@@ -18,6 +39,7 @@ export interface AgoraCallState {
   remoteAudioTrack: IRemoteAudioTrack | null;
   volume: number;
   connectionState: string;
+  networkQuality: NetworkQualityState; // 네트워크 품질
 }
 
 /**
@@ -37,6 +59,7 @@ export interface AgoraCallbacks {
   onCallEnded?: () => void;
   onTokenPrivilegeWillExpire?: () => void; // 토큰이 30초 후 만료될 때
   onTokenPrivilegeDidExpire?: () => void; // 토큰이 만료되었을 때
+  onNetworkQualityChange?: (quality: NetworkQualityState) => void; // 네트워크 품질 변경
 }
 
 /**
@@ -63,6 +86,10 @@ export class AgoraService {
     remoteAudioTrack: null,
     volume: 100,
     connectionState: "DISCONNECTED",
+    networkQuality: {
+      uplinkNetworkQuality: 0, // UNKNOWN
+      downlinkNetworkQuality: 0, // UNKNOWN
+    },
   };
   private callbacks: AgoraCallbacks = {};
   private currentChannelInfo: AgoraChannelInfo | null = null;
@@ -488,6 +515,10 @@ export class AgoraService {
         remoteAudioTrack: null,
         volume: 100,
         connectionState: "DISCONNECTED",
+        networkQuality: {
+          uplinkNetworkQuality: 0,
+          downlinkNetworkQuality: 0,
+        },
       };
       this.isJoining = false;
 
@@ -766,6 +797,53 @@ export class AgoraService {
       console.error("❌ Agora RTC 토큰이 만료되었습니다 - 통화 종료 필요");
       this.callbacks.onTokenPrivilegeDidExpire?.();
     });
+
+    // 네트워크 품질 모니터링 (2초마다 업데이트)
+    this.client.on("network-quality", (stats) => {
+      const quality: NetworkQualityState = {
+        uplinkNetworkQuality: stats.uplinkNetworkQuality as NetworkQuality,
+        downlinkNetworkQuality: stats.downlinkNetworkQuality as NetworkQuality,
+      };
+
+      // 상태 업데이트
+      this.callState.networkQuality = quality;
+
+      // 네트워크 품질이 나쁠 때만 로그 출력 (개발 환경)
+      if (import.meta.env.DEV) {
+        if (
+          stats.uplinkNetworkQuality >= 4 ||
+          stats.downlinkNetworkQuality >= 4
+        ) {
+          console.warn("⚠️ 네트워크 품질 저하:", {
+            uplink: this.getNetworkQualityLabel(
+              stats.uplinkNetworkQuality as NetworkQuality,
+            ),
+            downlink: this.getNetworkQualityLabel(
+              stats.downlinkNetworkQuality as NetworkQuality,
+            ),
+          });
+        }
+      }
+
+      // 콜백 호출
+      this.callbacks.onNetworkQualityChange?.(quality);
+    });
+  }
+
+  /**
+   * 네트워크 품질을 한글 레이블로 변환
+   */
+  private getNetworkQualityLabel(quality: NetworkQuality): string {
+    const labels = {
+      0: "측정중",
+      1: "최고",
+      2: "좋음",
+      3: "보통",
+      4: "나쁨",
+      5: "매우나쁨",
+      6: "연결끊김",
+    };
+    return labels[quality];
   }
 
   /**

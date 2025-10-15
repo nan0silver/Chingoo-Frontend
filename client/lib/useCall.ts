@@ -1,6 +1,10 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useCallStore } from "./callStore";
-import { getAgoraService, AgoraCallbacks } from "./agoraService";
+import {
+  getAgoraService,
+  AgoraCallbacks,
+  NetworkQualityState,
+} from "./agoraService";
 import { getWebSocketService } from "./websocket";
 import { getMatchingApiService } from "./matchingApi";
 import { CallStartNotification } from "@shared/api";
@@ -213,6 +217,21 @@ export const useCall = () => {
             // 토큰이 만료됨 - 통화 종료
             console.error("❌ RTC 토큰 만료 - 통화 종료");
             handleTokenExpired();
+          },
+          onNetworkQualityChange: (quality: NetworkQualityState) => {
+            // 네트워크 품질 변경 시 상태 업데이트
+            updateAgoraState(agoraService.getCallState());
+
+            // 네트워크 품질이 매우 나쁠 때 사용자에게 경고
+            if (
+              quality.uplinkNetworkQuality >= 5 ||
+              quality.downlinkNetworkQuality >= 5
+            ) {
+              if (import.meta.env.DEV) {
+                console.warn("⚠️ 네트워크 품질이 매우 나쁩니다");
+              }
+              // 사용자에게 경고 (에러는 아니므로 setError 대신 별도 처리 가능)
+            }
           },
           onUserLeft: (userId) => {
             if (import.meta.env.DEV) {
