@@ -88,6 +88,8 @@ export interface AgoraCallbacks {
   onTokenPrivilegeWillExpire?: () => void; // 토큰이 30초 후 만료될 때
   onTokenPrivilegeDidExpire?: () => void; // 토큰이 만료되었을 때
   onNetworkQualityChange?: (quality: NetworkQualityState) => void; // 네트워크 품질 변경
+  onException?: (error: { code: string; msg: string; uid: string }) => void; // SDK 내부 예외
+  onMicrophonePermissionDenied?: () => void; // 마이크 권한 거부
 }
 
 /**
@@ -130,6 +132,13 @@ export class AgoraService {
 
   // 토큰 갱신 관련
   private isRenewingToken = false; // 토큰 갱신 중 플래그 (중복 방지)
+
+  // 재시도 관련
+  private microphoneRetryCount = 0; // 마이크 권한 재시도 횟수
+  private readonly MAX_MICROPHONE_RETRY = 2; // 최대 재시도 횟수
+  private reconnectAttempts = 0; // 재연결 시도 횟수
+  private readonly MAX_RECONNECT_ATTEMPTS = 3; // 최대 재연결 시도 횟수
+  private isReconnecting = false; // 재연결 중 플래그
 
   constructor() {
     // Agora SDK 초기화
@@ -679,11 +688,38 @@ export class AgoraService {
           AGC: true, // 자동 게인 제어
         });
 
+      // 성공 시 재시도 카운터 초기화
+      this.microphoneRetryCount = 0;
+
       if (import.meta.env.DEV) {
         console.log("로컬 오디오 트랙 생성 성공");
       }
     } catch (error) {
       console.error("로컬 오디오 트랙 생성 실패:", error);
+
+      // 마이크 권한 거부 에러 체크
+      if (
+        error instanceof Error &&
+        (error.message.includes("Permission denied") ||
+          error.message.includes("NotAllowedError") ||
+          error.message.includes("PERMISSION_DENIED"))
+      ) {
+        console.error("❌ 마이크 권한이 거부되었습니다");
+        this.callbacks.onMicrophonePermissionDenied?.();
+
+        // 재시도 로직
+        if (this.microphoneRetryCount < this.MAX_MICROPHONE_RETRY) {
+          this.microphoneRetryCount++;
+          console.warn(
+            `⚠️ 마이크 권한 재시도 중... (${this.microphoneRetryCount}/${this.MAX_MICROPHONE_RETRY})`,
+          );
+
+          // 3초 대기 후 재시도
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+          return this.createLocalAudioTrack();
+        }
+      }
+
       throw error;
     }
   }
@@ -715,6 +751,9 @@ export class AgoraService {
           if (import.meta.env.DEV) {
             console.log("🚪 사용자가 채널을 떠남");
           }
+          // 정상 퇴장 시 재연결 카운터 초기화
+          this.reconnectAttempts = 0;
+          this.isReconnecting = false;
         } else {
           console.error("❌ 연결이 예상치 못하게 끊어짐:", reason);
           if (import.meta.env.DEV) {
@@ -724,7 +763,9 @@ export class AgoraService {
               reason,
             });
           }
-          this.callbacks.onError?.(new Error("네트워크 연결이 불안정합니다."));
+
+          // 자동 재연결 시도
+          this.handleUnexpectedDisconnection(reason);
         }
       }
     });
@@ -856,6 +897,38 @@ export class AgoraService {
       // 콜백 호출
       this.callbacks.onNetworkQualityChange?.(quality);
     });
+
+    // SDK 내부 예외 감지
+    this.client.on("exception", (event: any) => {
+      console.error("⚠️ Agora SDK 예외 발생:", event);
+
+      if (import.meta.env.DEV) {
+        console.error("예외 상세:", {
+          code: event.code,
+          msg: event.msg,
+          uid: event.uid,
+        });
+      }
+
+      const eventCode = String(event.code || "");
+
+      // 비디오 관련 에러는 무시 (음성 통화만 사용)
+      if (
+        eventCode === "FRAMERATE_INPUT_TOO_LOW" ||
+        eventCode === "FRAMERATE_SENT_TOO_LOW" ||
+        eventCode === "SEND_VIDEO_BITRATE_TOO_LOW" ||
+        eventCode === "RECV_VIDEO_DECODE_FAILED"
+      ) {
+        return;
+      }
+
+      // 기타 예외는 콜백으로 전달
+      this.callbacks.onException?.({
+        code: eventCode,
+        msg: String(event.msg || ""),
+        uid: String(event.uid || "unknown"),
+      });
+    });
   }
 
   /**
@@ -872,6 +945,89 @@ export class AgoraService {
       6: "연결끊김",
     };
     return labels[quality];
+  }
+
+  /**
+   * 예상치 못한 연결 해제 처리 (자동 재연결 시도)
+   */
+  private async handleUnexpectedDisconnection(
+    reason: ConnectionDisconnectedReason,
+  ): Promise<void> {
+    // 이미 재연결 중이면 무시
+    if (this.isReconnecting) {
+      if (import.meta.env.DEV) {
+        console.log("⚠️ 이미 재연결 시도 중");
+      }
+      return;
+    }
+
+    // 최대 재연결 시도 횟수 초과
+    if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
+      console.error(
+        `❌ 최대 재연결 시도 횟수(${this.MAX_RECONNECT_ATTEMPTS})를 초과했습니다`,
+      );
+      this.callbacks.onError?.(
+        new Error(
+          "네트워크 연결이 불안정하여 통화가 종료되었습니다. 다시 시도해주세요.",
+        ),
+      );
+      return;
+    }
+
+    this.isReconnecting = true;
+    this.reconnectAttempts++;
+
+    console.warn(
+      `🔄 재연결 시도 중... (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`,
+    );
+
+    try {
+      // 잠시 대기 (네트워크 안정화)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // 현재 채널 정보가 있으면 재연결 시도
+      if (this.currentChannelInfo && this.client) {
+        if (import.meta.env.DEV) {
+          console.log("🔄 Agora 채널 재입장 시도");
+        }
+
+        // 재입장 시도
+        await this.client.join(
+          this.currentChannelInfo.appId,
+          this.currentChannelInfo.channelName,
+          this.currentChannelInfo.token,
+          this.currentChannelInfo.uid,
+        );
+
+        // 오디오 트랙 다시 발행
+        if (this.callState.localAudioTrack) {
+          await this.client.publish([this.callState.localAudioTrack]);
+        }
+
+        this.callState.isConnected = true;
+        this.isReconnecting = false;
+
+        // 재연결 성공 - 카운터는 유지 (완전히 안정화될 때까지)
+        console.log("✅ 재연결 성공");
+      }
+    } catch (error) {
+      console.error("❌ 재연결 실패:", error);
+      this.isReconnecting = false;
+
+      // 재시도 가능하면 다시 시도
+      if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+        console.warn("⏰ 3초 후 재연결 재시도...");
+        setTimeout(() => {
+          this.handleUnexpectedDisconnection(reason);
+        }, 3000);
+      } else {
+        this.callbacks.onError?.(
+          new Error(
+            "네트워크 연결에 실패했습니다. 통화를 종료하고 다시 시도해주세요.",
+          ),
+        );
+      }
+    }
   }
 
   /**

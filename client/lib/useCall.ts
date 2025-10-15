@@ -233,6 +233,25 @@ export const useCall = () => {
               // 사용자에게 경고 (에러는 아니므로 setError 대신 별도 처리 가능)
             }
           },
+          onException: (error) => {
+            // SDK 내부 예외 발생
+            console.error("⚠️ Agora SDK 예외:", error);
+
+            // 심각한 예외만 사용자에게 알림
+            if (
+              error.code === "DEVICE_NOT_FOUND" ||
+              error.code === "UNEXPECTED_ERROR"
+            ) {
+              setError(`통화 중 오류가 발생했습니다: ${error.msg}`);
+            }
+          },
+          onMicrophonePermissionDenied: () => {
+            // 마이크 권한 거부
+            console.error("❌ 마이크 권한이 거부되었습니다");
+            setError(
+              "마이크 권한이 필요합니다. 브라우저 설정에서 마이크 권한을 허용해주세요.",
+            );
+          },
           onUserLeft: (userId) => {
             if (import.meta.env.DEV) {
               console.log("사용자 퇴장:", userId);
