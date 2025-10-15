@@ -591,6 +591,9 @@ export class MatchingApiService {
 
       if (import.meta.env.DEV) {
         logger.log("✅ 활동 통계 조회 성공");
+        console.log("📊 백엔드 응답 데이터:", JSON.stringify(result, null, 2));
+        console.log("📊 주간 통계:", result.data.weekly_stats);
+        console.log("📊 분기 통계:", result.data.quarterly_stats);
       }
 
       // snake_case를 camelCase로 변환

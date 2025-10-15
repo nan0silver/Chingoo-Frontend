@@ -28,6 +28,14 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
 
         matchingApi.setToken(token);
         const data = await matchingApi.getActivityStats();
+
+        // 디버깅: 받은 데이터 확인
+        if (import.meta.env.DEV) {
+          console.log("📊 MyActivityPage - 받은 데이터:", data);
+          console.log("📊 주간:", data.weeklyStats);
+          console.log("📊 분기:", data.quarterlyStats);
+        }
+
         setStats(data);
       } catch (err) {
         console.error("활동 통계 조회 실패:", err);
