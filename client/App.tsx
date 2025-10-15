@@ -17,6 +17,7 @@ import ConnectingCallPage from "./pages/ConnectingCallPage";
 import CallConnectedPage from "./pages/CallConnectedPage";
 import CallEvaluationPage from "./pages/CallEvaluationPage";
 import MyActivityPage from "./pages/MyActivityPage";
+import CallHistoryPage from "./pages/CallHistoryPage";
 import SettingsPage from "./pages/SettingsPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import SupportPage from "./pages/SupportPage";
@@ -117,6 +118,10 @@ const AppRoutes = () => {
 
   const handleNavigateToActivity = () => {
     navigate("/my-activity");
+  };
+
+  const handleNavigateToCallHistory = () => {
+    navigate("/call-history");
   };
 
   const handleNavigateToProfileEdit = () => {
@@ -237,6 +242,16 @@ const AppRoutes = () => {
           <AuthGuard>
             <div className="max-w-md mx-auto">
               <MyActivityPage onBack={handleBack} />
+            </div>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/call-history"
+        element={
+          <AuthGuard>
+            <div className="max-w-md mx-auto">
+              <CallHistoryPage onBack={handleBack} />
             </div>
           </AuthGuard>
         }

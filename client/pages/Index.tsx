@@ -7,6 +7,7 @@ import CallConnectedPage from "./CallConnectedPage";
 import CallEvaluationPage from "./CallEvaluationPage";
 import SettingsPage from "./SettingsPage";
 import MyActivityPage from "./MyActivityPage";
+import CallHistoryPage from "./CallHistoryPage";
 import ComingSoonPage from "./ComingSoonPage";
 import SupportPage from "./SupportPage";
 
@@ -19,6 +20,7 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showActivity, setShowActivity] = useState<boolean>(false);
+  const [showCallHistory, setShowCallHistory] = useState<boolean>(false);
   const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
   const [showSupport, setShowSupport] = useState<boolean>(false);
   const [comingSoonFeature, setComingSoonFeature] = useState<string>("");
@@ -142,6 +144,10 @@ export default function Index() {
     setShowActivity(true);
   };
 
+  const handleNavigateToCallHistory = () => {
+    setShowCallHistory(true);
+  };
+
   const handleNavigateToProfileEdit = () => {
     setShowSettings(false);
     navigate("/profile-setup");
@@ -149,6 +155,10 @@ export default function Index() {
 
   const handleBackFromActivity = () => {
     setShowActivity(false);
+  };
+
+  const handleBackFromCallHistory = () => {
+    setShowCallHistory(false);
   };
 
   const handleNavigateToComingSoon = (featureName: string) => {
@@ -196,6 +206,8 @@ export default function Index() {
           featureName={comingSoonFeature}
           onBack={handleBackFromComingSoon}
         />
+      ) : showCallHistory ? (
+        <CallHistoryPage onBack={handleBackFromCallHistory} />
       ) : showActivity ? (
         <MyActivityPage onBack={handleBackFromActivity} />
       ) : showSettings ? (
@@ -229,6 +241,7 @@ export default function Index() {
         <HomePage
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
+          onOpenCallHistory={handleNavigateToCallHistory}
         />
       )}
     </div>

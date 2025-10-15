@@ -307,3 +307,36 @@ export interface ActivityStatsResponse {
   message: string;
   timestamp: string;
 }
+
+/**
+ * 통화 이력 아이템
+ */
+export interface CallHistoryItem {
+  callId: string;
+  partnerId: string;
+  partnerNickname: string;
+  categoryId: number;
+  categoryName: string;
+  startedAt: string;
+  endedAt: string;
+  durationMinutes: number;
+  averageNetworkQuality?: number;
+  totalDataUsageMB?: number;
+}
+
+/**
+ * 통화 이력 응답
+ */
+export interface CallHistoryResponse {
+  data: {
+    calls: CallHistoryItem[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+    };
+  };
+  message: string;
+  timestamp: string;
+}

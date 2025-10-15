@@ -5,6 +5,7 @@ import {
   MatchingResponse,
   CategoriesResponse,
   ActivityStats,
+  CallHistoryItem,
 } from "@shared/api";
 import { refreshToken } from "./auth";
 import { logger } from "./logger";
@@ -628,6 +629,118 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("활동 통계 조회에 실패했습니다.");
+    }
+  }
+
+  /**
+   * 통화 이력 조회
+   * GET /api/v1/users/me/call-history
+   */
+  async getCallHistory(params?: {
+    page?: number;
+    limit?: number;
+    period?: "week" | "month" | "quarter" | "all";
+  }): Promise<{
+    calls: CallHistoryItem[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      hasNext: boolean;
+    };
+  }> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.page) queryParams.append("page", String(params.page));
+      if (params?.limit) queryParams.append("limit", String(params.limit));
+      if (params?.period) queryParams.append("period", params.period);
+
+      const queryString = queryParams.toString();
+      const url = `${this.baseUrl}/v1/users/me/call-history${queryString ? `?${queryString}` : ""}`;
+      logger.apiRequest("GET", `/v1/users/me/call-history?${queryString}`, {});
+
+      let response = await fetch(url, {
+        method: "GET",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "GET",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: {
+        data: {
+          calls: Array<{
+            call_id: string;
+            partner_id: string;
+            partner_nickname: string;
+            category_id: number;
+            category_name: string;
+            started_at: string;
+            ended_at: string;
+            duration_minutes: number;
+            average_network_quality?: number;
+            total_data_usage_mb?: number;
+          }>;
+          pagination: {
+            current_page: number;
+            total_pages: number;
+            total_count: number;
+            has_next: boolean;
+          };
+        };
+        message?: string;
+        timestamp?: string;
+      } = await handleApiResponse(response);
+
+      if (import.meta.env.DEV) {
+        logger.log("✅ 통화 이력 조회 성공");
+      }
+
+      // snake_case를 camelCase로 변환
+      const callHistory = {
+        calls: result.data.calls.map((call) => ({
+          callId: call.call_id,
+          partnerId: call.partner_id,
+          partnerNickname: call.partner_nickname,
+          categoryId: call.category_id,
+          categoryName: call.category_name,
+          startedAt: call.started_at,
+          endedAt: call.ended_at,
+          durationMinutes: call.duration_minutes,
+          averageNetworkQuality: call.average_network_quality,
+          totalDataUsageMB: call.total_data_usage_mb,
+        })),
+        pagination: {
+          currentPage: result.data.pagination.current_page,
+          totalPages: result.data.pagination.total_pages,
+          totalCount: result.data.pagination.total_count,
+          hasNext: result.data.pagination.has_next,
+        },
+      };
+
+      return callHistory;
+    } catch (error) {
+      logger.error("통화 이력 조회 오류:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("통화 이력 조회에 실패했습니다.");
     }
   }
 
