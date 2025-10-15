@@ -46,6 +46,65 @@ export const useCall = () => {
   const matchingApiService = getMatchingApiService();
 
   /**
+   * RTC 토큰 갱신 처리 (Agora 토큰 만료 30초 전)
+   */
+  const handleTokenRenewal = useCallback(async () => {
+    try {
+      if (!callId) {
+        console.error("❌ callId가 없어 토큰 갱신 불가");
+        return;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("🔄 RTC 토큰 갱신 시작");
+      }
+
+      // 토큰 설정 (갱신된 토큰 포함)
+      const { getStoredToken } = await import("./auth");
+      const token = getStoredToken();
+      if (token) {
+        matchingApiService.setToken(token);
+      }
+
+      // 백엔드에 RTC 토큰 갱신 요청
+      const result = await matchingApiService.renewRtcToken(callId);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 백엔드에서 새 RTC 토큰 받음");
+      }
+
+      // Agora SDK에 새 토큰 적용
+      await agoraService.renewToken(result.rtcToken);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ RTC 토큰 갱신 완료");
+      }
+    } catch (error) {
+      console.error("❌ RTC 토큰 갱신 실패:", error);
+      setError(
+        "통화 토큰 갱신에 실패했습니다. 잠시 후 통화가 종료될 수 있습니다.",
+      );
+      // 토큰 갱신 실패 시 사용자에게 알림 - 30초 내에 수동으로 종료할 수 있도록
+    }
+  }, [callId, matchingApiService, agoraService, setError]);
+
+  /**
+   * RTC 토큰 만료됨 처리 (긴급)
+   */
+  const handleTokenExpired = useCallback(async () => {
+    console.error("❌ RTC 토큰이 만료되었습니다 - 통화 강제 종료");
+    setError("통화 토큰이 만료되어 통화가 종료됩니다.");
+
+    // Agora 연결 해제 (handleEndCall 대신 직접 처리하여 순환 참조 방지)
+    try {
+      await agoraService.leaveChannel();
+      endCall();
+    } catch (error) {
+      console.error("토큰 만료 후 통화 종료 실패:", error);
+    }
+  }, [setError, agoraService, endCall]);
+
+  /**
    * 최대 통화 시간 타이머 시작
    */
   const startMaxCallDurationTimer = useCallback(() => {
@@ -142,6 +201,18 @@ export const useCall = () => {
             if (import.meta.env.DEV) {
               console.log("사용자 입장:", userId);
             }
+          },
+          onTokenPrivilegeWillExpire: () => {
+            // 토큰이 30초 후 만료 - 갱신 시도
+            if (import.meta.env.DEV) {
+              console.log("⚠️ RTC 토큰 30초 후 만료 - 갱신 시도");
+            }
+            handleTokenRenewal();
+          },
+          onTokenPrivilegeDidExpire: () => {
+            // 토큰이 만료됨 - 통화 종료
+            console.error("❌ RTC 토큰 만료 - 통화 종료");
+            handleTokenExpired();
           },
           onUserLeft: (userId) => {
             if (import.meta.env.DEV) {
@@ -279,6 +350,8 @@ export const useCall = () => {
       isInCall,
       isConnecting,
       startMaxCallDurationTimer,
+      handleTokenRenewal,
+      handleTokenExpired,
     ],
   );
 

@@ -35,6 +35,8 @@ export interface AgoraCallbacks {
   onError?: (error: Error) => void;
   onCallStarted?: () => void;
   onCallEnded?: () => void;
+  onTokenPrivilegeWillExpire?: () => void; // 토큰이 30초 후 만료될 때
+  onTokenPrivilegeDidExpire?: () => void; // 토큰이 만료되었을 때
 }
 
 /**
@@ -70,6 +72,9 @@ export class AgoraService {
   private inactivityTimer: NodeJS.Timeout | null = null; // 무응답 감지 타이머
   private lastActivityTime: number = Date.now(); // 마지막 활동 시간
   private readonly INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5분 무응답 시 자동 종료
+
+  // 토큰 갱신 관련
+  private isRenewingToken = false; // 토큰 갱신 중 플래그 (중복 방지)
 
   constructor() {
     // Agora SDK 초기화
@@ -740,6 +745,61 @@ export class AgoraService {
       // 활동 시간 갱신
       this.updateActivity();
     });
+
+    // 토큰 만료 30초 전 알림 (토큰 갱신 시도)
+    this.client.on("token-privilege-will-expire", () => {
+      console.warn("⚠️ Agora RTC 토큰이 30초 후 만료됩니다 - 갱신 필요");
+
+      if (this.isRenewingToken) {
+        if (import.meta.env.DEV) {
+          console.log("이미 토큰 갱신 중 - 중복 요청 무시");
+        }
+        return;
+      }
+
+      this.isRenewingToken = true;
+      this.callbacks.onTokenPrivilegeWillExpire?.();
+    });
+
+    // 토큰 만료됨 (긴급 상황)
+    this.client.on("token-privilege-did-expire", () => {
+      console.error("❌ Agora RTC 토큰이 만료되었습니다 - 통화 종료 필요");
+      this.callbacks.onTokenPrivilegeDidExpire?.();
+    });
+  }
+
+  /**
+   * 토큰 갱신
+   * @param newToken 새로운 RTC 토큰
+   */
+  async renewToken(newToken: string): Promise<void> {
+    try {
+      if (!this.client) {
+        throw new Error("Agora 클라이언트가 초기화되지 않았습니다.");
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("🔄 Agora RTC 토큰 갱신 시작");
+      }
+
+      // Agora SDK의 renewToken 메서드 호출
+      await this.client.renewToken(newToken);
+
+      // 현재 채널 정보 업데이트
+      if (this.currentChannelInfo) {
+        this.currentChannelInfo.token = newToken;
+      }
+
+      this.isRenewingToken = false;
+
+      if (import.meta.env.DEV) {
+        console.log("✅ Agora RTC 토큰 갱신 완료");
+      }
+    } catch (error) {
+      this.isRenewingToken = false;
+      console.error("❌ Agora RTC 토큰 갱신 실패:", error);
+      throw error;
+    }
   }
 
   /**

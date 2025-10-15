@@ -21,6 +21,7 @@ export default function CallConnectedPage({
     toggleMute,
     toggleSpeaker,
     setError,
+    error,
   } = useCall();
 
   // 디버깅: partner 정보 확인 (개발 환경만)
@@ -236,6 +237,15 @@ export default function CallConnectedPage({
           ))}
         </div>
       </div>
+
+      {/* Error Message Display */}
+      {error && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg max-w-md">
+            <p className="text-center font-pretendard">{error}</p>
+          </div>
+        </div>
+      )}
 
       {/* Controls Container */}
       <div className="flex-1 flex items-end justify-center pb-16">

@@ -378,6 +378,79 @@ export class MatchingApiService {
   }
 
   /**
+   * RTC 토큰 갱신
+   * POST /api/v1/calls/{callId}/renew-token
+   *
+   * 주의: 백엔드 API 엔드포인트를 확인하고 맞춰주세요!
+   * 가능한 엔드포인트:
+   * - POST /v1/calls/{callId}/renew-token
+   * - POST /v1/calls/rtc-token/renew
+   * - POST /v1/rtc/token/renew
+   */
+  async renewRtcToken(callId: string): Promise<{
+    rtcToken: string;
+    expiresAt: string;
+  }> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/calls/${callId}/renew-token`;
+      logger.apiRequest("POST", `/v1/calls/${callId}/renew-token`, {});
+
+      let response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          // 토큰 갱신 성공 시 새 토큰으로 재시도
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "POST",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          // 토큰 갱신 실패 시 인증 오류로 처리
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      // handleApiResponse는 에러 시 throw하므로, 여기 도달하면 성공
+      const result: {
+        data: {
+          rtcToken: string;
+          expiresAt: string;
+        };
+        message?: string;
+        timestamp?: string;
+      } = await handleApiResponse(response);
+
+      if (import.meta.env.DEV) {
+        logger.log(`✅ RTC 토큰 갱신 성공 (${response.status})`);
+      }
+
+      // 백엔드 response에는 success 필드가 없음 (200 OK면 성공)
+      if (!result.data || !result.data.rtcToken) {
+        throw new Error(result.message || "RTC 토큰 갱신에 실패했습니다.");
+      }
+
+      return result.data;
+    } catch (error) {
+      logger.error("RTC 토큰 갱신 오류:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("RTC 토큰 갱신에 실패했습니다.");
+    }
+  }
+
+  /**
    * 매칭 통계 조회 (선택사항)
    * GET /api/v1/calls/match/stats
    */
