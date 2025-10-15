@@ -30,6 +30,10 @@ export const useCall = () => {
   // 중복 알림 방지를 위한 ref
   const processedCallIds = useRef<Set<number>>(new Set());
 
+  // 최대 통화 시간 제한 (60분)
+  const MAX_CALL_DURATION = 60 * 60 * 1000; // 60분
+  const maxCallDurationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // 디버깅: partner 정보 변경 시에만 로그 출력 (개발 환경에서만)
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -40,6 +44,40 @@ export const useCall = () => {
   const agoraService = getAgoraService();
   const webSocketService = getWebSocketService();
   const matchingApiService = getMatchingApiService();
+
+  /**
+   * 최대 통화 시간 타이머 시작
+   */
+  const startMaxCallDurationTimer = useCallback(() => {
+    // 기존 타이머 정리
+    if (maxCallDurationTimerRef.current) {
+      clearTimeout(maxCallDurationTimerRef.current);
+    }
+
+    // 60분 후 자동 종료
+    maxCallDurationTimerRef.current = setTimeout(() => {
+      console.warn("⚠️ 최대 통화 시간(60분) 초과 - 자동 종료 (비용 방어)");
+      setError("최대 통화 시간(60분)이 초과되어 통화가 자동 종료되었습니다.");
+      handleEndCall();
+    }, MAX_CALL_DURATION);
+
+    if (import.meta.env.DEV) {
+      console.log("⏰ 최대 통화 시간 타이머 시작 (60분)");
+    }
+  }, [setError]);
+
+  /**
+   * 최대 통화 시간 타이머 정리
+   */
+  const clearMaxCallDurationTimer = useCallback(() => {
+    if (maxCallDurationTimerRef.current) {
+      clearTimeout(maxCallDurationTimerRef.current);
+      maxCallDurationTimerRef.current = null;
+      if (import.meta.env.DEV) {
+        console.log("⏰ 최대 통화 시간 타이머 정리");
+      }
+    }
+  }, []);
 
   /**
    * 통화 시작 (WebSocket 알림 수신 시)
@@ -181,6 +219,9 @@ export const useCall = () => {
             }
             updateConnectingState(false);
             updateAgoraState(agoraService.getCallState());
+
+            // 최대 통화 시간 타이머 시작
+            startMaxCallDurationTimer();
           },
           onCallEnded: () => {
             if (import.meta.env.DEV) {
@@ -237,6 +278,7 @@ export const useCall = () => {
       setError,
       isInCall,
       isConnecting,
+      startMaxCallDurationTimer,
     ],
   );
 
@@ -368,16 +410,19 @@ export const useCall = () => {
         }
       }
 
-      // 5. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
+      // 5. 최대 통화 시간 타이머 정리
+      clearMaxCallDurationTimer();
+
+      // 6. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
       agoraService.setCallbacks({});
       if (import.meta.env.DEV) {
         console.log("✅ Agora 콜백 정리 완료");
       }
 
-      // 6. 통화 상태 초기화
+      // 7. 통화 상태 초기화
       endCall();
 
-      // 7. 추가 대기 시간 (상태 정리 완료 보장)
+      // 8. 추가 대기 시간 (상태 정리 완료 보장)
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (import.meta.env.DEV) {
@@ -397,6 +442,7 @@ export const useCall = () => {
     matchingApiService,
     partner,
     webSocketService,
+    clearMaxCallDurationTimer,
   ]);
 
   /**
@@ -474,6 +520,9 @@ export const useCall = () => {
           console.log("📞 상대방이 통화를 종료했습니다 - 처리 시작");
         }
 
+        // 최대 통화 시간 타이머 정리
+        clearMaxCallDurationTimer();
+
         // Agora 채널에서 퇴장 (에러 무시)
         agoraService.leaveChannel().catch((error) => {
           if (import.meta.env.DEV) {
@@ -495,7 +544,7 @@ export const useCall = () => {
         }
       }
     },
-    [callId, agoraService, endCall],
+    [callId, agoraService, endCall, clearMaxCallDurationTimer],
   );
 
   /**
@@ -530,17 +579,14 @@ export const useCall = () => {
   }, [webSocketService, handleCallEndNotification]);
 
   /**
-   * 컴포넌트 언마운트 시 정리
-   * 주의: 페이지 이동 시 자동으로 통화를 종료하지 않음
+   * 컴포넌트 언마운트 시 타이머 정리
    */
-  // useEffect(() => {
-  //   return () => {
-  //     // 통화 중이면 정리
-  //     if (isInCall) {
-  //       agoraService.leaveChannel().catch(console.error);
-  //     }
-  //   };
-  // }, [isInCall, agoraService]);
+  useEffect(() => {
+    return () => {
+      // 타이머 정리
+      clearMaxCallDurationTimer();
+    };
+  }, [clearMaxCallDurationTimer]);
 
   return {
     // 상태

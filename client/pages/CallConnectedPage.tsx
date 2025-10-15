@@ -54,6 +54,42 @@ export default function CallConnectedPage({
     }
   }, [isInCall, partner, onEndCall]);
 
+  // 페이지 언로드 감지 (브라우저 닫기, 새로고침 등) - 비용 방어
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isInCall) {
+        // 통화 중일 때만 경고 메시지 표시
+        e.preventDefault();
+        e.returnValue = "통화가 진행 중입니다. 정말 페이지를 나가시겠습니까?";
+        return e.returnValue;
+      }
+    };
+
+    const handleUnload = () => {
+      if (isInCall) {
+        // 페이지 언로드 시 통화 종료 (비동기 처리 불가, navigator.sendBeacon 사용)
+        if (import.meta.env.DEV) {
+          console.log(
+            "⚠️ 페이지 언로드 감지 - 통화 자동 종료 시도 (비용 방어)",
+          );
+        }
+
+        // 동기적으로 통화 종료 처리 (navigator.sendBeacon을 사용한 백엔드 알림)
+        handleEndCall().catch((error) => {
+          console.error("페이지 언로드 시 통화 종료 실패:", error);
+        });
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("unload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("unload", handleUnload);
+    };
+  }, [isInCall, handleEndCall]);
+
   // Format seconds to MM:SS
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

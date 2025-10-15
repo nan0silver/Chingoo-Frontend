@@ -66,6 +66,11 @@ export class AgoraService {
   private currentChannelInfo: AgoraChannelInfo | null = null;
   private isJoining = false; // 중복 입장 방지 플래그
 
+  // 방어 로직을 위한 타이머들
+  private inactivityTimer: NodeJS.Timeout | null = null; // 무응답 감지 타이머
+  private lastActivityTime: number = Date.now(); // 마지막 활동 시간
+  private readonly INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5분 무응답 시 자동 종료
+
   constructor() {
     // Agora SDK 초기화
     AgoraRTC.setLogLevel(4); // INFO 레벨로 설정
@@ -236,6 +241,12 @@ export class AgoraService {
         console.log("✅ onCallStarted 콜백 호출 완료");
       }
 
+      // 무응답 감지 타이머 시작
+      this.startInactivityTimer();
+      if (import.meta.env.DEV) {
+        console.log("⏰ 무응답 감지 타이머 시작 (5분)");
+      }
+
       // 입장 완료 - 플래그 해제
       this.isJoining = false;
     } catch (error) {
@@ -314,7 +325,10 @@ export class AgoraService {
         this.client = null;
       }
 
-      // 3. 상태 완전 초기화
+      // 3. 타이머 정리
+      this.stopInactivityTimer();
+
+      // 4. 상태 완전 초기화
       this.callState.isConnected = false;
       this.callState.isConnecting = false;
       this.callState.connectionState = "DISCONNECTED";
@@ -331,6 +345,7 @@ export class AgoraService {
     } catch (error) {
       console.error("❌ 강제 채널 퇴장 실패:", error);
       // 실패해도 상태는 강제 초기화
+      this.stopInactivityTimer();
       this.callState.isConnected = false;
       this.callState.isConnecting = false;
       this.callState.connectionState = "DISCONNECTED";
@@ -343,6 +358,64 @@ export class AgoraService {
   }
 
   /**
+   * 무응답 감지 타이머 시작
+   */
+  private startInactivityTimer(): void {
+    // 기존 타이머 정리
+    this.stopInactivityTimer();
+
+    // 마지막 활동 시간 갱신
+    this.lastActivityTime = Date.now();
+
+    // 새 타이머 시작
+    this.inactivityTimer = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - this.lastActivityTime;
+
+      if (timeSinceLastActivity >= this.INACTIVITY_TIMEOUT) {
+        console.warn("⚠️ 5분간 활동이 없어 통화를 자동 종료합니다 (비용 방어)");
+        this.handleInactivityTimeout();
+      }
+    }, 30000); // 30초마다 체크
+  }
+
+  /**
+   * 무응답 감지 타이머 정지
+   */
+  private stopInactivityTimer(): void {
+    if (this.inactivityTimer) {
+      clearInterval(this.inactivityTimer);
+      this.inactivityTimer = null;
+    }
+  }
+
+  /**
+   * 활동 시간 갱신 (오디오 트랙 수신 등)
+   */
+  private updateActivity(): void {
+    this.lastActivityTime = Date.now();
+  }
+
+  /**
+   * 무응답 타임아웃 처리
+   */
+  private async handleInactivityTimeout(): Promise<void> {
+    try {
+      console.warn("🚨 무응답 타임아웃 - 통화 자동 종료");
+
+      // 에러 콜백 호출
+      this.callbacks.onError?.(
+        new Error("장시간 활동이 없어 통화가 자동 종료되었습니다."),
+      );
+
+      // 채널에서 퇴장
+      await this.leaveChannel();
+    } catch (error) {
+      console.error("무응답 타임아웃 처리 실패:", error);
+    }
+  }
+
+  /**
    * 채널에서 퇴장
    */
   async leaveChannel(): Promise<void> {
@@ -350,6 +423,9 @@ export class AgoraService {
       if (import.meta.env.DEV) {
         console.log("Agora 채널 퇴장");
       }
+
+      // 무응답 감지 타이머 정지
+      this.stopInactivityTimer();
 
       // 로컬 오디오 트랙 발행 해제 및 해제
       if (this.callState.localAudioTrack && this.client) {
@@ -635,6 +711,9 @@ export class AgoraService {
           if (import.meta.env.DEV) {
             console.log("✅ 원격 오디오 트랙 재생 성공");
           }
+
+          // 활동 시간 갱신 (오디오 트랙 수신)
+          this.updateActivity();
         }
       }
     });
@@ -657,6 +736,9 @@ export class AgoraService {
       }
       this.callState.remoteAudioTrack = audioTrack;
       this.callbacks.onAudioTrackSubscribed?.(user.uid.toString(), audioTrack);
+
+      // 활동 시간 갱신
+      this.updateActivity();
     });
   }
 

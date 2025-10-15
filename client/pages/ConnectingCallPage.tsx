@@ -23,6 +23,10 @@ export default function ConnectingCallPage({
   // 중복 알림 방지를 위한 ref
   const processedNotifications = useRef<Set<number>>(new Set());
 
+  // 연결 타임아웃 제한 (30초)
+  const CONNECTION_TIMEOUT = 30 * 1000; // 30초
+  const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Animate loading dots
   useEffect(() => {
     const interval = setInterval(() => {
@@ -113,6 +117,39 @@ export default function ConnectingCallPage({
     handleCallStartNotification,
     handleMatchingNotification,
   ]);
+
+  // 연결 타임아웃 감지 (30초) - 비용 방어
+  useEffect(() => {
+    if (isConnecting && !isInCall) {
+      // 연결 중일 때 타임아웃 타이머 시작
+      if (import.meta.env.DEV) {
+        console.log("⏰ 연결 타임아웃 타이머 시작 (30초)");
+      }
+
+      connectionTimeoutRef.current = setTimeout(() => {
+        console.warn("⚠️ 연결 타임아웃 (30초) - 자동 취소 (비용 방어)");
+        alert("통화 연결 시간이 초과되었습니다. 다시 시도해주세요.");
+        onCancel();
+      }, CONNECTION_TIMEOUT);
+    } else {
+      // 연결이 완료되거나 취소되면 타이머 정리
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+        if (import.meta.env.DEV) {
+          console.log("⏰ 연결 타임아웃 타이머 정리");
+        }
+      }
+    }
+
+    return () => {
+      // 컴포넌트 언마운트 시 타이머 정리
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
+    };
+  }, [isConnecting, isInCall, onCancel]);
 
   // 에러 발생 시 처리
   useEffect(() => {
