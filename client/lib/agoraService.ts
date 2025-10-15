@@ -28,6 +28,34 @@ export interface NetworkQualityState {
 }
 
 /**
+ * 통화 통계 정보
+ */
+export interface CallStatistics {
+  // 기본 정보
+  duration: number; // 통화 시간 (초)
+
+  // 네트워크 통계
+  sendBytes?: number; // 송신한 총 바이트
+  receiveBytes?: number; // 수신한 총 바이트
+  sendBitrate?: number; // 평균 송신 비트레이트 (kbps)
+  receiveBitrate?: number; // 평균 수신 비트레이트 (kbps)
+
+  // 패킷 손실률
+  sendPacketsLost?: number; // 송신 패킷 손실 수
+  receivePacketsLost?: number; // 수신 패킷 손실 수
+
+  // 오디오 품질
+  audioSendBytes?: number; // 오디오 송신 바이트
+  audioReceiveBytes?: number; // 오디오 수신 바이트
+  audioSendBitrate?: number; // 오디오 송신 비트레이트
+  audioReceiveBitrate?: number; // 오디오 수신 비트레이트
+
+  // 기타
+  userCount?: number; // 채널 내 사용자 수
+  lastNetworkQuality?: NetworkQualityState; // 마지막 네트워크 품질
+}
+
+/**
  * Agora 통화 상태
  */
 export interface AgoraCallState {
@@ -844,6 +872,96 @@ export class AgoraService {
       6: "연결끊김",
     };
     return labels[quality];
+  }
+
+  /**
+   * 통화 통계 수집
+   * 통화 종료 시 호출하여 통계 정보를 가져옴
+   */
+  async getCallStatistics(): Promise<CallStatistics | null> {
+    try {
+      if (!this.client) {
+        console.warn("⚠️ Agora 클라이언트가 없어 통계 수집 불가");
+        return null;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("📊 통화 통계 수집 시작");
+      }
+
+      // Agora SDK에서 RTC 통계 가져오기
+      const rtcStats = await this.client.getRTCStats();
+
+      // 로컬 오디오 트랙 통계
+      let localAudioStats = null;
+      if (this.callState.localAudioTrack) {
+        try {
+          localAudioStats = this.callState.localAudioTrack.getStats();
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.log("⚠️ 로컬 오디오 통계 수집 실패:", error);
+          }
+        }
+      }
+
+      // 리모트 오디오 트랙 통계
+      let remoteAudioStats = null;
+      if (this.callState.remoteAudioTrack) {
+        try {
+          remoteAudioStats = this.callState.remoteAudioTrack.getStats();
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.log("⚠️ 리모트 오디오 통계 수집 실패:", error);
+          }
+        }
+      }
+
+      const statistics: CallStatistics = {
+        // 기본 정보
+        duration: rtcStats.Duration || 0,
+
+        // 네트워크 통계 (전체)
+        sendBytes: rtcStats.SendBytes,
+        receiveBytes: rtcStats.RecvBytes,
+        sendBitrate: rtcStats.SendBitrate,
+        receiveBitrate: rtcStats.RecvBitrate,
+
+        // 오디오 통계
+        audioSendBytes: localAudioStats?.sendBytes,
+        audioReceiveBytes: remoteAudioStats?.receiveBytes,
+        audioSendBitrate: localAudioStats?.sendBitrate,
+        audioReceiveBitrate: remoteAudioStats?.receiveBitrate,
+
+        // 패킷 손실
+        sendPacketsLost: localAudioStats?.sendPacketsLost,
+        receivePacketsLost: remoteAudioStats?.receivePacketsLost,
+
+        // 기타
+        userCount: rtcStats.UserCount,
+        lastNetworkQuality: { ...this.callState.networkQuality },
+      };
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 통화 통계 수집 완료:", {
+          duration: `${statistics.duration}초`,
+          sendBytes: `${Math.round((statistics.sendBytes || 0) / 1024)}KB`,
+          receiveBytes: `${Math.round((statistics.receiveBytes || 0) / 1024)}KB`,
+          networkQuality: {
+            uplink: this.getNetworkQualityLabel(
+              statistics.lastNetworkQuality?.uplinkNetworkQuality || 0,
+            ),
+            downlink: this.getNetworkQualityLabel(
+              statistics.lastNetworkQuality?.downlinkNetworkQuality || 0,
+            ),
+          },
+        });
+      }
+
+      return statistics;
+    } catch (error) {
+      console.error("❌ 통화 통계 수집 실패:", error);
+      return null;
+    }
   }
 
   /**

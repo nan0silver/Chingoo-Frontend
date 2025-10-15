@@ -378,6 +378,80 @@ export class MatchingApiService {
   }
 
   /**
+   * 통화 통계 전송
+   * POST /api/v1/calls/{callId}/statistics
+   *
+   * 통화 종료 시 Agora에서 수집한 통계 정보를 백엔드로 전송
+   */
+  async sendCallStatistics(
+    callId: string,
+    statistics: {
+      duration: number;
+      sendBytes: number;
+      receiveBytes: number;
+      sendBitrate: number;
+      receiveBitrate: number;
+      audioSendBytes: number;
+      audioReceiveBytes: number;
+      uplinkNetworkQuality: number;
+      downlinkNetworkQuality: number;
+      networkQualityDescription: string;
+      totalDataUsageMB: number;
+      averageNetworkQuality: number;
+    },
+  ): Promise<void> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/calls/${callId}/statistics`;
+      logger.apiRequest("POST", `/v1/calls/${callId}/statistics`, statistics);
+
+      let response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+        credentials: "include",
+        body: JSON.stringify(statistics),
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "POST",
+            headers: createHeaders(newToken),
+            credentials: "include",
+            body: JSON.stringify(statistics),
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      // 204 No Content 또는 200 OK 모두 성공으로 처리
+      if (response.status === 204 || response.ok) {
+        if (import.meta.env.DEV) {
+          logger.log(`✅ 통화 통계 전송 성공 (${response.status})`);
+        }
+        return;
+      }
+
+      // 에러 처리
+      const result = await handleApiResponse(response);
+      if (import.meta.env.DEV) {
+        logger.log(`✅ 통화 통계 전송 성공`, result);
+      }
+    } catch (error) {
+      // 통계 전송 실패는 치명적이지 않으므로 에러를 로그만 남기고 throw하지 않음
+      logger.error("⚠️ 통화 통계 전송 실패 (무시):", error);
+      // 사용자 경험에 영향을 주지 않도록 에러를 throw하지 않음
+    }
+  }
+
+  /**
    * RTC 토큰 갱신
    * POST /api/v1/calls/{callId}/renew-token
    *

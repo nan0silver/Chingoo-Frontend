@@ -393,18 +393,102 @@ export const useCall = () => {
       // partner 정보를 미리 저장 (WebSocket 알림 전송용)
       const currentPartner = partner;
 
-      // 1. Agora 연결 해제
+      // 1. 통화 통계 수집 (Agora 연결 해제 전에 수집해야 함!)
       if (import.meta.env.DEV) {
-        console.log("📞 1. Agora 채널에서 퇴장 시작");
+        console.log("📊 1. 통화 통계 수집");
+      }
+      let callStatistics = null;
+      try {
+        callStatistics = await agoraService.getCallStatistics();
+        if (import.meta.env.DEV && callStatistics) {
+          console.log("✅ 1. 통화 통계 수집 완료:", {
+            duration: `${callStatistics.duration}초`,
+            데이터사용량: `${Math.round(((callStatistics.sendBytes || 0) + (callStatistics.receiveBytes || 0)) / 1024)}KB`,
+          });
+        }
+      } catch (statsError) {
+        console.error("⚠️ 통화 통계 수집 실패 (무시):", statsError);
+      }
+
+      // 2. Agora 연결 해제
+      if (import.meta.env.DEV) {
+        console.log("📞 2. Agora 채널에서 퇴장 시작");
       }
       await agoraService.leaveChannel();
       if (import.meta.env.DEV) {
-        console.log("✅ 1. Agora 채널 퇴장 완료");
+        console.log("✅ 2. Agora 채널 퇴장 완료");
       }
 
-      // 2. 채널 나가기 API 호출
+      // 3. 통화 통계 백엔드로 전송 (비동기, 실패해도 계속 진행)
+      if (callStatistics) {
+        if (import.meta.env.DEV) {
+          console.log("📡 3. 통화 통계 백엔드 전송");
+        }
+        try {
+          // 토큰 설정
+          const { getStoredToken } = await import("./auth");
+          const token = getStoredToken();
+          if (token) {
+            matchingApiService.setToken(token);
+          }
+
+          // 네트워크 품질 설명 생성
+          const uplinkQuality =
+            callStatistics.lastNetworkQuality?.uplinkNetworkQuality || 0;
+          const downlinkQuality =
+            callStatistics.lastNetworkQuality?.downlinkNetworkQuality || 0;
+
+          const getQualityLabel = (q: number): string => {
+            if (q === 0) return "측정중";
+            if (q <= 2) return "좋음";
+            if (q === 3) return "보통";
+            if (q === 4) return "나쁨";
+            return "매우나쁨";
+          };
+
+          const networkQualityDescription = `업링크: ${getQualityLabel(uplinkQuality)}, 다운링크: ${getQualityLabel(downlinkQuality)}`;
+
+          // 총 데이터 사용량 (MB)
+          const totalBytes =
+            (callStatistics.sendBytes || 0) +
+            (callStatistics.receiveBytes || 0);
+          const totalDataUsageMB = Number(
+            (totalBytes / (1024 * 1024)).toFixed(2),
+          );
+
+          // 평균 네트워크 품질 (0-6 사이, 낮을수록 좋음)
+          const averageNetworkQuality = Number(
+            ((uplinkQuality + downlinkQuality) / 2).toFixed(1),
+          );
+
+          await matchingApiService.sendCallStatistics(callId, {
+            duration: callStatistics.duration || 0,
+            sendBytes: callStatistics.sendBytes || 0,
+            receiveBytes: callStatistics.receiveBytes || 0,
+            sendBitrate: callStatistics.sendBitrate || 0,
+            receiveBitrate: callStatistics.receiveBitrate || 0,
+            audioSendBytes: callStatistics.audioSendBytes || 0,
+            audioReceiveBytes: callStatistics.audioReceiveBytes || 0,
+            uplinkNetworkQuality: uplinkQuality,
+            downlinkNetworkQuality: downlinkQuality,
+            networkQualityDescription,
+            totalDataUsageMB,
+            averageNetworkQuality,
+          });
+          if (import.meta.env.DEV) {
+            console.log("✅ 3. 통화 통계 전송 완료");
+          }
+        } catch (statsError) {
+          // 통계 전송 실패는 무시 (사용자 경험에 영향 없음)
+          if (import.meta.env.DEV) {
+            console.log("⚠️ 3. 통화 통계 전송 실패 (무시):", statsError);
+          }
+        }
+      }
+
+      // 4. 채널 나가기 API 호출
       if (import.meta.env.DEV) {
-        console.log("📡 2. 백엔드 채널 나가기 API 호출");
+        console.log("📡 4. 백엔드 채널 나가기 API 호출");
       }
       try {
         // 토큰 설정 (갱신된 토큰 포함)
@@ -423,16 +507,16 @@ export const useCall = () => {
 
         await matchingApiService.leaveChannel(callId);
         if (import.meta.env.DEV) {
-          console.log("✅ 2. 채널 나가기 API 호출 성공");
+          console.log("✅ 4. 채널 나가기 API 호출 성공");
         }
       } catch (apiError) {
-        console.error("❌ 2. 채널 나가기 API 호출 실패:", apiError);
+        console.error("❌ 4. 채널 나가기 API 호출 실패:", apiError);
         // API 호출 실패해도 통화 종료는 계속 진행
       }
 
-      // 3. 통화 종료 API 호출
+      // 5. 통화 종료 API 호출
       if (import.meta.env.DEV) {
-        console.log("📡 3. 백엔드 통화 종료 API 호출");
+        console.log("📡 5. 백엔드 통화 종료 API 호출");
       }
       try {
         // 토큰 설정 (갱신된 토큰 포함)
@@ -451,7 +535,7 @@ export const useCall = () => {
 
         await matchingApiService.endCall(callId);
         if (import.meta.env.DEV) {
-          console.log("✅ 3. 통화 종료 API 호출 성공");
+          console.log("✅ 5. 통화 종료 API 호출 성공");
         }
       } catch (apiError) {
         // 409 Conflict (이미 종료된 통화)는 정상적인 상황으로 처리
@@ -463,12 +547,12 @@ export const useCall = () => {
             console.log("ℹ️ 통화가 이미 종료됨 - 정상적인 상황");
           }
         } else {
-          console.error("❌ 3. 통화 종료 API 호출 실패:", apiError);
+          console.error("❌ 5. 통화 종료 API 호출 실패:", apiError);
         }
         // API 호출 실패해도 통화 상태 초기화는 계속 진행
       }
 
-      // 4. 상대방에게 통화 종료 WebSocket 알림 전송 (저장된 partner 정보 사용)
+      // 6. 상대방에게 통화 종료 WebSocket 알림 전송 (저장된 partner 정보 사용)
       if (currentPartner?.id) {
         if (import.meta.env.DEV) {
           console.log("📡 상대방에게 통화 종료 알림 전송");
@@ -502,19 +586,19 @@ export const useCall = () => {
         }
       }
 
-      // 5. 최대 통화 시간 타이머 정리
+      // 7. 최대 통화 시간 타이머 정리
       clearMaxCallDurationTimer();
 
-      // 6. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
+      // 8. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
       agoraService.setCallbacks({});
       if (import.meta.env.DEV) {
         console.log("✅ Agora 콜백 정리 완료");
       }
 
-      // 7. 통화 상태 초기화
+      // 9. 통화 상태 초기화
       endCall();
 
-      // 8. 추가 대기 시간 (상태 정리 완료 보장)
+      // 10. 추가 대기 시간 (상태 정리 완료 보장)
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (import.meta.env.DEV) {
