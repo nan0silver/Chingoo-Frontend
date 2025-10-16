@@ -339,7 +339,17 @@ export default function ProfileSetupPage() {
       {/* Header */}
       <div className="w-full max-w-sm md:max-w-md px-5 pt-4 pb-6">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+          <button
+            onClick={() => {
+              // 신규 유저는 홈으로, 기존 유저는 설정 페이지로
+              if (userProfile.is_new_user) {
+                navigate("/");
+              } else {
+                navigate("/settings");
+              }
+            }}
+            className="p-2 -ml-2"
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M15 18L9 12L15 6"
