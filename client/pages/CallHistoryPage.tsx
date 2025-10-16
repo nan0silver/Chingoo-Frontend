@@ -189,7 +189,7 @@ export default function CallHistoryPage({ onBack }: CallHistoryPageProps) {
                       </div>
 
                       {/* 하단: 카테고리 */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 ml-[52px]">
                         <div className="px-3 py-1 bg-white rounded-full border border-orange-200">
                           <span className="text-orange-500 font-pretendard text-sm">
                             {call.categoryName}
