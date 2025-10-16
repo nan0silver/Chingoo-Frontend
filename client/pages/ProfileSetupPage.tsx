@@ -489,7 +489,7 @@ export default function ProfileSetupPage() {
               !birthDay ||
               showSuccessMessage
             }
-            className="w-full h-14 md:h-16 bg-login-button text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="w-full h-14 md:h-16 bg-gradient-to-r from-yellow-300 to-red-gradient text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:opacity-90 transition-opacity disabled:bg-gray-300 disabled:bg-none disabled:cursor-not-allowed"
           >
             {isLoading ? "저장 중..." : "프로필 저장"}
           </button>
