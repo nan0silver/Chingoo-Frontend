@@ -253,6 +253,16 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
                 </div>
               </div>
             </div>
+
+            {/* Back Button */}
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={onBack}
+                className="w-full max-w-sm h-14 bg-gradient-to-r from-yellow-300 to-red-gradient text-white font-crimson text-xl font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                돌아가기
+              </button>
+            </div>
           </>
         )}
       </div>
