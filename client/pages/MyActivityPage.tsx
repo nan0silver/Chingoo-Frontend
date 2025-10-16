@@ -149,7 +149,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
                       ? "linear-gradient(93deg, #F4BC41 0.31%, #E26155 100.05%)"
                       : grade.level === "GOOD"
                         ? "linear-gradient(93deg, #4B9FE1 0.31%, #6CC4A1 100.05%)"
-                        : "linear-gradient(93deg, #9CA3AF 0.31%, #6B7280 100.05%)",
+                        : "linear-gradient(93deg, #FCD34D 0.31%, #F59E0B 100.05%)",
                 }}
               >
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
