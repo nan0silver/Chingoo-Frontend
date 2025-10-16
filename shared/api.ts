@@ -271,6 +271,34 @@ export type CategoryId = (typeof CATEGORIES)[keyof typeof CATEGORIES]["id"];
 export type CategoryName = (typeof CATEGORIES)[keyof typeof CATEGORIES]["name"];
 
 /**
+ * 카테고리 ID를 표시 이름으로 변환하는 헬퍼 함수
+ */
+export function getCategoryDisplayName(
+  category: string | number | null,
+): string {
+  if (category === null || category === undefined) {
+    return "알 수 없음";
+  }
+
+  // 숫자 또는 문자열 숫자인 경우
+  const categoryId =
+    typeof category === "string" ? parseInt(category) : category;
+
+  if (!isNaN(categoryId)) {
+    // CATEGORIES에서 해당 ID를 가진 카테고리 찾기
+    const categoryEntry = Object.values(CATEGORIES).find(
+      (cat) => cat.id === categoryId,
+    );
+    return categoryEntry?.name || "알 수 없음";
+  }
+
+  // 문자열 키인 경우 (예: "hobby", "children" 등)
+  const categoryKey = String(category).toUpperCase();
+  const categoryEntry = CATEGORIES[categoryKey as keyof typeof CATEGORIES];
+  return categoryEntry?.name || String(category);
+}
+
+/**
  * 사용자 활동 통계
  */
 export interface ActivityStats {

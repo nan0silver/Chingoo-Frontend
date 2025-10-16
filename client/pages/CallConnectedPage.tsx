@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
 import { NetworkQuality } from "@/lib/agoraService";
+import { getCategoryDisplayName } from "@shared/api";
 
 interface CallConnectedPageProps {
   selectedCategory: string | null;
@@ -160,33 +161,6 @@ export default function CallConnectedPage({
   const networkQuality = getNetworkQualityDisplay(
     agoraState.networkQuality?.downlinkNetworkQuality || 0,
   );
-
-  const getCategoryDisplayName = (category: string | null) => {
-    if (!category) return "알 수 없음";
-
-    // 숫자 ID인 경우 카테고리 이름으로 변환
-    const categoryId = parseInt(category);
-    if (!isNaN(categoryId)) {
-      const categoryMap: Record<number, string> = {
-        1: "취미",
-        2: "자녀",
-        3: "배우자",
-        4: "추억",
-        5: "스트레스",
-      };
-      return categoryMap[categoryId] || "알 수 없음";
-    }
-
-    // 문자열인 경우 기존 로직 사용
-    const categoryMap: Record<string, string> = {
-      hobby: "취미",
-      children: "자녀",
-      spouse: "배우자",
-      memories: "추억",
-      stress: "스트레스",
-    };
-    return categoryMap[category] || category;
-  };
 
   return (
     <div
