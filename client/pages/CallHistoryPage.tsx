@@ -172,7 +172,7 @@ export default function CallHistoryPage({ onBack }: CallHistoryPageProps) {
                               />
                             </svg>
                           </div>
-                          <div>
+                          <div className="ml-1">
                             <p className="text-gray-800 font-crimson text-lg font-semibold">
                               {call.partnerNickname}
                             </p>
