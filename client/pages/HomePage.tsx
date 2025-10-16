@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUserProfile } from "@/lib/auth";
+import { getUserProfile, getStoredToken } from "@/lib/auth";
 import { useMatchingStore } from "@/lib/matchingStore";
-import { CATEGORIES } from "@shared/api";
+import { CATEGORIES, CategoryRequest } from "@shared/api";
+import CategoryRequestModal from "@/components/CategoryRequestModal";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
@@ -22,6 +23,7 @@ export default function HomePage({
   const [userNickname, setUserNickname] = useState<string>("따뜻한 햇살"); // 기본값
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const [isStartingMatching, setIsStartingMatching] = useState<boolean>(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
@@ -58,15 +60,30 @@ export default function HomePage({
   const categories = Object.values(CATEGORIES).map((category) => ({
     id: category.id.toString(),
     name: category.name,
-    icon: (
-      <div className="w-20 h-20 flex items-center justify-center">
-        <img
-          src={`/icons/${category.icon}`}
-          alt={category.name}
-          className="w-16 h-16"
-        />
-      </div>
-    ),
+    icon:
+      category.id === 0 ? (
+        // 요청하기 버튼: + 아이콘 SVG
+        <div className="w-20 h-20 flex items-center justify-center">
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" fill="#FFDAB9" />
+            <path
+              d="M32 16V48M16 32H48"
+              stroke="#EF4444"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      ) : (
+        // 일반 카테고리: 이미지 아이콘
+        <div className="w-20 h-20 flex items-center justify-center">
+          <img
+            src={`/icons/${category.icon}`}
+            alt={category.name}
+            className="w-16 h-16"
+          />
+        </div>
+      ),
   }));
 
   const handleStartCall = async () => {
@@ -99,11 +116,78 @@ export default function HomePage({
   };
 
   const handleCategorySelect = (categoryId: string) => {
+    // 요청하기 버튼 클릭 시
+    if (categoryId === "0") {
+      setIsRequestModalOpen(true);
+      return;
+    }
     setSelectedCategory(categoryId);
+  };
+
+  // 카테고리 요청 처리
+  const handleCategoryRequest = async (categoryName: string) => {
+    try {
+      const token = getStoredToken();
+
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+        ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
+        : "/api";
+
+      const requestBody: CategoryRequest = {
+        category_name: categoryName,
+      };
+
+      if (import.meta.env.DEV) {
+        console.log("📤 카테고리 요청 전송:", requestBody);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/v1/categories/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "카테고리 요청에 실패했습니다.");
+      }
+
+      const data = await response.json();
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 카테고리 요청 성공:", data);
+      }
+
+      alert("카테고리 요청이 완료되었습니다.\n소중한 의견 감사합니다!");
+    } catch (error) {
+      console.error("카테고리 요청 실패:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "요청 전송에 실패했습니다. 다시 시도해주세요.",
+      );
+      throw error; // 모달이 에러를 처리할 수 있도록
+    }
   };
 
   return (
     <div className="min-h-screen bg-grey-50 flex flex-col">
+      {/* Category Request Modal */}
+      <CategoryRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        onSubmit={handleCategoryRequest}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4">
         {/* Logo */}
@@ -197,7 +281,9 @@ export default function HomePage({
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
               disabled={isStartingMatching}
-              className={`relative h-32 bg-white border border-grey-100 rounded-2xl flex items-center justify-between px-4 transition-colors hover:shadow-md ${
+              className={`relative h-32 border border-grey-100 rounded-2xl flex items-center justify-between px-4 transition-colors hover:shadow-md ${
+                category.id === "0" ? "bg-orange-50" : "bg-white"
+              } ${
                 selectedCategory === category.id
                   ? "border-orange-accent bg-orange-accent/5"
                   : ""

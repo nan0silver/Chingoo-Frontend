@@ -262,9 +262,10 @@ export type WebSocketMessage = MatchingNotification | CallStartNotification;
 export const CATEGORIES = {
   HOBBY: { id: 1, name: "취미", icon: "hobby.png" },
   CHILDREN: { id: 2, name: "자녀", icon: "children.png" },
-  SPOUSE: { id: 3, name: "배우자", icon: "cooking.png" },
+  SPOUSE: { id: 3, name: "배우자", icon: "marriage.png" },
   MEMORIES: { id: 4, name: "추억", icon: "memories.png" },
-  STRESS: { id: 5, name: "스트레스", icon: "music.png" },
+  STRESS: { id: 5, name: "스트레스", icon: "stress.png" },
+  REQUEST: { id: 0, name: "요청하기", icon: "plus.png" }, // 특별한 카테고리 (매칭 불가)
 } as const;
 
 export type CategoryId = (typeof CATEGORIES)[keyof typeof CATEGORIES]["id"];
@@ -366,4 +367,24 @@ export interface CallHistoryResponse {
   };
   message: string;
   timestamp: string;
+}
+
+/**
+ * 카테고리 요청
+ */
+export interface CategoryRequest {
+  category_name: string;
+}
+
+/**
+ * 카테고리 요청 응답
+ */
+export interface CategoryRequestResponse {
+  message: string;
+  data?: {
+    id: number;
+    category_name: string;
+    user_id: number;
+    created_at: string;
+  };
 }
