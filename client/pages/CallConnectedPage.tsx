@@ -170,10 +170,9 @@ export default function CallConnectedPage({
       const categoryMap: Record<number, string> = {
         1: "취미",
         2: "자녀",
-        3: "요리",
+        3: "배우자",
         4: "추억",
-        5: "음악",
-        6: "여행",
+        5: "스트레스",
       };
       return categoryMap[categoryId] || "알 수 없음";
     }
@@ -182,10 +181,9 @@ export default function CallConnectedPage({
     const categoryMap: Record<string, string> = {
       hobby: "취미",
       children: "자녀",
-      cooking: "요리",
+      spouse: "배우자",
       memories: "추억",
-      music: "음악",
-      travel: "여행",
+      stress: "스트레스",
     };
     return categoryMap[category] || category;
   };

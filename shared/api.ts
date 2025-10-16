@@ -262,10 +262,9 @@ export type WebSocketMessage = MatchingNotification | CallStartNotification;
 export const CATEGORIES = {
   HOBBY: { id: 1, name: "취미", icon: "hobby.png" },
   CHILDREN: { id: 2, name: "자녀", icon: "children.png" },
-  COOKING: { id: 3, name: "요리", icon: "cooking.png" },
+  SPOUSE: { id: 3, name: "배우자", icon: "cooking.png" },
   MEMORIES: { id: 4, name: "추억", icon: "memories.png" },
-  MUSIC: { id: 5, name: "음악", icon: "music.png" },
-  TRAVEL: { id: 6, name: "여행", icon: "travel.png" },
+  STRESS: { id: 5, name: "스트레스", icon: "music.png" },
 } as const;
 
 export type CategoryId = (typeof CATEGORIES)[keyof typeof CATEGORIES]["id"];
