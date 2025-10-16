@@ -54,7 +54,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
 
   // 분 단위를 "X시간 Y분" 형식으로 변환
   const formatDuration = (minutes: number): string => {
-    if (minutes === 0) return "0분";
+    if (minutes === 0) return "1분 미만";
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hours === 0) return `${mins}분`;
