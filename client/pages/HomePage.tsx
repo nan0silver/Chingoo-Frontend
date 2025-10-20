@@ -24,6 +24,7 @@ export default function HomePage({
   const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true);
   const [isStartingMatching, setIsStartingMatching] = useState<boolean>(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
+  const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
@@ -167,7 +168,13 @@ export default function HomePage({
         console.log("✅ 카테고리 요청 성공:", data);
       }
 
-      alert("카테고리 요청이 완료되었습니다.\n소중한 의견 감사합니다!");
+      // 성공 모달 표시
+      setShowSuccessModal(true);
+
+      // 2초 후 모달 자동 닫기
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 2000);
     } catch (error) {
       console.error("카테고리 요청 실패:", error);
       alert(
@@ -187,6 +194,45 @@ export default function HomePage({
         onClose={() => setIsRequestModalOpen(false)}
         onSubmit={handleCategoryRequest}
       />
+
+      {/* Success Message Modal */}
+      {showSuccessModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="category-request-success-title"
+          aria-describedby="category-request-success-desc"
+        >
+          <div className="bg-white rounded-lg p-6 mx-4 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h3
+              id="category-request-success-title"
+              className="text-lg font-semibold text-gray-900 mb-2"
+            >
+              카테고리 요청이 완료되었습니다!
+            </h3>
+            <p id="category-request-success-desc" className="text-gray-600">
+              소중한 의견 감사합니다.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4">
