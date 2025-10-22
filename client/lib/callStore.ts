@@ -86,6 +86,10 @@ const initialState: CallState = {
     remoteAudioTrack: null,
     volume: 100,
     connectionState: "DISCONNECTED",
+    networkQuality: {
+      uplinkNetworkQuality: 0,
+      downlinkNetworkQuality: 0,
+    },
   },
   error: null,
 };
@@ -145,6 +149,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
         remoteAudioTrack: null,
         volume: 100,
         connectionState: "DISCONNECTED",
+        networkQuality: {
+          uplinkNetworkQuality: 0,
+          downlinkNetworkQuality: 0,
+        },
       },
       error: null,
     });
