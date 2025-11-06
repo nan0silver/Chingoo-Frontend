@@ -16,7 +16,7 @@ export default function ConnectingCallPage({
   onConnected,
 }: ConnectingCallPageProps) {
   const [dots, setDots] = useState("");
-  const { queuePosition, estimatedWaitTime } = useMatchingStore();
+  const { queuePosition } = useMatchingStore();
   const { isInCall, isConnecting, error, callId, partner, handleCallStart } =
     useCall();
   const webSocketService = getWebSocketService();
@@ -223,18 +223,11 @@ export default function ConnectingCallPage({
           </p>
 
           {/* 실시간 대기 정보 */}
-          {(queuePosition !== undefined || estimatedWaitTime !== undefined) && (
+          {queuePosition !== undefined && (
             <div className="mt-8 space-y-2">
-              {queuePosition !== undefined && (
-                <p className="text-white font-crimson text-lg">
-                  대기 순서: {queuePosition}번째
-                </p>
-              )}
-              {estimatedWaitTime !== undefined && (
-                <p className="text-white font-crimson text-lg">
-                  예상 대기 시간: {estimatedWaitTime}분
-                </p>
-              )}
+              <p className="text-white font-crimson text-lg">
+                대기 순서: {queuePosition}번째
+              </p>
             </div>
           )}
         </div>
