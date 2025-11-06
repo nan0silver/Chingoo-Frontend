@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       screens: {
-        xs: { max: "445px" },
+        xs: { max: "420px" },
       },
       fontFamily: {
         crimson: ["Crimson Text", "serif"],
@@ -79,6 +79,9 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      fontSize: {
+        "1.5xl": "1.375rem", // 22px - text-xl(20px)과 text-2xl(24px) 사이
       },
       borderRadius: {
         lg: "var(--radius)",

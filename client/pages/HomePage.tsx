@@ -341,7 +341,7 @@ export default function HomePage({
               } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <div className="flex items-center justify-center gap-3 xs:justify-between xs:w-full">
-                <span className="text-grey-900 font-crimson text-2xl xs:text-xl font-bold whitespace-nowrap text-center pl-4">
+                <span className="text-grey-900 font-crimson text-2xl xs:text-1.5xl font-bold whitespace-nowrap text-center pl-4">
                   {category.name}
                 </span>
                 <div className="w-20 xs:w-16 flex items-center justify-center flex-shrink-0 pr-4">
