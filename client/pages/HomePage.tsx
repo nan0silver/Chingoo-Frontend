@@ -382,9 +382,9 @@ export default function HomePage({
           <button
             onClick={handleStartCall}
             disabled={!selectedCategory || isStartingMatching}
-            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-opacity ${
+            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all ${
               selectedCategory && !isStartingMatching
-                ? "bg-gradient-to-r from-yellow-300 to-red-gradient"
+                ? "bg-gradient-to-r from-yellow-300 to-red-gradient shadow-lg"
                 : "bg-gray-400 opacity-50 cursor-not-allowed"
             }`}
           >
