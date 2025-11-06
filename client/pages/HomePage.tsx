@@ -332,7 +332,7 @@ export default function HomePage({
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
               disabled={isStartingMatching}
-              className={`relative h-32 border border-grey-100 rounded-2xl flex items-center justify-between px-4 xs:px-2 overflow-hidden transition-colors hover:shadow-md ${
+              className={`relative h-32 border border-grey-100 rounded-2xl flex items-center justify-center px-4 xs:px-2 overflow-hidden transition-colors hover:shadow-md ${
                 category.id === "0" ? "bg-orange-50" : "bg-white"
               } ${
                 selectedCategory === category.id
@@ -340,13 +340,13 @@ export default function HomePage({
                   : ""
               } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className="flex-1 flex items-center justify-center min-w-0 pr-1 xs:pr-0.5">
-                <span className="text-grey-900 font-crimson text-2xl xs:text-xl font-bold whitespace-nowrap text-center">
+              <div className="flex items-center justify-center gap-3 xs:justify-between xs:w-full">
+                <span className="text-grey-900 font-crimson text-2xl xs:text-xl font-bold whitespace-nowrap text-center pl-4">
                   {category.name}
                 </span>
-              </div>
-              <div className="w-20 xs:w-16 flex items-center justify-center flex-shrink-0">
-                {category.icon}
+                <div className="w-20 xs:w-16 flex items-center justify-center flex-shrink-0 pr-4">
+                  {category.icon}
+                </div>
               </div>
             </button>
           ))}
