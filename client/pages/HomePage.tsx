@@ -64,8 +64,13 @@ export default function HomePage({
     icon:
       category.id === 0 ? (
         // 요청하기 버튼: + 아이콘 SVG
-        <div className="w-20 h-20 flex items-center justify-center">
-          <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+        <div className="w-full h-full flex items-center justify-center">
+          <svg
+            className="w-16 h-16 xs:w-14 xs:h-14"
+            viewBox="0 0 64 64"
+            fill="none"
+            preserveAspectRatio="xMidYMid meet"
+          >
             <circle cx="32" cy="32" r="30" fill="#FFDAB9" />
             <path
               d="M32 16V48M16 32H48"
@@ -77,11 +82,11 @@ export default function HomePage({
         </div>
       ) : (
         // 일반 카테고리: 이미지 아이콘
-        <div className="w-20 h-20 flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center">
           <img
             src={`/icons/${category.icon}`}
             alt={category.name}
-            className="w-16 h-16"
+            className="w-16 h-16 xs:w-12 xs:h-12 object-contain"
           />
         </div>
       ),
@@ -327,7 +332,7 @@ export default function HomePage({
               key={category.id}
               onClick={() => handleCategorySelect(category.id)}
               disabled={isStartingMatching}
-              className={`relative h-32 border border-grey-100 rounded-2xl flex items-center justify-between px-4 transition-colors hover:shadow-md ${
+              className={`relative h-32 border border-grey-100 rounded-2xl flex items-center justify-between px-4 xs:px-2 overflow-hidden transition-colors hover:shadow-md ${
                 category.id === "0" ? "bg-orange-50" : "bg-white"
               } ${
                 selectedCategory === category.id
@@ -335,12 +340,12 @@ export default function HomePage({
                   : ""
               } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className="flex-1 flex items-center justify-center">
-                <span className="text-grey-900 font-crimson text-2xl font-bold whitespace-nowrap">
+              <div className="flex-1 flex items-center justify-center min-w-0 pr-1 xs:pr-0.5">
+                <span className="text-grey-900 font-crimson text-2xl xs:text-xl font-bold whitespace-nowrap text-center">
                   {category.name}
                 </span>
               </div>
-              <div className="w-20 flex items-center justify-center flex-shrink-0">
+              <div className="w-20 xs:w-16 flex items-center justify-center flex-shrink-0">
                 {category.icon}
               </div>
             </button>

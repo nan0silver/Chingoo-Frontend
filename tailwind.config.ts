@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        xs: { max: "445px" },
+      },
       fontFamily: {
         crimson: ["Crimson Text", "serif"],
         pretendard: ["Pretendard", "sans-serif"],
