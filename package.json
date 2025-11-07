@@ -18,7 +18,10 @@
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "android:dev": "npx cap run android --livereload --external",
+    "android:build": "pnpm build && npx cap sync && npx cap run android",
+    "android:sync": "npx cap sync android"
   },
   "dependencies": {
     "@stomp/stompjs": "^7.2.0",
