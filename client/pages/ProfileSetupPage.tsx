@@ -224,7 +224,7 @@ export default function ProfileSetupPage() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center safe-area-page">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-login-button"></div>
       </div>
     );
@@ -232,7 +232,7 @@ export default function ProfileSetupPage() {
 
   return (
     <div
-      className="min-h-screen bg-white flex flex-col items-center relative"
+      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page"
       aria-busy={showSuccessMessage}
     >
       {/* Privacy Consent Modal */}

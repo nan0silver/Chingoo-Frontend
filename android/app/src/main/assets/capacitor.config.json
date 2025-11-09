@@ -1,5 +1,6 @@
 {
 	"appId": "com.chingoohaja.app",
+<<<<<<< HEAD
 	"appName": "chingoo-haja",
 	"webDir": "dist/spa",
 	"server": {
@@ -25,4 +26,8 @@
 		"allowsLinkPreview": false,
 		"scheme": "com.chingoohaja.app"
 	}
+=======
+	"appName": "Chingoo-haja",
+	"webDir": "dist/spa"
+>>>>>>> 9ace5444d01fb9086c77cd6e7c70052255438a57
 }

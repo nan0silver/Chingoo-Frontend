@@ -15,10 +15,19 @@ export default {
     extend: {
       screens: {
         xs: { max: "420px" },
+        sm: { max: "640px" },
+        md: { max: "768px" },
+        lg: { max: "1024px" },
+        xl: { max: "1280px" },
+      },
+      maxWidth: {
+        mobile: "448px", // max-w-md와 동일
       },
       fontFamily: {
+        sans: ["Noto Sans KR", "Inter", "Pretendard", "sans-serif"],
         crimson: ["Crimson Text", "serif"],
         pretendard: ["Pretendard", "sans-serif"],
+        noto: ["Noto Sans KR", "Inter", "Pretendard", "sans-serif"],
       },
       colors: {
         kakao: "#F7E600",

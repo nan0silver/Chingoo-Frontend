@@ -26,7 +26,7 @@ export default function ComingSoonPage({
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <button onClick={handleBack} className="p-1">

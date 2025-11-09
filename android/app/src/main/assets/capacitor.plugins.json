@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [
 	{
 		"pkg": "@capacitor-community/http",
@@ -12,3 +13,6 @@
 		"classpath": "com.capacitorjs.plugins.network.NetworkPlugin"
 	}
 ]
+=======
+[]
+>>>>>>> 9ace5444d01fb9086c77cd6e7c70052255438a57

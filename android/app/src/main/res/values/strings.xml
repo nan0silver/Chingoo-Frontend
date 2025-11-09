@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Chingoo-haja</string>
+    <string name="title_activity_main">Chingoo-haja</string>
+    <string name="package_name">com.chingoohaja.app</string>
+    <string name="custom_url_scheme">com.chingoohaja.app</string>
+</resources>
