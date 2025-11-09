@@ -31,7 +31,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
+    <div className="min-h-screen bg-white flex flex-col items-center safe-area-page">
       {/* Logo */}
       <div className="mt-4 md:mt-16 mb-8 md:mb-12">
         <svg width="103" height="32" viewBox="0 0 103 32" fill="none">
