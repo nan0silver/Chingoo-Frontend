@@ -40,6 +40,7 @@ public class MainActivity extends BridgeActivity {
 
             // 페이지 로드 전에 스크립트 주입
             injectAudioOnlyMediaDevicesPatch();
+            injectFontFamilyOverride();
         }
     }
 
@@ -93,6 +94,7 @@ public class MainActivity extends BridgeActivity {
             });
 
         injectAudioOnlyMediaDevicesPatch();
+        injectFontFamilyOverride();
     }
 
     private void injectAudioOnlyMediaDevicesPatch() {
@@ -143,6 +145,36 @@ public class MainActivity extends BridgeActivity {
                         "})();";
 
         // WebView가 완전히 로드되기 전에 주입
+        getBridge().getWebView().evaluateJavascript(script, null);
+    }
+
+    private void injectFontFamilyOverride() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return;
+        }
+
+        if (getBridge() == null || getBridge().getWebView() == null) {
+            return;
+        }
+
+        String script =
+                "(function() {\n" +
+                        "  try {\n" +
+                        "    var head = document.head || document.getElementsByTagName('head')[0];\n" +
+                        "    if (!head) { return; }\n" +
+                        "    if (document.getElementById('chingoo-noto-sans')) { return; }\n" +
+                        "    var style = document.createElement('style');\n" +
+                        "    style.id = 'chingoo-noto-sans';\n" +
+                        "    style.innerHTML = \"@font-face { font-family: 'Noto Sans KR'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/noto-sans-kr/NotoSansKR-Regular.ttf') format('truetype'); }\" +\n" +
+                        "      \"@font-face { font-family: 'Noto Sans KR'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/noto-sans-kr/NotoSansKR-Medium.ttf') format('truetype'); }\" +\n" +
+                        "      \"@font-face { font-family: 'Noto Sans KR'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/noto-sans-kr/NotoSansKR-Bold.ttf') format('truetype'); }\" +\n" +
+                        "      \"html, body, button, input, textarea, select { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }\";\n" +
+                        "    head.appendChild(style);\n" +
+                        "  } catch (e) {\n" +
+                        "    console.warn('[ChingooHaja] Failed to inject font override', e);\n" +
+                        "  }\n" +
+                        "})();";
+
         getBridge().getWebView().evaluateJavascript(script, null);
     }
 

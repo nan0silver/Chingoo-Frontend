@@ -63,7 +63,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="아이디를 입력해주세요"
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
           />
         </div>
 
@@ -74,7 +74,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="비밀번호를 입력해주세요"
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
         <div className="pt-4">
           <button
             onClick={handleLogin}
-            className="w-full h-14 md:h-16 bg-login-button text-white font-crimson text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+            className="w-full h-14 md:h-16 bg-login-button text-white font-noto text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors"
           >
             로그인
           </button>
@@ -105,7 +105,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
         {/* Social Login Divider */}
         <div className="flex items-center justify-center pt-8 pb-4">
           <div className="flex-1 h-px bg-border-gray"></div>
-          <span className="px-4 text-text-gray font-crimson text-base md:text-lg">
+          <span className="px-4 text-text-gray font-noto text-base md:text-lg">
             간편 로그인
           </span>
           <div className="flex-1 h-px bg-border-gray"></div>
@@ -123,7 +123,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
               alt="Kakao"
               className="w-6 h-6"
             />
-            <span className="text-gray-800 font-crimson text-base md:text-lg font-bold">
+            <span className="text-gray-800 font-noto text-base md:text-lg font-bold">
               카카오로 로그인
             </span>
           </button>
@@ -151,7 +151,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
                 fill="#EA4335"
               />
             </svg>
-            <span className="text-gray-800 font-crimson text-base md:text-lg font-bold">
+            <span className="text-gray-800 font-noto text-base md:text-lg font-bold">
               구글로 로그인
             </span>
           </button>

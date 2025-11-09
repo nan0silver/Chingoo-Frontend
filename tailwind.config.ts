@@ -24,8 +24,10 @@ export default {
         mobile: "448px", // max-w-md와 동일
       },
       fontFamily: {
+        sans: ["Noto Sans KR", "Inter", "Pretendard", "sans-serif"],
         crimson: ["Crimson Text", "serif"],
         pretendard: ["Pretendard", "sans-serif"],
+        noto: ["Noto Sans KR", "Inter", "Pretendard", "sans-serif"],
       },
       colors: {
         kakao: "#F7E600",
