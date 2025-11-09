@@ -221,15 +221,6 @@ export default function ConnectingCallPage({
             <br />
             잠시만 기다려주세요{dots}
           </p>
-
-          {/* 실시간 대기 정보 */}
-          {queuePosition !== undefined && (
-            <div className="mt-8 space-y-2">
-              <p className="text-white font-crimson text-lg">
-                대기 순서: {queuePosition}번째
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
