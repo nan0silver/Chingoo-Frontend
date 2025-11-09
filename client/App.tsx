@@ -158,144 +158,146 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route
-        path="/login"
-        element={
-          <div className="max-w-md mx-auto">
-            <LoginPage onLogin={() => {}} onSignUp={() => {}} />
-          </div>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <div className="max-w-md mx-auto">
-            <SignUpPage onBack={() => {}} onSignUp={() => {}} />
-          </div>
-        }
-      />
-      <Route
-        path="/oauth/callback"
-        element={
-          <div className="max-w-md mx-auto">
-            <OAuthCallbackPage />
-          </div>
-        }
-      />
-      <Route
-        path="/profile-setup"
-        element={
-          <AuthGuard>
+    <div className="w-full min-h-screen max-w-md mx-auto bg-white relative overflow-x-hidden">
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route
+          path="/login"
+          element={
             <div className="max-w-md mx-auto">
-              <ProfileSetupPage />
+              <LoginPage onLogin={() => {}} onSignUp={() => {}} />
             </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/connecting-call"
-        element={
-          <AuthGuard>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
             <div className="max-w-md mx-auto">
-              <ConnectingCallPage
-                selectedCategory={getCategoryName(categoryId)}
-                onCancel={handleCancelMatching}
-                onConnected={handleConnected}
-              />
+              <SignUpPage onBack={() => {}} onSignUp={() => {}} />
             </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/call-connected"
-        element={
-          <AuthGuard>
+          }
+        />
+        <Route
+          path="/oauth/callback"
+          element={
             <div className="max-w-md mx-auto">
-              <CallConnectedPage
-                selectedCategory={getCategoryName(categoryId)}
-                onEndCall={handleEndCall}
-              />
+              <OAuthCallbackPage />
             </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/call-evaluation"
-        element={
-          <AuthGuard>
-            <div className="max-w-md mx-auto">
-              <CallEvaluationPage
-                selectedCategory={getCategoryName(categoryId)}
-                onCallAgain={handleCallAgain}
-                onSelectInterests={handleSelectInterests}
-                onGoHome={handleGoHome}
-              />
-            </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/my-activity"
-        element={
-          <AuthGuard>
-            <div className="max-w-md mx-auto">
-              <MyActivityPage onBack={handleBack} />
-            </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/call-history"
-        element={
-          <AuthGuard>
-            <div className="max-w-md mx-auto">
-              <CallHistoryPage onBack={handleBack} />
-            </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <AuthGuard>
-            <div className="max-w-md mx-auto">
-              <SettingsPage
-                onBack={handleBack}
-                onNavigateToActivity={handleNavigateToActivity}
-                onNavigateToProfileEdit={handleNavigateToProfileEdit}
-                onNavigateToComingSoon={handleNavigateToComingSoon}
-                onNavigateToSupport={handleNavigateToSupport}
-                onLogout={handleLogout}
-              />
-            </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/coming-soon"
-        element={
-          <AuthGuard>
-            <div className="max-w-md mx-auto">
-              <ComingSoonPage />
-            </div>
-          </AuthGuard>
-        }
-      />
-      <Route
-        path="/support"
-        element={
-          <AuthGuard>
-            <div className="max-w-md mx-auto">
-              <SupportPage onBack={handleBack} />
-            </div>
-          </AuthGuard>
-        }
-      />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+          }
+        />
+        <Route
+          path="/profile-setup"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <ProfileSetupPage />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/connecting-call"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <ConnectingCallPage
+                  selectedCategory={getCategoryName(categoryId)}
+                  onCancel={handleCancelMatching}
+                  onConnected={handleConnected}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/call-connected"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <CallConnectedPage
+                  selectedCategory={getCategoryName(categoryId)}
+                  onEndCall={handleEndCall}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/call-evaluation"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <CallEvaluationPage
+                  selectedCategory={getCategoryName(categoryId)}
+                  onCallAgain={handleCallAgain}
+                  onSelectInterests={handleSelectInterests}
+                  onGoHome={handleGoHome}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/my-activity"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <MyActivityPage onBack={handleBack} />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/call-history"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <CallHistoryPage onBack={handleBack} />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <SettingsPage
+                  onBack={handleBack}
+                  onNavigateToActivity={handleNavigateToActivity}
+                  onNavigateToProfileEdit={handleNavigateToProfileEdit}
+                  onNavigateToComingSoon={handleNavigateToComingSoon}
+                  onNavigateToSupport={handleNavigateToSupport}
+                  onLogout={handleLogout}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/coming-soon"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <ComingSoonPage />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/support"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <SupportPage onBack={handleBack} />
+              </div>
+            </AuthGuard>
+          }
+        />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
   );
 };
 

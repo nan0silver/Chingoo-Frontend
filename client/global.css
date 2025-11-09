@@ -100,12 +100,27 @@
 }
 
 @layer base {
+  html {
+    overflow-x: hidden;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  @supports (-webkit-touch-callout: none) {
+    .fixed {
+      position: -webkit-sticky;
+      position: sticky;
+    }
   }
 }
 
