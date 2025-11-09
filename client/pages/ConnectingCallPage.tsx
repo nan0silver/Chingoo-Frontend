@@ -162,7 +162,7 @@ export default function ConnectingCallPage({
 
   return (
     <div
-      className="min-h-screen flex flex-col relative"
+      className="min-h-screen flex flex-col relative safe-area-page pt-6"
       style={{
         background: `linear-gradient(0deg, rgba(120, 90, 0, 0.20) 0%, rgba(120, 90, 0, 0.20) 100%), 
                     radial-gradient(138.99% 139.71% at 10.56% -25.76%, rgba(235, 161, 0, 0.80) 0%, rgba(245, 69, 53, 0.80) 100%)`,
@@ -221,15 +221,6 @@ export default function ConnectingCallPage({
             <br />
             잠시만 기다려주세요{dots}
           </p>
-
-          {/* 실시간 대기 정보 */}
-          {queuePosition !== undefined && (
-            <div className="mt-8 space-y-2">
-              <p className="text-white font-crimson text-lg">
-                대기 순서: {queuePosition}번째
-              </p>
-            </div>
-          )}
         </div>
       </div>
 

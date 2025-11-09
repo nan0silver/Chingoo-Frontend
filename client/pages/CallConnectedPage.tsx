@@ -164,7 +164,7 @@ export default function CallConnectedPage({
 
   return (
     <div
-      className="min-h-screen flex flex-col relative"
+      className="min-h-screen flex flex-col relative safe-area-page pt-6"
       style={{
         background: `linear-gradient(0deg, rgba(120, 90, 0, 0.20) 0%, rgba(120, 90, 0, 0.20) 100%), 
                     radial-gradient(138.99% 139.71% at 10.56% -25.76%, rgba(235, 161, 0, 0.80) 0%, rgba(245, 69, 53, 0.80) 100%)`,
@@ -180,7 +180,7 @@ export default function CallConnectedPage({
       </div>
 
       {/* Network Quality Indicator */}
-      <div className="absolute top-8 right-8">
+      <div className="absolute top-20 right-8">
         <div className="flex items-center gap-2 bg-black bg-opacity-30 px-3 py-2 rounded-full">
           {/* Signal Bars */}
           <div className="flex items-end gap-0.5 h-4">
