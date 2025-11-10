@@ -31,3 +31,10 @@ dist-ssr
 .env.*.local
 .env.production
 .env.test
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+*.lock
+*.ser
