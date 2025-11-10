@@ -18,18 +18,26 @@ import { logger } from "./logger";
  * API 설정
  */
 const getApiBaseUrl = (): string => {
+  console.log("🔍 Capacitor.isNativePlatform():", Capacitor.isNativePlatform());
+  console.log("🔍 VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
+
   if (import.meta.env.VITE_API_BASE_URL) {
-    return String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "");
+    const url = String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "");
+    console.log("✅ 환경변수 사용:", url);
+    return url;
   }
 
   if (Capacitor.isNativePlatform()) {
+    console.log("✅ 네이티브 앱 - 운영 서버 사용");
     return "https://silverld.site/api";
   }
 
+  console.log("✅ 웹 개발 - 프록시 사용");
   return "/api";
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log("🚀 최종 API_BASE_URL:", API_BASE_URL);
 
 /**
  * 보안 설정 안내:
