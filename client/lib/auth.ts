@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import {
   OAuthProvider,
   OAuthConfigResponse,
@@ -16,10 +17,19 @@ import { logger } from "./logger";
 /**
  * API 설정
  */
-// 백엔드 서버 포트를 실제 포트로 변경해주세요
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
-  : "/api"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
+const getApiBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "");
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    return "https://silverld.site/api";
+  }
+
+  return "/api";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * 보안 설정 안내:
