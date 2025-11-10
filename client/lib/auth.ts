@@ -15,29 +15,25 @@ import {
 import { logger } from "./logger";
 
 /**
- * API 설정
+ * API 설정 - 동적으로 URL을 가져오는 함수
  */
-const getApiBaseUrl = (): string => {
-  console.log("🔍 Capacitor.isNativePlatform():", Capacitor.isNativePlatform());
-  console.log("🔍 VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
-
-  if (import.meta.env.VITE_API_BASE_URL) {
-    const url = String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "");
-    console.log("✅ 환경변수 사용:", url);
-    return url;
-  }
-
+export const getApiUrl = (): string => {
+  // 네이티브 앱이면 무조건 운영 서버
   if (Capacitor.isNativePlatform()) {
     console.log("✅ 네이티브 앱 - 운영 서버 사용");
     return "https://silverld.site/api";
   }
 
+  // 웹에서는 환경변수 사용
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl) {
+    console.log("✅ 웹 - 환경변수 사용:", envUrl);
+    return String(envUrl).replace(/\/$/, "");
+  }
+
   console.log("✅ 웹 개발 - 프록시 사용");
   return "/api";
 };
-
-const API_BASE_URL = getApiBaseUrl();
-console.log("🚀 최종 API_BASE_URL:", API_BASE_URL);
 
 /**
  * 보안 설정 안내:
@@ -128,7 +124,7 @@ export const getOAuthConfig = async (
   provider: OAuthProvider,
 ): Promise<OAuthConfigResponse> => {
   try {
-    const url = `${API_BASE_URL}/v1/auth/oauth/${provider}/config`;
+    const url = `${getApiUrl()}/v1/auth/oauth/${provider}/config`;
     logger.apiRequest("GET", `/v1/auth/oauth/${provider}/config`);
 
     const controller = new AbortController();
@@ -286,7 +282,7 @@ export const processSocialLogin = async (
 
     let response: Response;
     try {
-      response = await fetch(`${API_BASE_URL}/v1/auth/oauth/${provider}`, {
+      response = await fetch(`${getApiUrl()}/v1/auth/oauth/${provider}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -427,7 +423,7 @@ export const logoutFromServer = async (): Promise<void> => {
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     let response: Response;
     try {
-      response = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
+      response = await fetch(`${getApiUrl()}/v1/auth/logout`, {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
@@ -525,7 +521,7 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    let response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+    let response = await fetch(`${getApiUrl()}/v1/auth/me`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -543,7 +539,7 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
         logger.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
         const controller2 = new AbortController();
         const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
-        response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+        response = await fetch(`${getApiUrl()}/v1/auth/me`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${newToken}`,
@@ -607,7 +603,7 @@ export const updateUserProfile = async (
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    let response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
+    let response = await fetch(`${getApiUrl()}/v1/users/profile`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -626,7 +622,7 @@ export const updateUserProfile = async (
         logger.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
         const controller2 = new AbortController();
         const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
-        response = await fetch(`${API_BASE_URL}/v1/users/profile`, {
+        response = await fetch(`${getApiUrl()}/v1/users/profile`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${newToken}`,
@@ -728,7 +724,7 @@ export const refreshToken = async (): Promise<string | null> => {
     let response: Response;
     try {
       logger.apiRequest("POST", "/v1/auth/refresh");
-      response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+      response = await fetch(`${getApiUrl()}/v1/auth/refresh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

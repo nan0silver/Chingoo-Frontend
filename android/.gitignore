@@ -101,17 +101,17 @@ app/src/main/assets/capacitor.plugins.json
 app/src/main/res/xml/config.xml
 
 # Android
-android/.gradle/
-android/build/
-android/app/build/
+.gradle/
+build/
+app/build/
 *.lock
 *.ser
 
 # Android build artifacts
-android/app/src/main/assets/public/
-android/app/src/main/assets/capacitor.config.json
-android/app/src/main/assets/capacitor.plugins.json
-android/.gradle/
-android/*/build/
-android/app/build/
-android/capacitor-cordova-android-plugins/.gradle/
+app/src/main/assets/public/
+app/src/main/assets/capacitor.config.json
+app/src/main/assets/capacitor.plugins.json
+.gradle/
+*/build/
+app/build/
+capacitor-cordova-android-plugins/.gradle/
