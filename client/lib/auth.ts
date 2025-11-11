@@ -19,9 +19,15 @@ import { logger } from "./logger";
  */
 export const getApiUrl = (): string => {
   // 네이티브 앱이면 무조건 운영 서버
+  console.log("🔍 현재 URL:", window.location.href);
+  console.log("🔍 현재 Origin:", window.location.origin);
+  console.log("🔍 Capacitor Native:", Capacitor.isNativePlatform());
+
   if (Capacitor.isNativePlatform()) {
     console.log("✅ 네이티브 앱 - 운영 서버 사용");
     return "https://silverld.site/api";
+    // console.log("✅ 네이티브 앱 - Spring Boot 직접 연결 (8080)");
+    // return "http://43.202.193.103:8080/api";
   }
 
   // 웹에서는 환경변수 사용

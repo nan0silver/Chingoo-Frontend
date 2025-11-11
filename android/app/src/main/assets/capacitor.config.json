@@ -1,5 +1,17 @@
 {
 	"appId": "com.chingoohaja.app",
 	"appName": "Chingoo-haja",
-	"webDir": "dist/spa"
+	"webDir": "dist/spa",
+	"server": {
+		"androidScheme": "https",
+		"hostname": "localhost",
+		"allowNavigation": [
+			"silverld.site"
+		]
+	},
+	"plugins": {
+		"CapacitorHttp": {
+			"enabled": true
+		}
+	}
 }
