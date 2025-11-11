@@ -1,11 +1,34 @@
 PODS:
+  - Alamofire (5.10.2)
   - Capacitor (7.4.4):
     - CapacitorCordova
   - CapacitorCordova (7.4.4)
+  - KakaoSDKAuth (2.21.1):
+    - KakaoSDKCommon (= 2.21.1)
+  - KakaoSDKCommon (2.21.1):
+    - KakaoSDKCommon/Common (= 2.21.1)
+    - KakaoSDKCommon/Network (= 2.21.1)
+  - KakaoSDKCommon/Common (2.21.1)
+  - KakaoSDKCommon/Network (2.21.1):
+    - Alamofire (~> 5.1)
+    - KakaoSDKCommon/Common (= 2.21.1)
+  - KakaoSDKUser (2.21.1):
+    - KakaoSDKAuth (= 2.21.1)
 
 DEPENDENCIES:
+  - Alamofire (~> 5.9)
   - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
+  - KakaoSDKAuth (~> 2.21.1)
+  - KakaoSDKCommon (~> 2.21.1)
+  - KakaoSDKUser (~> 2.21.1)
+
+SPEC REPOS:
+  trunk:
+    - Alamofire
+    - KakaoSDKAuth
+    - KakaoSDKCommon
+    - KakaoSDKUser
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -14,9 +37,13 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
 
 SPEC CHECKSUMS:
+  Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   Capacitor: 09d9ff8e9618e8c4b3cab2bbee34a17215dd2fef
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
+  KakaoSDKAuth: 28343159dd60ee9bbb61ff25d45d9769fcef6b8c
+  KakaoSDKCommon: 7938fce8e5ba3e73490f1928e55b20b510a0685b
+  KakaoSDKUser: 35608bb49bbc644f507561d8b8a33dec1c5eb360
 
-PODFILE CHECKSUM: 0d6e9142707929209c588ceb252b64b0dfcfb16d
+PODFILE CHECKSUM: ebb2f0fa6b03e061d2da5535633863ed88da1302
 
 COCOAPODS: 1.16.2

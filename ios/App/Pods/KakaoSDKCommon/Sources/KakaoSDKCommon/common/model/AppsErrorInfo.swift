@@ -14,16 +14,11 @@
 
 import Foundation
 
-/// Apps 에러 정보 \
-/// Apps error Information
+/// APPS 호출 시 발생하는 에러 정보입니다.
 /// ## SeeAlso
 /// - ``AppsFailureReason``
 public struct AppsErrorInfo : Codable {
-    /// 에러 코드 \
-    /// Error code
     public let errorCode : AppsFailureReason
-    /// 에러 메시지 \
-    /// Error message
     public let errorMsg : String
     
     enum CodingKeys : String, CodingKey {

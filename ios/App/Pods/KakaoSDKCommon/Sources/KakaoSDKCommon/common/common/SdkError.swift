@@ -14,24 +14,19 @@
 
 import Foundation
 
-/// SDK 내부 동작 에러 \
-/// SDK internal operation errors
+/// 카카오 SDK를 사용하면서 발생하는 모든 에러를 나타냅니다.
 public enum SdkError : Error {
     
-    /// 클라이언트 에러 \
-    /// Client errors
+    /// SDK 내에서 발생하는 클라이언트 에러
     case ClientFailed(reason:ClientFailureReason, errorMessage:String?)
     
-    /// API 에러  \
-    /// API errors
+    /// API 호출 에러
     case ApiFailed(reason:ApiFailureReason, errorInfo:ErrorInfo?)
     
-    /// 인증 및 인가 에러 \
-    /// Authorization or authentication errors
+    /// 로그인 에러
     case AuthFailed(reason:AuthFailureReason, errorInfo:AuthErrorInfo?)
     
-    /// Apps 에러 \
-    /// Apps error
+    /// Apps 에러
     case AppsFailed(reason:AppsFailureReason, errorInfo:AppsErrorInfo?)
 }
 
@@ -124,8 +119,7 @@ extension SdkError {
 //helper
 extension SdkError {
     
-    /// 클라이언트 에러인지 확인 \
-    /// Checks if the error is a client error
+    /// 클라이언트 에러인지 확인합니다.
     /// ## SeeAlso
     /// - ``ClientFailureReason``
     public var isClientFailed : Bool {
@@ -135,8 +129,7 @@ extension SdkError {
         return false
     }
     
-    /// API 에러인지 확인 \
-    /// Checks if the error is a API error
+    /// API 서버 에러인지 확인합니다.
     /// ## SeeAlso
     /// - ``ApiFailureReason``
     public var isApiFailed : Bool {
@@ -146,8 +139,7 @@ extension SdkError {
         return false
     }
     
-    /// 인증 및 인가 에러인지 확인 \
-    /// Checks if the error is a authorization or authentication error
+    /// 인증 서버 에러인지 확인합니다.
     /// ## SeeAlso
     /// - ``AuthFailureReason``
     public var isAuthFailed : Bool {
@@ -157,8 +149,7 @@ extension SdkError {
         return false
     }
     
-    /// Apps 에러인지 확인 \
-    /// Checks if the error is a Apps error
+    /// APPS 서버 에러인지 확인합니다.
     /// ## SeeAlso
     /// - ``AppsFailureReason``
     public var isAppsFailed : Bool {
@@ -169,9 +160,7 @@ extension SdkError {
     }
     
     
-    // `isClientFailed`가 true인 경우 사용
-    /// 클라이언트 에러 정보 확인 \
-    /// Returns the client error information
+    /// 클라이언트 에러 정보를 얻습니다. `isClientFailed`가 true인 경우 사용해야 합니다.
     /// ## SeeAlso
     /// - ``ClientFailureReason``
     public func getClientError() -> (reason:ClientFailureReason, message:String?) {
@@ -181,9 +170,7 @@ extension SdkError {
         return (ClientFailureReason.Unknown, nil)
     }
     
-    // `isApiFailed`가 true인 경우 사용
-    /// API 에러 정보 확인 \
-    /// Returns the API error information
+    /// API 요청 에러에 대한 정보를 얻습니다. `isApiFailed`가 true인 경우 사용해야 합니다.
     /// ## SeeAlso
     /// - ``ApiFailureReason``
     /// - ``ErrorInfo``
@@ -194,9 +181,7 @@ extension SdkError {
         return (ApiFailureReason.Unknown, nil)
     }
     
-    // `isAuthFailed`가 true인 경우 사용
-    /// 인증 및 인가 에러 정보 확인 \
-    /// Returns the authorization or authentication error information
+    /// 로그인 요청 에러에 대한 정보를 얻습니다. `isAuthFailed`가 true인 경우 사용해야 합니다.
     /// ## SeeAlso
     /// - ``AuthFailureReason``
     /// - ``AuthErrorInfo``
@@ -207,9 +192,7 @@ extension SdkError {
         return (AuthFailureReason.Unknown, nil)
     }
     
-    // `isAppsFailed`가 true인 경우 사용
-    /// Apps 에러 정보 확인 \
-    /// Returns the Apps error information
+    /// APPS 요청 에러에 대한 정보를 얻습니다. `isAppsFailed`가 true인 경우 사용해야 합니다.
     /// ## SeeAlso
     /// - ``AppsFailureReason``
     /// - ``AppsErrorInfo``
@@ -220,8 +203,7 @@ extension SdkError {
         return (AppsFailureReason.Unknown, nil)
     }
     
-    /// 유효하지 않은 토큰으로 인한 에러인지 확인 \
-    /// Checks if the error caused by an invalid token
+    /// 유효하지 않은 토큰 에러인지 체크합니다.
     public func isInvalidTokenError() -> Bool {
         if case .ApiFailed = self, getApiError().reason == .InvalidAccessToken {
             return true
@@ -237,190 +219,142 @@ extension SdkError {
 //MARK: - error code enum
 
 
-/// 클라이언트 에러 원인 \
-/// Reasons for client errors
+/// 클라이언트 에러 종류 입니다.
 public enum ClientFailureReason {
     
-    /// 알 수 없음 \
-    /// Unknown
+    /// 기타 에러
     case Unknown
     
-    /// 사용자가 취소한 경우 \
-    /// User canceled
+    /// 사용자의 취소 액션 등
     case Cancelled
     
-    /// API 요청에 사용할 토큰이 없는 경우 \
-    /// A token for API requests not found
+    /// API 요청에 사용할 토큰이 없음
     case TokenNotFound
     
-    /// 지원하지 않는 기능 \
-    /// Not supported feature
+    /// 지원되지 않는 기능
     case NotSupported
     
-    /// 잘못된 파라미터를 전달한 경우 \
-    /// Passed wrong parameters
+    /// 잘못된 파라미터
     case BadParameter
     
-    /// Kakao SDK를 초기화하지 않음 \
-    /// Kakao SDK is not initialized
+    /// SDK 초기화를 하지 않음
     case MustInitAppKey
     
-    /// 카카오톡 공유 메시지 템플릿 용량 초과 \
-    /// Exceeded the size limit of the message template for Kakao Talk Sharing
+    /// 카카오톡 공유 템플릿 용량 초과
     case ExceedKakaoLinkSizeLimit
     
-    /// 타입 캐스팅 실패 \
-    /// Failed type casting
+    /// type casting 실패
     case CastingFailed
     
-    /// 요청을 정상적으로 처리할 수 없는 상태 \
-    /// Illegal state to process the request
+    /// 정상적으로 실행할 수 없는 상태
     case IllegalState
 }
 
-/// API 에러 원인 \
-/// Reasons for API errors
+/// API 서버 에러 종류 입니다.
 public enum ApiFailureReason : Int, Codable {
     
-    /// 알 수 없음 \
-    /// Unknown
+    /// 기타 서버 에러
     case Unknown = -9999
     
-    /// 서버 내부에서 처리 중 에러가 발생한 경우 \
-    /// An Error occurred during the internal processing on the server
+    /// 기타 서버 에러
     case Internal = -1
     
-    /// 필수 파라미터가 포함되지 않았거나, 파라미터 값이 올바르지 않은 경우 \
-    /// Requested without required parameters or using invalid values
+    /// 잘못된 파라미터
     case BadParameter = -2
     
-    /// API 사용에 필요한 사전 설정을 완료하지 않은 경우 \
-    /// Required prerequisites for the API are not completed
+    /// 지원되지 않는 API
     case UnsupportedApi = -3
     
-    /// 카카오계정이 제재되었거나, 카카오계정에 제한된 동작을 요청한 경우 \
-    /// Requested by a blocked Kakao Account, or requested restricted actions to the Kakao Account
+    /// API 호출이 금지됨
     case Blocked = -4
     
-    /// 앱에 사용 권한이 없는 API를 호출한 경우 \
-    /// Requested an API using an app that does not have permission
+    /// 호출 권한이 없음
     case Permission = -5
     
-    /// 제공 종료된 API를 호출한 경우 \
-    /// Requested a deprecated API
+    /// 더이상 지원하지 않은 API를 요청한 경우
     case DeprecatedApi = -9
     
-    /// 사용량 제한을 초과한 경우 \
-    /// Exceeded the quota
+    /// 쿼터 초과
     case ApiLimitExceed = -10
     
-    /// 앱과 연결되지 않은 사용자가 요청한 경우 \
-    /// Requested by a user who is not linked to the app
+    /// 연결되지 않은 사용자
     case NotSignedUpUser = -101
     
-    /// 이미 앱과 연결되어 있는 사용자에 대해 연결하기 요청한 경우 \
-    /// Requested manual sign-up to a linked user
+    /// 이미 연결된 사용자에 대해 signup 시도
     case AlreadySignedUpUsercase = -102
     
-    /// 휴면 상태, 또는 존재하지 않는 카카오계정으로 요청한 경우 \
-    /// Requested with a Kakao Account that is in the dormant state or does not exist
+    /// 존재하지 않는 카카오계정
     case NotKakaoAccountUser = -103
     
-    /// 앱에 추가하지 않은 사용자 프로퍼티 키 값을 불러오거나 저장하려고 한 경우 \
-    /// Requested to retrieve or save value for not registered user properties key
+    /// 등록되지 않은 user property key
     case InvalidUserPropertyKey = -201
     
-    /// 등록되지 않은 앱 키로 요청했거나, 존재하지 않는 앱에 대해 요청한 경우 \
-    /// Requested with an app key of not registered app, or requested to an app that does not exist
+    /// 등록되지 않은 앱키의 요청 또는 존재하지 않는 앱으로의 요청. (앱키가 인증에 사용되는 경우는 -401 참조)
     case NoSuchApp = -301
     
-    /// 유효하지 않은 앱 키나 액세스 토큰으로 요청했거나, 앱 정보가 등록된 앱 정보와 일치하지 않는 경우 \
-    /// Requested with an invalid app key or an access token, or the app information is not equal to the registered app information
+    /// 앱키 또는 토큰이 잘못된 경우. 예) 토큰 만료
     case InvalidAccessToken = -401
     
-    /// 접근하려는 리소스에 대해 사용자 동의를 받지 않은 경우 \
-    /// The user has not agreed to the scope of the desired resource
+    /// 해당 API에서 접근하는 리소스에 대해 사용자의 동의를 받지 않음
     case InsufficientScope = -402
     
-    /// 연령인증 필요 \
-    /// Age verification is required
+    ///연령인증이 필요함
     case RequiredAgeVerification = -405
     
-    /// 앱에 설정된 제한 연령보다 사용자의 연령이 낮음 \
-    /// User's age does not meet the app's age limit
+    ///연령제한에 걸림
     case UnderAgeLimit = -406
     
     //TODO: aos와 이름 맞춰야 함.
-    // papi error code=E2006
-    /// 서명이 완료되지 않은 경우 \
-    /// Signing is not completed
+    ///아직 서명이 완료되지 않은 경우 (papi error code=E2006)
     case SigningIsNotCompleted = -421
     
-    // papi error code=E2007
-    /// 유효시간 안에 서명이 완료되지 않은 경우 \
-    /// Signing is not completed in the valid time
+    ///전자서명 유효시간 내에(5분) 서명이 완료되지 않은 경우 (papi error code=E2007)
     case InvalidTransaction = -422
     
-    // papi error code=E2016
-    /// 공개 키가 만료된 경우 \
-    /// The public key has been expired
+    ///public key 유효시간(24시간)이 expired 된 경우 (papi error code=E2016)
     case TransactionHasExpired = -423
     
 
-    /// 14세 미만 미허용 설정이 되어 있는 앱으로 14세 미만 사용자가 API 호출한 경우 \
-    /// Users under age 14 requested in the app that does not allow users under age 14
+    /// 앱의 연령제한보다 사용자의 연령이 낮음
     case LowerAgeLimit = -451
 
-    /// 이미 연령인증을 완료함 \
-    /// Age verification is already completed
+    /// 이미 연령인증이 완료 됨
     case AlreadyAgeAuthorized = -452
 
-    /// 연령인증 요청 제한 회수 초과 \
-    /// Exceeded the limit of request for the age verification
+    /// 연령인증 허용 횟수 초과
     case AgeCheckLimitExceed = -453
 
-    /// 기존 연령인증 결과와 일치하지 않음 \
-    /// The result is not equal to the previous result of age verification
+    /// 이전 연령인증과 일치하지 않음
     case AgeResultMismatched = -480
 
-    /// CI 불일치 \
-    /// CI is mismatched
+    /// CI 불일치
     case CIResultMismatched = -481
     
-    /// 카카오톡 미가입 사용자가 카카오톡 API를 호출한 경우 \
-    /// Users not signed up for Kakao Talk requested the Kakao Talk APIs
+    /// 카카오톡 사용자가 아님
     case NotTalkUser = -501
     
-    /// 지원되지 않는 기기로 메시지를 전송한 경우 \
-    /// Sent message to an unsupported device
+    /// 지원되지 않는 기기로 메시지 보내는 경우
     case UserDevicedUnsupported = -504
     
-    /// 받는 이가 프로필 비공개로 설정한 경우 \
-    /// The receiver turned off the profile visibility
+    /// 메시지 수신자가 수신을 거부한 경우
     case TalkMessageDisabled = -530
     
-    /// 보내는 이가 한 달 동안 보낼 수 있는 쿼터를 초과한 경우 \
-    /// The sender exceeded the monthly quota for sending messages
+    /// 월간 메시지 전송 허용 횟수 초과
     case TalkSendMessageMonthlyLimitExceed = -531
     
-    /// 보내는 이가 하루 동안 보낼 수 있는 쿼터를 초과한 경우 \
-    /// The sender exceeded the daily quota for sending messages
+    /// 일간 메시지 전송 허용 횟수 초과
     case TalkSendMessageDailyLimitExceed = -532
         
-    /// 업로드 가능한 이미지 최대 용량을 초과한 경우 \
-    /// Exceeded the maximum size of images to upload
+    /// 이미지 업로드 시 최대 용량을 초과한 경우
     case ImageUploadSizeExceed = -602
     
-    /// 카카오 플랫폼 내부에서 요청 처리 중 타임아웃이 발생한 경우 \
-    /// Timeout occurred during the internal processing in the server
+    /// 카카오 플랫폼 내부에서 요청 처리 중 타임아웃이 발생한 경우
     case ServerTimeout = -603
     
-    /// 업로드할 수 있는 최대 이미지 개수를 초과한 경우 \
-    /// Exceeded the maximum number of images to upload
+    /// 이미지 업로드시 허용된 업로드 파일 수가 넘을 경우
     case ImageMaxUploadNumberExceed = -606
     
-    /// 서비스 점검 중 \
-    /// Under the service maintenance
+    /// 서버 점검 중
     case UnderMaintenance = -9798
 }
 
@@ -433,44 +367,34 @@ extension ApiFailureReason {
     }
 }
 
-/// 인증 및 인가 에러 원인 \
-/// Reasons for authentication or authorization errors
+/// 로그인 요청 에러 종류 입니다.
 public enum AuthFailureReason : String, Codable {
     
-    /// 알 수 없음 \
-    /// Unknown
+    /// 기타 에러
     case Unknown = "unknown"
     
-    /// 잘못된 파라미터를 전달한 경우 \
-    /// Passed wrong parameters
+    /// 요청 파라미터 오류
     case InvalidRequest = "invalid_request"
     
-    /// 잘못된 앱 키를 전달한 경우 \
-    /// Passed with the wrong app key
+    /// 유효하지 않은 앱
     case InvalidClient = "invalid_client"
     
-    /// 잘못된 동의항목 ID를 전달한 경우 \
-    /// Passed with invalid scope IDs
+    /// 유효하지 않은 scope
     case InvalidScope = "invalid_scope"
     
-    /// 리프레시 토큰이 만료되었거나 존재하지 않는 경우 \
-    /// The refresh token has expired or does not exist
+    /// 인증 수단이 유효하지 않아 인증할 수 없는 상태
     case InvalidGrant = "invalid_grant"
     
-    /// 앱의 플랫폼 설정이 올바르지 않은 경우 \
-    /// Platform settings of the app are misconfigured
+    /// 설정이 올바르지 않음. 예) bundle id
     case Misconfigured = "misconfigured"
     
-    /// 앱에 사용 권한이 없는 경우 \
-    /// The app does not have permission
+    /// 앱이 요청 권한이 없음
     case Unauthorized = "unauthorized"
     
-    /// 사용자가 동의 화면에서 카카오 로그인을 취소한 경우 \
-    /// The user canceled Kakao Login at the consent screen
+    /// 접근이 거부 됨 (동의 취소)
     case AccessDenied = "access_denied"
     
-    /// 서버 에러 \
-    /// Server error
+    /// 서버 내부 에러
     case ServerError = "server_error"
     
 #if swift(>=5.8)
@@ -489,79 +413,60 @@ extension AuthFailureReason {
     }
 }
 
-/// Apps 에러 원인 \
-/// Reasons for Apps error
+/// Apps 요청 에러 종류 입니다.
 public enum AppsFailureReason : String, Codable {
-    /// 서버 내부에서 처리 중 에러가 발생한 경우 \
-    /// An Error occurred during the internal processing on the server
+    /// 내부 서버 에러가 발생하는 경우
     case InternalServerError = "KAE001"
 
-    /// 잘못된 요청을 전달한 경우 \
-    /// Passed wrong request
+    /// 잘못된 요청을 사용하는 경우
     case InvalidRequest = "KAE002"
 
-    /// 잘못된 파라미터를 전달한 경우 \
-    /// Passed wrong parameters
+    /// 잘못된 파라미터를 사용하는 경우
     case InvalidParameter = "KAE003"
 
-    /// 유효시간이 만료된 경우 \
-    /// Validity period has expired
+    /// 유효시간이 만료된 경우
     case TimeExpired = "KAE004"
     
-    /// 카카오톡 채널 정보를 확인할 수 없는 경우 \
-    /// Unable to check Kakao Talk channel information
+    /// 채널 정보를 확인할 수 없는 경우
     case InvalidChannel = "KAE005"
     
-    /// 카카오톡 채널이 추가 불가능 상태인 경우 \
-    /// Kakao Talk channel in a state that cannot be added
+    /// 채널 추가 가능한 상태가 아닌 경우
     case IllegalStateChannel = "KAE006"
 
-    /// 사용할 수 없는 앱 타입인 경우 \
-    /// Unavailable app type
+    /// API를 사용할 수 없는 앱 타입인 경우
     case AppTypeError = "KAE101"
 
-    /// 필요한 동의항목이 설정되지 않은 경우 \
-    /// Required consent items are not set
+    /// API 사용에 필요한 scope이 설정되지 않은 경우
     case AppScopeError = "KAE102"
 
-    /// 앱에 사용 권한이 없는 API를 호출한 경우	\
-    /// Requested an API using an app that does not have permission
+    /// API 사용에 필요한 권한이 없는 경우
     case PermissionError = "KAE103"
 
-    /// 잘못된 타입의 앱 키를 전달한 경우 \
-    /// Passed wrong type app key
+    /// API 호출에 사용할 수 없는 앱키 타입으로 API를 호출하는 경우
     case AppKeyTypeError = "KAE104"
     
-    /// 앱과 연결되지 않은 카카오톡 채널 정보를 전달한 경우 \
-    /// Passed Kakao Talk channel is not connected to an app
+    /// 앱과 연결되지 않은 채널 정보로 요청한 경우
     case AppChannelNotConnected = "KAE105"
 
-    /// 사용자 인증에 실패한 경우 \
-    /// Failed user authentication
+    /// Access Token, KPIDT, 톡세션 등으로 앱 유저 인증에 실패하는 경우
     case AuthError = "KAE201"
 
-    /// 앱에 연결되지 않은 사용자가 API를 호출한 경우 \
-    /// Requested an API by users not connected to the app
+    /// 앱에 연결되지 않은 유저가 API를 호출하는 경우
     case NotRegistredUser = "KAE202"
 
-    /// 필요한 동의항목이 동의 상태가 아닌 경우 \
-    /// Required consent items are not agreed to
+    /// API 호출에 필요한 scope에 동의하지 않은 경우
     case InvalidScope = "KAE203"
 
-    /// 필요한 서비스 약관이 동의 상태가 아닌 경우 \
-    /// Required service terms are not agreed to
+    /// API 사용에 필요한 계정 약관 동의가 되어 있지 않은 경우
     case AccountTermsError = "KAE204"
 
-    /// 로그인이 필요한 경우 \
-    /// Login is required
+    /// 계정 페이지에서 배송지 콜백으로 로그인 필요 응답을 전달하는 경우
     case LoginRequired = "KAE205"
 
-    /// 등록되지 않은 배송지 ID를 전달한 경우 \
-    /// Unregistered delivery ID
+    /// 계정에 등록되어있지 않은 배송지 ID를 파라미터로 사용하는 경우
     case InvalidShippingAddressId = "KAE206"
     
-    /// 토큰 유효성 확인 \
-    /// Check token validation 
+    /// 예외
     case Unknown
 }
 

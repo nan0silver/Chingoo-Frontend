@@ -14,132 +14,69 @@
 
 import Foundation
 
-/// 서비스 약관 동의 내역 확인하기 응답 \
-/// Response for Retrieve consent details for service terms
+/// 서비스 약관 조회 API 응답 클래스
 /// ## SeeAlso
 /// - ``UserApi/serviceTerms(result:tags:completion:)``
 public struct UserServiceTerms : Codable {
     
     // MARK: Fields
     
-    /// 회원번호 \
-    /// Service user ID
+    /// 회원 번호
     public let id: Int64
     
-    /// 서비스 약관 목록 \
-    /// List of service terms
+    /// 조회한 서비스 약관 목록
     /// ## SeeAlso
     /// - ``ServiceTerms``
     public let serviceTerms: [ServiceTerms]?
 }
 
-/// 서비스 약관 정보 \
-/// Service terms information
+/// 3rd party 서비스 약관 정보 클래스
 /// ## SeeAlso
 /// - ``UserServiceTerms``
 public struct ServiceTerms : Codable {
     
     // MARK: Fields
     
-    /// 태그 \
-    /// Tag
+    /// 3rd에서 동의한 약관의 항목들을 정의한 값
     public let tag: String
     
-    /// 마지막으로 동의한 시간 \
-    /// The last time the user agreed to the scope
+    /// 최근 동의 시각
     public let agreedAt: Date?
     
-    /// 동의 여부 \
-    /// The consent status of the service terms
+    /// 동의  여부
     public let agreed: Bool
     
-    /// 필수 동의 여부 \
-    /// Whether consent is required
+    /// 필수 동의 여부
     public let required: Bool
     
-    /// 철회 가능 여부 \
-    /// Whether consent is revocable
+    /// 철회 가능 여부
     public let revocable: Bool
-    
-    /// 서비스 약관의 동의 경로 \
-    /// Path through which the service terms were agreed to.
-    ///  ## SeeAlso
-    ///  - ``Referer-swift.enum``
-    public let referer: Referer?
-    
-    /// 서비스 약관의 동의 경로 \
-    /// Path through which the service terms were agreed to.
-    public enum Referer: String, Codable {
-        /// 카카오싱크 간편가입 동의 화면 \
-        /// Consent screen of Kakao Sync Simple Signup.
-        case kauth = "KAUTH"
-        
-        /// 기타 \
-        /// Other paths.
-        case kapi = "KAPI"
-        
-        /// 알 수 없음 \
-        /// Unknown
-        case unknown
-        
-#if swift(>=5.8)
-    @_documentation(visibility: private)
-#endif
-        public init(from decoder: any Decoder) throws {
-            self = try Referer(rawValue: decoder.singleValueContainer().decode(RawValue.self)) ?? .unknown
-        }
-    }
-    
-    private enum CodingKeys: String, CodingKey {
-        case tag, agreedAt, agreed, required, revocable
-        case referer = "agreedBy"
-    }
-        
-#if swift(>=5.8)
-    @_documentation(visibility: private)
-#endif
-    public init(from decoder: any Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        
-        tag = try values.decode(String.self, forKey: .tag)
-        agreedAt = try? values.decode(Date.self, forKey: .agreedAt)
-        agreed = try values.decode(Bool.self, forKey: .agreed)
-        required = try values.decode(Bool.self, forKey: .required)
-        revocable = try values.decode(Bool.self, forKey: .revocable)
-        referer = try? values.decode(Referer.self, forKey: .referer)
-    }
 }
 
-/// 서비스 약관 동의 철회하기 응답 \
-/// Response for Revoke consent for service terms
+/// 서비스 약관 철회 API 응답 클래스
 /// ## SeeAlso
 /// - ``RevokedServiceTerms``
 public struct UserRevokedServiceTerms : Codable {
     
     // MARK: Fields
     
-    /// 회원번호 \
-    /// Service user ID
+    /// 회원 번호
     public var id: Int64
     
-    /// 동의 철회에 성공한 서비스 약관 목록 \
-    /// List of revoked service terms
+    /// 동의 철회가 반영된 서비스 약관 목록
     public var revokedServiceTerms: [RevokedServiceTerms]?
 }
 
-/// 동의 철회된 서비스 약관 정보 \
-/// Revoked service terms information
+/// 동의 철회가 반영된 서비스  약관 클래스
 /// ## SeeAlso
 /// - ``UserRevokedServiceTerms``
 public struct RevokedServiceTerms : Codable {
     
     // MARK: Fields
     
-    /// 태그 \
-    /// Tag
+    /// 3rd에서 설정한 서비스 약관의 tag
     public let tag: String
     
-    /// 동의 여부 \
-    /// The consent status of the service terms
+    /// 동의 여부
     public let agreed: Bool
 }

@@ -14,18 +14,15 @@
 
 import Foundation
 
-/// 인증 및 인가 에러 응답 \
-/// Response for authorization or authentication errors
+/// 로그인 요청에서 사용되는 OAuth 에러를 나타냅니다.
 /// ## SeeAlso
 /// - ``AuthFailureReason``
 public struct AuthErrorInfo : Codable {
     
-    /// 에러 코드 \
-    /// Error code
+    /// 에러 코드
     public let error: AuthFailureReason
     
-    /// 에러 메시지 \
-    /// Error message
+    /// 에러 메시지
     public let errorDescription: String?
     
 }
