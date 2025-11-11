@@ -1,33 +1,17 @@
 {
 	"appId": "com.chingoohaja.app",
-<<<<<<< HEAD
-	"appName": "chingoo-haja",
+	"appName": "Chingoo-haja",
 	"webDir": "dist/spa",
 	"server": {
+		"androidScheme": "https",
+		"hostname": "localhost",
 		"allowNavigation": [
-			"https://silverld.site/*",
-			"https://kauth.kakao.com/*",
-			"https://accounts.google.com/*",
-			"https://nid.naver.com/*",
-			"http://localhost:8080/*",
-			"http://127.0.0.1:8080/*"
-		],
-		"cleartext": true
+			"silverld.site"
+		]
 	},
 	"plugins": {
 		"CapacitorHttp": {
 			"enabled": true
 		}
-	},
-	"ios": {
-		"contentInset": "automatic",
-		"scrollEnabled": true,
-		"backgroundColor": "#ffffff",
-		"allowsLinkPreview": false,
-		"scheme": "com.chingoohaja.app"
 	}
-=======
-	"appName": "Chingoo-haja",
-	"webDir": "dist/spa"
->>>>>>> 9ace5444d01fb9086c77cd6e7c70052255438a57
 }

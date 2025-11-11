@@ -17,6 +17,10 @@ end
 target 'App' do
   capacitor_pods
   # Add your Pods here
+  pod 'Alamofire', '~> 5.9'
+  pod 'KakaoSDKCommon', '~> 2.21.1'
+  pod 'KakaoSDKAuth', '~> 2.21.1'
+  pod 'KakaoSDKUser', '~> 2.21.1'
 end
 
 post_install do |installer|

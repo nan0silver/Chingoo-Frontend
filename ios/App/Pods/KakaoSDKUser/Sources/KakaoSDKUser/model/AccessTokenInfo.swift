@@ -14,30 +14,23 @@
 
 import Foundation
 
-/// 액세스 토큰 정보 \
-/// Access token information
+/// 토큰 정보 요청 API 응답 클래스 입니다.
 /// ## SeeAlso
 /// - ``UserApi/accessTokenInfo(completion:)``
 public struct AccessTokenInfo: Codable {
     
     // MARK: Fields
-    /// 앱 ID \
-    /// App ID
+    /// 앱 아이디
     public let appId: Int64
     
-    /// 회원번호 \
-    /// Service user ID
+    /// 사용자 아이디
     public let id: Int64?
     
-#if swift(>=5.8)
-    @_documentation(visibility: private)
-#endif
     /// 더 이상 사용하지 않는 프로퍼티 입니다. 대신 expriresIn을 사용해주세요.
     /// 해당 액세스 토큰의 남은 만료시간 (단위: milli-second)
     @available(*, deprecated, message: "대신 expiresIn 을 사용해주세요.")
     public let expiresInMillis: Int64?
     
-    /// 만료 시간(단위: 초) \
-    /// Remaining expiration time (Unit: second)
+    /// 해당 액세스 토큰의 남은 만료시간 (단위: second)
     public let expiresIn: Int64
 }

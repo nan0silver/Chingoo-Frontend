@@ -45,8 +45,7 @@ public enum LogLevel : Int {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-/// Kakao SDK 내부 로그 \
-/// Internal logs of Kakao SDK
+/// SdkLog 클래스 입니다.
 open class SdkLog {
     public static let shared = SdkLog()
     

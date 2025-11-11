@@ -14,8 +14,9 @@
 
 import Foundation
 
-/// 카카오 로그인으로 발급받은 토큰 \
-/// Tokens issued with Kakao Login
+/// 카카오 로그인을 통해 발급 받은 토큰입니다.
+///
+/// 이 토큰을 이용하여 로그인 기반 API를 호출할 수 있습니다. 카카오 SDK를 이용하여 로그인에 성공하면 발급된 토큰을 SDK 내부에 설정된 `TokenManagable` 구현체를 통해 저장합니다. 이후 로그인 기반 API(ex. 사용자관리)를 호출하면 해당 토큰을 읽어오며 API 요청 Authorization 헤더에 자동 입력됩니다.
 public struct OAuthToken: Codable {
     
     // MARK: Fields
@@ -26,8 +27,7 @@ public struct OAuthToken: Codable {
     /// 토큰 타입. 현재는 "Bearer" 타입만 사용됩니다.
     public let tokenType: String
 
-    /// 액세스 토큰 \
-    /// Access token
+    /// 액세스 토큰
     public let accessToken: String
     
 #if swift(>=5.8)
@@ -36,12 +36,10 @@ public struct OAuthToken: Codable {
     /// 액세스 토큰의 남은 만료시간 (단위: 초)
     public let expiresIn: TimeInterval
     
-    /// 액세스 토큰 만료시각 \
-    /// The expiration time of the access token
+    /// 액세스 토큰의 만료 시각
     public let expiredAt: Date
     
-    /// 리프레시 토큰 \
-    /// Refresh token
+    /// 리프레시 토큰
     public let refreshToken: String
     
 #if swift(>=5.8)
@@ -50,8 +48,7 @@ public struct OAuthToken: Codable {
     /// 리프레시 토큰의 남은 만료시간 (단위: 초)
     public let refreshTokenExpiresIn: TimeInterval
     
-    /// 리프레시 토큰 만료시각 \
-    /// The expiration time of the refresh token
+    /// 리프레시 토큰의 만료 시각
     public let refreshTokenExpiredAt: Date
     
 #if swift(>=5.8)
@@ -59,13 +56,10 @@ public struct OAuthToken: Codable {
 #endif
     public let scope: String? //space delimited string
     
-    // 인가 코드를 사용한 토큰 신규 발급 시점에만 저장되고 이후 같은 값으로 유지, 토큰 갱신으로는 최신정보로 업데이트되지 않음
-    /// 인가된 동의항목 \
-    /// Authorized scopes
+    /// 현재까지 사용자로부터 획득에 성공한 scope (동의항목) 목록. 인증코드를 통한 토큰 신규 발급 시점에만 저장되며 이후 같은 값으로 유지됩니다. 토큰 갱신으로는 최신정보로 업데이트되지 않습니다.
     public let scopes: [String]?
     
-    /// ID 토큰 \
-    /// ID token
+    /// OpenID Connect 확장 기능을 통해 발급되는 ID 토큰, Base64 인코딩된 사용자 인증 정보 포함
     public let idToken: String?
     
     enum CodingKeys: String, CodingKey {
@@ -251,15 +245,12 @@ public struct CertOAuthToken: Codable {
     }
 }
 
-/// 토큰 정보와 전자서명 접수번호 \
-/// Token information and transaction ID
+/// 카카오톡 인증 로그인을 통해 발급 받은 토큰 및 전자서명 접수번호 입니다.
 public struct CertTokenInfo: Codable {
-    /// 토큰 정보 \
-    /// Token information
+    ///토큰 정보
     public let token: OAuthToken
     
-    /// 전자서명 접수번호 \
-    /// Transaction ID
+    ///전자서명 접수번호
     public let txId: String
     
 #if swift(>=5.8)
@@ -272,36 +263,11 @@ public struct CertTokenInfo: Codable {
     }
 }
 
-/// 상품 종류 \
-/// Product type
+/// 상품 코드
 public enum CertType: String {
-    
-    /// K2100, 카카오톡 인증 로그인 \
-    /// K2100, Kakao Talk Certification Login
+    /// 카카오톡 인증 로그인
     case K2100 = "k2100"
     
-    /// K2220, 카카오톡 축약서명 \
-    /// K2220, Kakao Talk Abbreviated signature
+    /// 카카오톡 축약서명
     case K2220 = "k2220"
-    
-    /// K3220, 축약서명 \
-    /// K3220, Abbreviated signature
-    case K3220 = "k3220"
-}
-
-/// 확인할 서명자 정보 \
-/// Signer information to verify
-public enum IdentifyItem: String {
-    /// 전화번호 \
-    /// Phone number
-    case PhoneNumber = "phone_number"
-    /// 연계 정보 \
-    ///  Connecting Information (CI)
-    case CI = "ci"
-    /// 이름 \
-    ///  Name
-    case Name = "name"
-    /// 생일 \
-    /// Birthday
-    case Birthday = "birthday"
 }

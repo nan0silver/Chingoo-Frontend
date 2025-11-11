@@ -25,7 +25,6 @@ public class Hosts {
     public let auth : String
     public let kauth : String
     public let talkAuth : String
-    public let talkCert : String
     public let channel : String
     public let talkLink : String
     public let talkLinkVersion : String
@@ -40,7 +39,6 @@ public class Hosts {
                 auth: String = "auth.kakao.com",
                 kauth: String = "kauth.kakao.com",
                 talkAuth: String = "kakaokompassauth",
-                talkCert: String = "kakaotalk",
                 channel: String = "pf.kakao.com",
                 talkLink: String = "kakaolink",
                 talkLinkVersion: String = "kakaotalk-5.9.7",
@@ -63,7 +61,6 @@ public class Hosts {
         self.cert = cert
         self.plusFriend = plusFriend
         self.apps = apps
-        self.talkCert = talkCert
     }
 }
 
@@ -76,7 +73,6 @@ public enum HostType {
     case Auth
     case Kauth
     case TalkAuth
-    case TalkCert
     case Channel
     case Navi
     case NaviInstall
@@ -100,8 +96,6 @@ public enum HostType {
             return "https://\(KakaoSDK.shared.hosts().kauth)"
         case .TalkAuth:
             return "\(KakaoSDK.shared.hosts().talkAuth)://"
-        case .TalkCert:
-            return "\(KakaoSDK.shared.hosts().talkCert)://"
         case .Channel:
             return "https://\(KakaoSDK.shared.hosts().channel)"
         case .Navi:
@@ -137,9 +131,6 @@ public class Paths {
     public static let authAgt = "/api/agt"
     
     public static let authTalk = "authorize"
-    
-    //cert for K3220
-    public static let certSignWithoutLogin = "me/cert/sign"
     
     //kakao accounts
     public static let kakaoAccountsLogin = "/sdks/page"
@@ -214,7 +205,12 @@ public class Paths {
     
     //kakaocert
     public static let sessionInfo = "/v1/api/cert/sign/session_info"
-    public static let checkStatus = "/v1/api/cert/sign/check_status"
+    
+    //kakaocert demo(임시 이용기관)
+    public static let demoLogin = "/k2220/login"
+    public static let demoVerify = "/k2220/verify"
+    public static let demoSign = "/k2220/sign"
+    public static let demoSignTest = "/k2220/sign/temp"
 
     //token refresher
     public static let checkAccessToken = "/v1/user/check_access_token"

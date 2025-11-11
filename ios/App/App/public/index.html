@@ -2,14 +2,73 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>친구하자</title>
-    <script type="module" crossorigin src="/assets/index-CZp5Bsha.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DXeCvZ_e.css">
+    <script type="module" crossorigin src="/assets/index-DuanrF_A.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-JMf-c8Zt.css">
   </head>
 
   <body>
     <div id="root"></div>
+
+    <script>
+      (function () {
+        if (
+          typeof navigator === "undefined" ||
+          !navigator.mediaDevices ||
+          typeof navigator.mediaDevices !== "object"
+        ) {
+          return;
+        }
+
+        const { mediaDevices } = navigator;
+
+        if (typeof mediaDevices.getUserMedia === "function") {
+          const originalGetUserMedia =
+            mediaDevices.getUserMedia.bind(mediaDevices);
+
+          mediaDevices.getUserMedia = function patchedGetUserMedia(
+            constraints,
+          ) {
+            const normalized =
+              constraints && typeof constraints === "object"
+                ? { ...constraints }
+                : {};
+
+            if (normalized && typeof normalized === "object") {
+              if (normalized.video) {
+                console.warn(
+                  "[ChingooHaja] Video constraints이 제거되었습니다. 오디오만 활성화됩니다.",
+                );
+                delete normalized.video;
+              }
+              if (!normalized.audio) {
+                normalized.audio = true;
+              }
+            }
+
+            return originalGetUserMedia(normalized);
+          };
+        }
+
+        mediaDevices.enumerateDevices = function patchedEnumerateDevices() {
+          return Promise.resolve([
+            {
+              deviceId: "default",
+              groupId: "default",
+              kind: "audioinput",
+              label: "Default Microphone",
+              toJSON() {
+                return this;
+              },
+            },
+          ]);
+        };
+      })();
+    </script>
 
   </body>
 </html>

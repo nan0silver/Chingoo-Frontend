@@ -15,16 +15,13 @@
 import Foundation
 import KakaoSDKCommon
 
-/// [카카오 로그인](https://developers.kakao.com/docs/latest/ko/kakaologin/common) 인증 및 토큰 관리 클래스 \
-/// Class for the authentication and token management through [Kakao Login](https://developers.kakao.com/docs/latest/en/kakaologin/common)
+/// 카카오 로그인 인증서버로 API 요청을 담당하는 클래스입니다.
 final public class AuthApi {
     
-    /// 카카오 SDK 싱글톤 객체 \
-    /// A singleton object for Kakao SDK
+    /// 간편하게 API를 호출할 수 있도록 제공되는 공용 싱글톤 객체입니다.
     public static let shared = AuthApi()
     
-    /// 카카오톡으로부터 리다이렉트된 URL인지 확인 \
-    /// Checks whether the URL is redirected from Kakao Talk
+    /// 카카오톡 으로부터 리다이렉트 된 URL 인지 체크합니다.
     public static func isKakaoTalkLoginUrl(_ url:URL) -> Bool {
         if url.absoluteString.hasPrefix(KakaoSDK.shared.redirectUri()) {
             return true
@@ -32,8 +29,8 @@ final public class AuthApi {
         return false
     }
         
-    /// 토큰 존재 여부 확인하기 \
-    /// Check token presence
+    /// 사용자가 앞서 로그인을 통해 토큰을 발급 받은 상태인지 확인합니다.
+    /// 주의: 기존 토큰 존재 여부를 확인하는 기능으로, 사용자가 현재도 로그인 상태임을 보장하지 않습니다.
     public static func hasToken() -> Bool {
         return Auth.shared.tokenManager.getToken() != nil
     }
@@ -73,8 +70,7 @@ final public class AuthApi {
                                 }
     }
     
-    /// 인가 코드로 토큰 발급 \
-    /// Issues tokens with the authorization code
+    /// 사용자 인증코드를 이용하여 신규 토큰 발급을 요청합니다.
     public func token(code: String,
                       codeVerifier: String? = nil,
                       redirectUri: String = KakaoSDK.shared.redirectUri(),
@@ -106,8 +102,7 @@ final public class AuthApi {
                                 }
     }
     
-    /// 토큰 갱신 \
-    /// Refreshes the tokens
+    /// 기존 토큰을 갱신합니다.
     public func refreshToken(token oldToken: OAuthToken? = nil,
                              completion:@escaping (OAuthToken?, Error?) -> Void) {
         API.responseData(.post,
@@ -173,7 +168,7 @@ final public class AuthApi {
     }
     
     
-    // 기존 토큰을 갱신합니다.
+    /// 기존 토큰을 갱신합니다.
     @available(*, deprecated, message: "use refreshToken(token:completion:) instead")
     public func refreshAccessToken(refreshToken: String? = nil,
                                    completion:@escaping (OAuthToken?, Error?) -> Void) {
@@ -182,8 +177,9 @@ final public class AuthApi {
 
 
 extension AuthApi {
-    /// 인가 코드로 토큰과 전자서명 접수번호 발급 \
-    /// Issues tokens and ``txId`` with the authorization code
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
     public func certToken(code: String,
                           codeVerifier: String? = nil,
                           redirectUri: String = KakaoSDK.shared.redirectUri(),
@@ -248,13 +244,7 @@ extension AuthApi {
                         txId: String? = nil, //certType == .K2220 일때 not null
                         settleId: String? = nil,
                         signData: String? = nil,
-                        identifyItems: [IdentifyItem]? = nil,
                         completion: @escaping (String?, Error?) -> Void) {
-        
-        if certType == .K3220 {
-            completion(nil, SdkError(reason: .BadParameter, message: "not support k3220"))
-            return
-        }
         
         if certType == .K2220 {
             guard txId != nil else {
@@ -270,8 +260,7 @@ extension AuthApi {
                             "cert_type": certType.rawValue,
                             "tx_id": txId,
                             "settle_id":settleId,
-                            "sign_data": signData,
-                            "sign_identify_items": identifyItems?.map({ $0.rawValue }).joined(separator: ","),
+                            "sign_data": signData
                             ].filterNil(),
                          sessionType: .Auth,
                          apiType: .KAuth) { (response, data, error) in
