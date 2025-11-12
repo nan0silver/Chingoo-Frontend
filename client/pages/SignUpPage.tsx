@@ -1,5 +1,14 @@
 import { useState } from "react";
 import { SignUpRequest, SignUpResponse, ApiErrorResponse } from "@shared/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SignUpPageProps {
   onBack: () => void;
@@ -16,6 +25,7 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 비밀번호 유효성 검사 상태
   const [passwordValidation, setPasswordValidation] = useState({
@@ -190,13 +200,11 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
       // 성공 시 응답 처리
       try {
         const data: SignUpResponse = JSON.parse(responseText);
-        alert("회원가입이 완료되었습니다!");
-        onSignUp();
+        setShowSuccessModal(true);
       } catch (parseError) {
         console.error("응답 파싱 실패:", parseError);
         // 파싱 실패해도 성공 상태 코드면 성공으로 처리
-        alert("회원가입이 완료되었습니다!");
-        onSignUp();
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error("회원가입 오류:", error);
@@ -298,7 +306,7 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
                     });
                   }
                 }}
-                placeholder="비밀번호를 입력해주세요 (8-20자, 영문/숫자/특수문자)"
+                placeholder="비밀번호를 입력해주세요 "
                 className={`w-full h-14 px-4 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
@@ -526,6 +534,33 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
           {isLoading ? "가입 중..." : "가입하기"}
         </button>
       </div>
+
+      {/* 회원가입 완료 모달 */}
+      <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <AlertDialogContent className="max-w-md mx-4 rounded-2xl p-6 md:p-8">
+          <AlertDialogHeader className="text-center sm:text-left">
+            <AlertDialogTitle className="text-xl md:text-2xl font-crimson font-bold text-gray-900 mb-3">
+              회원가입 완료
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base font-pretendard text-gray-600">
+              회원가입이 완료되었습니다.
+              <br />
+              로그인 페이지로 이동하시겠습니까?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-6">
+            <AlertDialogAction
+              onClick={() => {
+                setShowSuccessModal(false);
+                onSignUp();
+              }}
+              className="w-full sm:w-auto bg-orange-500 text-white font-crimson text-lg font-semibold hover:bg-orange-600 rounded-lg py-3 px-6"
+            >
+              확인
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

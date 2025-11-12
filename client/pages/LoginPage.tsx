@@ -73,7 +73,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호를 입력해주세요"
+            placeholder=""
             className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
           />
         </div>
