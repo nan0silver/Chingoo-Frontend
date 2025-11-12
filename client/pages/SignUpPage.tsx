@@ -1,33 +1,22 @@
 import { useState } from "react";
-import { SignUpRequest, SignUpResponse, ApiErrorResponse } from "@shared/api";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
+import { signup } from "@/lib/auth";
+import { SignUpRequest } from "@shared/api";
 import { Eye, EyeOff } from "lucide-react";
 
 interface SignUpPageProps {
   onBack: () => void;
-  onSignUp: () => void;
 }
 
-export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
+export default function SignUpPage({ onBack }: SignUpPageProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [nickname, setNickname] = useState("");
   const [realName, setRealName] = useState("");
-  const [gender, setGender] = useState<"MALE" | "FEMALE">("MALE");
-  const [birth, setBirth] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 비밀번호 유효성 검사 상태
   const [passwordValidation, setPasswordValidation] = useState({
@@ -84,16 +73,8 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
         "비밀번호는 8-20자이며, 영문/숫자/특수문자를 포함해야 합니다.";
     }
 
-    if (!nickname.trim()) {
-      newErrors.nickname = "닉네임을 입력해주세요.";
-    }
-
     if (!realName.trim()) {
       newErrors.realName = "사용자 이름을 입력해주세요.";
-    }
-
-    if (!birth) {
-      newErrors.birth = "생년월일을 선택해주세요.";
     }
 
     setErrors(newErrors);
@@ -113,108 +94,22 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
       const signUpData: SignUpRequest = {
         email: email.trim(),
         password,
-        nickname: nickname.trim(),
         real_name: realName.trim(),
-        gender,
-        birth,
       };
 
-      // API 기본 URL 설정 (환경변수 사용)
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-        ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
-        : "/api";
+      // auth.ts의 signup 함수 사용
+      await signup(signUpData);
 
-      const response = await fetch(`${API_BASE_URL}/v1/auth/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(signUpData),
-      });
-
-      // 응답 본문을 텍스트로 먼저 읽기
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        let errorData: ApiErrorResponse;
-        let errorMessage = "";
-
-        try {
-          // JSON 파싱 시도
-          errorData = JSON.parse(responseText);
-
-          // 필드별 에러 처리
-          if (errorData.errors && errorData.errors.length > 0) {
-            const fieldErrors: Record<string, string> = {};
-            errorData.errors.forEach((error) => {
-              if (error.field) {
-                // 필드명 매핑 (백엔드 필드명 -> 프론트엔드 필드명)
-                const fieldMap: Record<string, string> = {
-                  email: "email",
-                  password: "password",
-                  nickname: "nickname",
-                  real_name: "realName",
-                  gender: "gender",
-                  birth: "birth",
-                };
-                const frontendField = fieldMap[error.field] || error.field;
-                fieldErrors[frontendField] = error.message;
-              } else {
-                // 필드가 없는 일반 에러 메시지
-                errorMessage += error.message + " ";
-              }
-            });
-
-            if (Object.keys(fieldErrors).length > 0) {
-              setErrors(fieldErrors);
-            }
-
-            // 일반 에러 메시지 설정
-            if (errorData.message) {
-              setGeneralError(errorData.message);
-            } else if (errorMessage.trim()) {
-              setGeneralError(errorMessage.trim());
-            } else {
-              setGeneralError(
-                "회원가입에 실패했습니다. 입력 정보를 확인해주세요.",
-              );
-            }
-          } else if (errorData.message) {
-            setGeneralError(errorData.message);
-          } else {
-            setGeneralError(
-              `회원가입에 실패했습니다. (상태 코드: ${response.status})`,
-            );
-          }
-        } catch (parseError) {
-          // JSON 파싱 실패 시 원본 텍스트 표시
-          console.error("에러 응답 파싱 실패:", parseError);
-          console.error("원본 응답:", responseText);
-          setGeneralError(
-            responseText ||
-              `회원가입에 실패했습니다. (상태 코드: ${response.status})`,
-          );
-        }
-        return;
-      }
-
-      // 성공 시 응답 처리
-      try {
-        const data: SignUpResponse = JSON.parse(responseText);
-        setShowSuccessModal(true);
-      } catch (parseError) {
-        console.error("응답 파싱 실패:", parseError);
-        // 파싱 실패해도 성공 상태 코드면 성공으로 처리
-        setShowSuccessModal(true);
-      }
+      // 회원가입 성공 - 프로필 설정 페이지로 이동 (소셜 로그인과 동일)
+      navigate("/profile-setup", { replace: true });
     } catch (error) {
       console.error("회원가입 오류:", error);
-      setGeneralError(
+      // 에러 메시지를 화면에 표시
+      const errorMessage =
         error instanceof Error
           ? error.message
-          : "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.",
-      );
+          : "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.";
+      setGeneralError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -273,6 +168,7 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
                 className={`w-full h-14 px-4 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                   errors.email ? "border-red-500" : "border-gray-200"
                 }`}
+                disabled={isLoading}
               />
             </div>
             {errors.email && (
@@ -312,6 +208,7 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
                 className={`w-full h-14 px-4 pr-12 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
+                disabled={isLoading}
               />
               <button
                 type="button"
@@ -393,34 +290,6 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
             )}
           </div>
 
-          {/* Nickname Field */}
-          <div className="space-y-2">
-            <label className="text-gray-700 font-pretendard text-xl">
-              닉네임
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => {
-                  setNickname(e.target.value);
-                  if (errors.nickname) {
-                    setErrors({ ...errors, nickname: "" });
-                  }
-                }}
-                placeholder="닉네임을 입력해주세요"
-                className={`w-full h-14 px-4 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                  errors.nickname ? "border-red-500" : "border-gray-200"
-                }`}
-              />
-            </div>
-            {errors.nickname && (
-              <p className="text-red-500 text-sm font-pretendard">
-                {errors.nickname}
-              </p>
-            )}
-          </div>
-
           {/* Real Name Field */}
           <div className="space-y-2">
             <label className="text-gray-700 font-pretendard text-xl">
@@ -440,85 +309,12 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
                 className={`w-full h-14 px-4 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                   errors.realName ? "border-red-500" : "border-gray-200"
                 }`}
+                disabled={isLoading}
               />
             </div>
             {errors.realName && (
               <p className="text-red-500 text-sm font-pretendard">
                 {errors.realName}
-              </p>
-            )}
-          </div>
-
-          {/* Gender Field */}
-          <div className="space-y-2">
-            <label className="text-gray-700 font-pretendard text-xl">
-              성별
-            </label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setGender("MALE");
-                  if (errors.gender) {
-                    setErrors({ ...errors, gender: "" });
-                  }
-                }}
-                className={`flex-1 h-14 px-4 border rounded-lg font-crimson text-xl transition-colors ${
-                  gender === "MALE"
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-orange-300"
-                }`}
-              >
-                남성
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setGender("FEMALE");
-                  if (errors.gender) {
-                    setErrors({ ...errors, gender: "" });
-                  }
-                }}
-                className={`flex-1 h-14 px-4 border rounded-lg font-crimson text-xl transition-colors ${
-                  gender === "FEMALE"
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-orange-300"
-                }`}
-              >
-                여성
-              </button>
-            </div>
-            {errors.gender && (
-              <p className="text-red-500 text-sm font-pretendard">
-                {errors.gender}
-              </p>
-            )}
-          </div>
-
-          {/* Birth Field */}
-          <div className="space-y-2">
-            <label className="text-gray-700 font-pretendard text-xl">
-              생년월일
-            </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={birth}
-                onChange={(e) => {
-                  setBirth(e.target.value);
-                  if (errors.birth) {
-                    setErrors({ ...errors, birth: "" });
-                  }
-                }}
-                max={new Date().toISOString().split("T")[0]}
-                className={`w-full h-14 px-4 border rounded-lg font-crimson text-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                  errors.birth ? "border-red-500" : "border-gray-200"
-                }`}
-              />
-            </div>
-            {errors.birth && (
-              <p className="text-red-500 text-sm font-pretendard">
-                {errors.birth}
               </p>
             )}
           </div>
@@ -548,33 +344,6 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
           {isLoading ? "가입 중..." : "가입하기"}
         </button>
       </div>
-
-      {/* 회원가입 완료 모달 */}
-      <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <AlertDialogContent className="max-w-md mx-4 rounded-2xl p-6 md:p-8">
-          <AlertDialogHeader className="text-center sm:text-left">
-            <AlertDialogTitle className="text-xl md:text-2xl font-crimson font-bold text-gray-900 mb-3">
-              회원가입 완료
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base font-pretendard text-gray-600">
-              회원가입이 완료되었습니다.
-              <br />
-              로그인 페이지로 이동하시겠습니까?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-3 mt-6">
-            <AlertDialogAction
-              onClick={() => {
-                setShowSuccessModal(false);
-                onSignUp();
-              }}
-              className="w-full sm:w-auto bg-orange-500 text-white font-crimson text-lg font-semibold hover:bg-orange-600 rounded-lg py-3 px-6"
-            >
-              확인
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

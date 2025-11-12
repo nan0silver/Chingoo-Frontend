@@ -13,6 +13,8 @@ import {
   UserInfo,
   LoginRequest,
   LoginResponse,
+  SignUpRequest,
+  SignUpResponse,
 } from "@shared/api";
 import { logger } from "./logger";
 
@@ -123,6 +125,109 @@ const subscribeTokenRefresh = (callback: (token: string) => void): void => {
 const onTokenRefreshed = (token: string): void => {
   refreshSubscribers.forEach((callback) => callback(token));
   refreshSubscribers = [];
+};
+
+/**
+ * 회원가입 함수
+ */
+export const signup = async (
+  signUpData: SignUpRequest,
+): Promise<SignUpResponse> => {
+  try {
+    const requestBody: SignUpRequest = {
+      email: signUpData.email.trim(),
+      password: signUpData.password,
+      real_name: signUpData.real_name.trim(),
+    };
+
+    logger.apiRequest("POST", "/v1/auth/signup");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    let response: Response;
+    try {
+      response = await fetch(`${getApiUrl()}/v1/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include", // 쿠키를 포함하여 요청
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    // 응답 본문을 텍스트로 먼저 읽기
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      logger.error("회원가입 응답 에러:", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+
+      let errorMessage = "회원가입에 실패했습니다.";
+
+      try {
+        // JSON 파싱 시도
+        const errorData: ApiErrorResponse = JSON.parse(responseText);
+        logger.error("❌ 백엔드 에러 응답:", errorData);
+        
+        errorMessage = errorData.message || errorMessage;
+
+        // 필드별 에러가 있는 경우
+        if (errorData.errors && errorData.errors.length > 0) {
+          const errorMessages = errorData.errors.map((err) => err.message).join(", ");
+          errorMessage = errorMessages || errorMessage;
+        }
+      } catch (parseError) {
+        // JSON 파싱 실패 시 원본 텍스트 표시
+        logger.error("에러 응답 파싱 실패:", parseError);
+        logger.error("원본 응답:", responseText);
+        if (responseText) {
+          errorMessage = responseText;
+        } else {
+          errorMessage = `회원가입에 실패했습니다. (상태 코드: ${response.status})`;
+        }
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    // 성공 시 응답 처리
+    let result: SignUpResponse;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      logger.error("응답 파싱 실패:", parseError);
+      throw new Error("회원가입 응답 처리 중 오류가 발생했습니다.");
+    }
+
+    // 토큰 저장
+    // access_token은 메모리에만 저장 (XSS 공격 방어)
+    setInMemoryToken(result.data.access_token, result.data.expires_in);
+    // refresh_token은 HttpOnly 쿠키로 서버에서 설정됨
+    // 프론트엔드에서는 저장하지 않음
+
+    // PII 보안: 최소한의 정보만 저장 (이메일, 닉네임 제외)
+    const minimalUserInfo: UserInfo = {
+      id: result.data.user_info.id,
+      is_new_user: result.data.user_info.is_new_user,
+      is_profile_complete: result.data.user_info.is_profile_complete,
+    };
+    localStorage.setItem(
+      OAUTH_STORAGE_KEYS.USER_INFO,
+      JSON.stringify(minimalUserInfo),
+    );
+
+    logger.log("✅ 회원가입 성공");
+    return result;
+  } catch (error) {
+    logger.error("회원가입 실패:", error);
+    throw error;
+  }
 };
 
 /**

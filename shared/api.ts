@@ -122,21 +122,19 @@ export interface UpdateProfileResponse {
 export interface SignUpRequest {
   email: string;
   password: string;
-  nickname: string;
   real_name: string;
-  gender: "MALE" | "FEMALE";
-  birth: string; // YYYY-MM-DD 형식
 }
 
 /**
- * Sign Up Response
+ * Sign Up Response (로그인과 동일한 형식)
  */
 export interface SignUpResponse {
-  message: string;
-  data?: {
-    user_id: number;
-    email: string;
-    nickname: string;
+  data: {
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    expires_in: number;
+    user_info: UserInfo;
   };
 }
 

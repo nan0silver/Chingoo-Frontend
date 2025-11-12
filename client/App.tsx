@@ -184,10 +184,7 @@ const AppRoutes = () => {
           path="/signup"
           element={
             <div className="max-w-md mx-auto">
-              <SignUpPage
-                onBack={handleBackToLogin}
-                onSignUp={handleBackToLogin}
-              />
+              <SignUpPage onBack={handleBackToLogin} />
             </div>
           }
         />
