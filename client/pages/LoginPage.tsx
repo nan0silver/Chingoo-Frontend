@@ -2,6 +2,7 @@ import { useState } from "react";
 import { startSocialLogin, login } from "@/lib/auth";
 import { OAuthProvider, LoginRequest } from "@shared/api";
 import { logger } from "@/lib/logger";
+import { Eye, EyeOff } from "lucide-react";
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -12,6 +13,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     // 유효성 검사
@@ -101,11 +103,11 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
         {/* Password Input */}
         <div className="relative">
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="비밀번호를 입력해주세요."
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+            className="w-full h-12 md:h-14 px-4 pr-12 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
             disabled={isLoading}
             onKeyPress={(e) => {
               if (e.key === "Enter" && !isLoading) {
@@ -113,6 +115,18 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
               }
             }}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+            disabled={isLoading}
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5 md:w-6 md:h-6" />
+            ) : (
+              <Eye className="w-5 h-5 md:w-6 md:h-6" />
+            )}
+          </button>
         </div>
 
         {/* Login Button */}

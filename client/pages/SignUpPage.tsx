@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Eye, EyeOff } from "lucide-react";
 
 interface SignUpPageProps {
   onBack: () => void;
@@ -25,6 +26,7 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // 비밀번호 유효성 검사 상태
@@ -287,7 +289,7 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => {
                   const newPassword = e.target.value;
@@ -307,10 +309,22 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
                   }
                 }}
                 placeholder="비밀번호를 입력해주세요 "
-                className={`w-full h-14 px-4 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                className={`w-full h-14 px-4 pr-12 border rounded-lg font-crimson text-xl placeholder:text-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                   errors.password ? "border-red-500" : "border-gray-200"
                 }`}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                disabled={isLoading}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
             </div>
             {errors.password && (
               <p className="text-red-500 text-sm font-pretendard">
