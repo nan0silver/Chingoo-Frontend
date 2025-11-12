@@ -117,6 +117,30 @@ export interface UpdateProfileResponse {
 }
 
 /**
+ * Sign Up Request
+ */
+export interface SignUpRequest {
+  email: string;
+  password: string;
+  nickname: string;
+  real_name: string;
+  gender: "MALE" | "FEMALE";
+  birth: string; // YYYY-MM-DD 형식
+}
+
+/**
+ * Sign Up Response
+ */
+export interface SignUpResponse {
+  message: string;
+  data?: {
+    user_id: number;
+    email: string;
+    nickname: string;
+  };
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {
