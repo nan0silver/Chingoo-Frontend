@@ -173,7 +173,10 @@ const AppRoutes = () => {
           path="/login"
           element={
             <div className="max-w-md mx-auto">
-              <LoginPage onLogin={() => {}} onSignUp={handleNavigateToSignUp} />
+              <LoginPage
+                onLogin={handleGoHome}
+                onSignUp={handleNavigateToSignUp}
+              />
             </div>
           }
         />

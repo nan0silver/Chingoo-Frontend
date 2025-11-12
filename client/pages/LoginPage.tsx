@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { startSocialLogin } from "@/lib/auth";
-import { OAuthProvider } from "@shared/api";
+import { startSocialLogin, login } from "@/lib/auth";
+import { OAuthProvider, LoginRequest } from "@shared/api";
 import { logger } from "@/lib/logger";
 
 interface LoginPageProps {
@@ -9,15 +9,45 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    // Simulate login validation
-    if (username.trim() && password.trim()) {
+  const handleLogin = async () => {
+    // 유효성 검사
+    if (!email.trim()) {
+      alert("이메일을 입력해주세요.");
+      return;
+    }
+
+    if (!password.trim()) {
+      alert("비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const loginData: LoginRequest = {
+        email: email.trim(),
+        password,
+      };
+
+      // auth.ts의 login 함수 사용
+      await login(loginData);
+
+      // 로그인 성공 - 메인 페이지로 이동
       onLogin();
-    } else {
-      alert("아이디와 비밀번호를 입력해주세요.");
+    } catch (error) {
+      console.error("로그인 오류:", error);
+      // 에러 메시지를 팝업 알림으로 표시
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "로그인 중 오류가 발생했습니다. 다시 시도해주세요.";
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,14 +86,15 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
 
       {/* Form Container */}
       <div className="w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl px-5 space-y-4 md:space-y-6">
-        {/* Username Input */}
+        {/* Email Input */}
         <div className="relative">
           <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="아이디를 입력해주세요"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="이메일을 입력해주세요."
             className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+            disabled={isLoading}
           />
         </div>
 
@@ -73,8 +104,14 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder=""
+            placeholder="비밀번호를 입력해주세요."
             className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-noto text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent"
+            disabled={isLoading}
+            onKeyPress={(e) => {
+              if (e.key === "Enter" && !isLoading) {
+                handleLogin();
+              }
+            }}
           />
         </div>
 
@@ -82,9 +119,12 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
         <div className="pt-4">
           <button
             onClick={handleLogin}
-            className="w-full h-14 md:h-16 bg-login-button text-white font-noto text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors"
+            disabled={isLoading}
+            className={`w-full h-14 md:h-16 bg-login-button text-white font-noto text-xl md:text-2xl font-bold rounded-lg hover:bg-opacity-90 transition-colors ${
+              isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            로그인
+            {isLoading ? "로그인 중..." : "로그인"}
           </button>
         </div>
 

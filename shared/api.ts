@@ -141,6 +141,27 @@ export interface SignUpResponse {
 }
 
 /**
+ * Login Request
+ */
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+/**
+ * Login Response
+ */
+export interface LoginResponse {
+  data: {
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    expires_in: number;
+    user_info: UserInfo;
+  };
+}
+
+/**
  * API Error Response
  */
 export interface ApiErrorResponse {
