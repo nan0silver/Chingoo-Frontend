@@ -124,6 +124,14 @@ const AppRoutes = () => {
     navigate("/call-history");
   };
 
+  const handleNavigateToSignUp = () => {
+    navigate("/signup");
+  };
+
+  const handleBackToLogin = () => {
+    navigate("/login");
+  };
+
   const handleNavigateToProfileEdit = () => {
     navigate("/profile-setup");
   };
@@ -165,7 +173,7 @@ const AppRoutes = () => {
           path="/login"
           element={
             <div className="max-w-md mx-auto">
-              <LoginPage onLogin={() => {}} onSignUp={() => {}} />
+              <LoginPage onLogin={() => {}} onSignUp={handleNavigateToSignUp} />
             </div>
           }
         />
@@ -173,7 +181,7 @@ const AppRoutes = () => {
           path="/signup"
           element={
             <div className="max-w-md mx-auto">
-              <SignUpPage onBack={() => {}} onSignUp={() => {}} />
+              <SignUpPage onBack={handleBackToLogin} onSignUp={() => {}} />
             </div>
           }
         />
