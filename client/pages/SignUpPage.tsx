@@ -242,15 +242,6 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
           </h2>
         </div>
 
-        {/* 일반 에러 메시지 */}
-        {generalError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm font-pretendard">
-              {generalError}
-            </p>
-          </div>
-        )}
-
         {/* Form */}
         <div className="space-y-6">
           {/* Email Field */}
@@ -511,6 +502,17 @@ export default function SignUpPage({ onBack, onSignUp }: SignUpPageProps) {
           </div>
         </div>
       </div>
+
+      {/* 일반 에러 메시지 - 가입하기 버튼 바로 위 */}
+      {generalError && (
+        <div className="px-5 pb-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm font-pretendard">
+              {generalError}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Sign Up Button */}
       <div className="px-5 pb-8">
