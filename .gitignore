@@ -38,3 +38,6 @@ android/build/
 android/app/build/
 *.lock
 *.ser
+
+# Android build assets (빌드 산출물 - 매번 해시가 변경됨)
+android/app/src/main/assets/public/assets/
