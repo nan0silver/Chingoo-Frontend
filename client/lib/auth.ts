@@ -2,6 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { App } from "@capacitor/app";
 import { KakaoLoginPlugin } from "capacitor-kakao-login-plugin";
+import { GoogleAuth } from "@codetrix-studio/capacitor-google-auth";
 import {
   OAuthProvider,
   OAuthConfigResponse,
@@ -419,7 +420,7 @@ export const startSocialLogin = async (
     sessionStorage.setItem("oauth_redirect_uri", config.data.redirect_uri);
 
     if (isMobile) {
-      // 모바일: 카카오는 네이티브 플러그인 사용, 다른 제공자는 기존 방식
+      // 모바일: 카카오와 구글은 네이티브 플러그인 사용, 네이버는 기존 방식
       if (provider === "kakao") {
         logger.log("모바일: 카카오 네이티브 플러그인으로 로그인");
 
@@ -429,8 +430,6 @@ export const startSocialLogin = async (
           logger.log("카카오 로그인 성공:", kakaoResult);
 
           // 카카오 액세스 토큰을 백엔드로 전달하여 우리 서버 토큰 받기
-          // TODO: 백엔드 API가 카카오 토큰을 받을 수 있는지 확인 필요
-          // 일단 기존 OAuth 플로우와 호환되도록 처리
           const result = await processKakaoNativeLogin(kakaoResult.accessToken);
 
           // 로그인 성공 - 페이지 이동을 위해 커스텀 이벤트 발생
@@ -456,8 +455,54 @@ export const startSocialLogin = async (
           );
           throw error;
         }
+      } else if (provider === "google") {
+        logger.log("모바일: 구글 네이티브 플러그인으로 로그인");
+
+        try {
+          // 구글 플러그인 초기화 (scopes 포함)
+          await GoogleAuth.initialize({
+            scopes: ["profile", "email"],
+          });
+          logger.log("구글 플러그인 초기화 완료");
+
+          // 구글 네이티브 로그인 실행
+          const googleResult = await GoogleAuth.signIn();
+          logger.log("구글 로그인 성공:", googleResult);
+
+          // 구글 ID 토큰을 백엔드로 전달하여 우리 서버 토큰 받기
+          if (!googleResult.authentication?.idToken) {
+            throw new Error("구글 ID 토큰을 받지 못했습니다.");
+          }
+
+          const result = await processGoogleNativeLogin(
+            googleResult.authentication.idToken,
+          );
+
+          // 로그인 성공 - 페이지 이동을 위해 커스텀 이벤트 발생
+          if (result) {
+            logger.log("✅ 모바일 구글 로그인 성공");
+            window.dispatchEvent(
+              new CustomEvent("oauth-login-success", {
+                detail: { userInfo: result.data.user_info },
+              }),
+            );
+          }
+        } catch (error) {
+          logger.error("구글 로그인 실패:", error);
+          window.dispatchEvent(
+            new CustomEvent("oauth-login-error", {
+              detail: {
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "구글 로그인 중 오류가 발생했습니다.",
+              },
+            }),
+          );
+          throw error;
+        }
       } else {
-        // 구글, 네이버는 기존 In-App Browser 방식 사용
+        // 네이버는 기존 In-App Browser 방식 사용
         logger.log("모바일: In-App Browser로 OAuth 페이지 열기", provider);
 
         await Browser.open({
@@ -633,6 +678,100 @@ export const processOAuthCallback =
       redirectUri || undefined,
     );
   };
+
+/**
+ * 구글 네이티브 로그인으로 받은 ID 토큰을 백엔드로 전달하는 함수
+ */
+export const processGoogleNativeLogin = async (
+  googleIdToken: string,
+): Promise<OAuthLoginResponse> => {
+  try {
+    logger.log("구글 네이티브 로그인 토큰을 백엔드로 전달");
+
+    const requestBody = {
+      google_id_token: googleIdToken,
+      device_info: `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
+    };
+
+    logger.log("📤 전송할 데이터:", {
+      provider: "google",
+      google_token_length: googleIdToken?.length || 0,
+    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      logger.error("⏰ 구글 네이티브 로그인 요청 타임아웃 (60초 초과)");
+      controller.abort();
+    }, 60000);
+
+    const startTime = Date.now();
+    logger.apiRequest("POST", `/v1/auth/oauth/google/native`);
+
+    let response: Response;
+    try {
+      response = await fetch(`${getApiUrl()}/v1/auth/oauth/google/native`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include",
+        signal: controller.signal,
+      });
+
+      const elapsedTime = Date.now() - startTime;
+      logger.log(`✅ 구글 네이티브 로그인 요청 완료: ${elapsedTime}ms`);
+    } catch (fetchError) {
+      const elapsedTime = Date.now() - startTime;
+      logger.error(
+        `❌ 구글 네이티브 로그인 요청 실패: ${elapsedTime}ms`,
+        fetchError,
+      );
+      throw fetchError;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!response.ok) {
+      logger.error("구글 네이티브 로그인 응답 에러:", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        logger.error("❌ 백엔드 에러 응답:", errorData);
+        throw new Error(errorData.message || "로그인에 실패했습니다.");
+      } else {
+        const text = await response.text();
+        logger.error("예상치 못한 에러 응답:", text);
+        throw new Error(`서버 에러: ${response.status} ${response.statusText}`);
+      }
+    }
+
+    const result: OAuthLoginResponse = await response.json();
+
+    // 토큰 저장
+    setInMemoryToken(result.data.access_token, result.data.expires_in);
+
+    // PII 보안: 최소한의 정보만 저장
+    const minimalUserInfo: UserInfo = {
+      id: result.data.user_info.id,
+      is_new_user: result.data.user_info.is_new_user,
+      is_profile_complete: result.data.user_info.is_profile_complete,
+    };
+    localStorage.setItem(
+      OAUTH_STORAGE_KEYS.USER_INFO,
+      JSON.stringify(minimalUserInfo),
+    );
+
+    return result;
+  } catch (error) {
+    logger.error("구글 네이티브 로그인 처리 실패:", error);
+    throw error;
+  }
+};
 
 /**
  * 카카오 네이티브 로그인으로 받은 액세스 토큰을 백엔드로 전달하는 함수

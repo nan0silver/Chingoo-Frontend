@@ -7,4 +7,6 @@
     <!-- 카카오 SDK 설정 (카카오 개발자 콘솔에서 발급받은 네이티브 앱 키로 변경 필요) -->
     <string name="kakao_app_key">aa1e70c80567cbfe9b5dfa111ca97ab5</string>
     <string name="kakao_scheme">kakaoaa1e70c80567cbfe9b5dfa111ca97ab5</string>
+    <!-- 구글 로그인 설정 (구글 개발자 콘솔에서 발급받은 웹 클라이언트 ID로 변경 필요) -->
+    <string name="server_client_id">251609733477-thoh9ldn3b2ve4ap31pt4pelau8bgsaa.apps.googleusercontent.com</string>
 </resources>
