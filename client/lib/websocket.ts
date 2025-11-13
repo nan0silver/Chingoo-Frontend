@@ -6,6 +6,7 @@ import {
   CallStartNotification,
   WebSocketConnectionState,
 } from "@shared/api";
+import { Capacitor } from "@capacitor/core";
 import { logger } from "./logger";
 
 export class WebSocketService {
@@ -38,9 +39,19 @@ export class WebSocketService {
 
   private setupClient(token?: string) {
     // SockJS를 사용하여 WebSocket 연결 설정
-    const wsUrl = import.meta.env.VITE_WS_BASE_URL
-      ? String(import.meta.env.VITE_WS_BASE_URL)
-      : "/ws"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
+    // 네이티브 앱에서는 운영 서버의 WebSocket을 사용
+    let wsUrl: string;
+    
+    if (Capacitor.isNativePlatform()) {
+      // 네이티브 앱: HTTPS이므로 wss:// 사용
+      wsUrl = "https://silverld.site/ws";
+      console.log("✅ 네이티브 앱 - WebSocket 운영 서버 사용");
+    } else {
+      // 웹: 환경변수 또는 프록시 사용
+      wsUrl = import.meta.env.VITE_WS_BASE_URL
+        ? String(import.meta.env.VITE_WS_BASE_URL)
+        : "/ws"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
+    }
 
     // ⚠️ 쿼리 파라미터로 토큰을 전달하지 않음 (SockJS /info 엔드포인트는 인증 불필요)
     // 대신 STOMP CONNECT 헤더로 토큰을 전달합니다
