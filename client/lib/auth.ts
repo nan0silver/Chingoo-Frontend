@@ -467,10 +467,16 @@ export const startSocialLogin = async (
 
           // 구글 네이티브 로그인 실행
           const googleResult = await GoogleAuth.signIn();
-          logger.log("구글 로그인 성공:", googleResult);
+          logger.log("구글 로그인 성공:", {
+            hasIdToken: !!googleResult.authentication?.idToken,
+            hasAccessToken: !!googleResult.authentication?.accessToken,
+            email: googleResult.email,
+            id: googleResult.id,
+          });
 
           // 구글 ID 토큰을 백엔드로 전달하여 우리 서버 토큰 받기
           if (!googleResult.authentication?.idToken) {
+            logger.error("구글 로그인 결과:", googleResult);
             throw new Error("구글 ID 토큰을 받지 못했습니다.");
           }
 
@@ -489,6 +495,33 @@ export const startSocialLogin = async (
           }
         } catch (error) {
           logger.error("구글 로그인 실패:", error);
+
+          // 에러 상세 정보 추출
+          let errorMessage = "알 수 없는 오류";
+          let errorDetails: any = {};
+
+          if (error instanceof Error) {
+            errorMessage = error.message;
+            errorDetails = {
+              message: error.message,
+              stack: error.stack,
+              name: error.name,
+            };
+          } else if (typeof error === "string") {
+            errorMessage = error;
+            errorDetails = { message: error };
+          } else if (error && typeof error === "object") {
+            try {
+              errorMessage = JSON.stringify(error);
+              errorDetails = error;
+            } catch (e) {
+              errorMessage = String(error);
+              errorDetails = { raw: String(error) };
+            }
+          }
+
+          logger.error("구글 로그인 에러 상세:", errorDetails);
+          logger.error("구글 로그인 에러 메시지:", errorMessage);
           window.dispatchEvent(
             new CustomEvent("oauth-login-error", {
               detail: {

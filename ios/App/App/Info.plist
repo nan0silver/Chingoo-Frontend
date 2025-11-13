@@ -56,7 +56,7 @@
 				<string>kakaoaa1e70c80567cbfe9b5dfa111ca97ab5</string>
 				<string>com.chingoohaja.app</string>
 				<!-- 구글 로그인 설정: GoogleService.plist에서 REVERSED_CLIENT_ID 값을 가져와서 추가 필요 -->
-				<string>251609733477-thoh9ldn3b2ve4ap31pt4pelau8bgsaa.apps.googleusercontent.com</string>
+				<string>com.googleusercontent.apps.251609733477-aefj75rp7f41idqg682ia11id6gkh63u</string>
 			</array>
 		</dict>
 	</array>
