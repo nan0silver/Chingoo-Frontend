@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.chingoohaja.app",
+      "sha256_cert_fingerprints": [
+        "F46477538C384D8899AA0AD5B88D728C27D155F05098D2CB7D69CEB9EA2F6511"
+      ]
+    }
+  }
+]
