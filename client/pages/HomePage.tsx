@@ -66,7 +66,7 @@ export default function HomePage({
         // 요청하기 버튼: + 아이콘 SVG
         <div className="w-full h-full flex items-center justify-center">
           <svg
-            className="w-16 h-16 xs:w-14 xs:h-14"
+            className="w-12 h-12 xs:w-10 xs:h-10"
             viewBox="0 0 64 64"
             fill="none"
             preserveAspectRatio="xMidYMid meet"
@@ -340,11 +340,25 @@ export default function HomePage({
                   : ""
               } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              <div className="flex items-center justify-center gap-3 xs:justify-between xs:w-full">
-                <span className="text-grey-900 font-crimson text-2xl xs:text-1.5xl font-bold whitespace-nowrap text-center pl-4">
+              <div
+                className={`flex items-center justify-center ${
+                  category.id === "0" || category.id === "5"
+                    ? "gap-1"
+                    : "gap-3 xs:justify-between xs:w-full"
+                }`}
+              >
+                <span
+                  className={`text-grey-900 font-crimson text-2xl xs:text-1.5xl font-bold whitespace-nowrap text-center ${
+                    category.id === "0" || category.id === "5" ? "pl-1" : "pl-4"
+                  }`}
+                >
                   {category.name}
                 </span>
-                <div className="w-20 xs:w-16 flex items-center justify-center flex-shrink-0 pr-4">
+                <div
+                  className={`w-20 xs:w-16 flex items-center justify-center flex-shrink-0 ${
+                    category.id === "0" || category.id === "5" ? "pr-1" : "pr-4"
+                  }`}
+                >
                   {category.icon}
                 </div>
               </div>
