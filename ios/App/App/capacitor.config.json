@@ -16,6 +16,7 @@
 	},
 	"packageClassList": [
 		"AppPlugin",
-		"CAPBrowserPlugin"
+		"CAPBrowserPlugin",
+		"KakaoLoginPlugin"
 	]
 }

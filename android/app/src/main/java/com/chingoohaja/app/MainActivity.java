@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
+import com.kakao.sdk.common.KakaoSdk;
 
 import java.lang.reflect.Method;
 
@@ -25,6 +26,14 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // 카카오 SDK 초기화
+        try {
+            KakaoSdk.init(this, getResources().getString(R.string.kakao_app_key));
+        } catch (Exception e) {
+            // 카카오 SDK 초기화 실패 시 로그만 출력 (앱은 계속 실행)
+            android.util.Log.e("MainActivity", "Kakao SDK initialization failed", e);
+        }
 
         suppressChromiumCameraLogs();
 

@@ -7,17 +7,36 @@ PODS:
   - CapacitorBrowser (7.0.2):
     - Capacitor
   - CapacitorCordova (7.4.4)
-  - KakaoSDKAuth (2.21.1):
-    - KakaoSDKCommon (= 2.21.1)
-  - KakaoSDKCommon (2.21.1):
-    - KakaoSDKCommon/Common (= 2.21.1)
-    - KakaoSDKCommon/Network (= 2.21.1)
-  - KakaoSDKCommon/Common (2.21.1)
-  - KakaoSDKCommon/Network (2.21.1):
+  - CapacitorKakaoLoginPlugin (3.0.0):
+    - Capacitor
+    - KakaoSDKAuth
+    - KakaoSDKCommon
+    - KakaoSDKShare
+    - KakaoSDKStory
+    - KakaoSDKTalk
+    - KakaoSDKTemplate
+    - KakaoSDKUser
+  - KakaoSDKAuth (2.18.2):
+    - KakaoSDKCommon (= 2.18.2)
+  - KakaoSDKCommon (2.18.2):
+    - KakaoSDKCommon/Common (= 2.18.2)
+    - KakaoSDKCommon/Network (= 2.18.2)
+  - KakaoSDKCommon/Common (2.18.2)
+  - KakaoSDKCommon/Network (2.18.2):
     - Alamofire (~> 5.1)
-    - KakaoSDKCommon/Common (= 2.21.1)
-  - KakaoSDKUser (2.21.1):
-    - KakaoSDKAuth (= 2.21.1)
+    - KakaoSDKCommon/Common (= 2.18.2)
+  - KakaoSDKShare (2.18.2):
+    - KakaoSDKCommon (= 2.18.2)
+    - KakaoSDKTemplate (= 2.18.2)
+  - KakaoSDKStory (2.18.2):
+    - KakaoSDKUser (= 2.18.2)
+  - KakaoSDKTalk (2.18.2):
+    - KakaoSDKTemplate (= 2.18.2)
+    - KakaoSDKUser (= 2.18.2)
+  - KakaoSDKTemplate (2.18.2):
+    - KakaoSDKCommon/Common (= 2.18.2)
+  - KakaoSDKUser (2.18.2):
+    - KakaoSDKAuth (= 2.18.2)
 
 DEPENDENCIES:
   - Alamofire (~> 5.9)
@@ -25,15 +44,17 @@ DEPENDENCIES:
   - "CapacitorApp (from `../../node_modules/.pnpm/@capacitor+app@7.1.0_@capacitor+core@7.4.4/node_modules/@capacitor/app`)"
   - "CapacitorBrowser (from `../../node_modules/.pnpm/@capacitor+browser@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/browser`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
-  - KakaoSDKAuth (~> 2.21.1)
-  - KakaoSDKCommon (~> 2.21.1)
-  - KakaoSDKUser (~> 2.21.1)
+  - "CapacitorKakaoLoginPlugin (from `../../node_modules/.pnpm/capacitor-kakao-login-plugin@3.0.0_@capacitor+core@7.4.4/node_modules/capacitor-kakao-login-plugin`)"
 
 SPEC REPOS:
   trunk:
     - Alamofire
     - KakaoSDKAuth
     - KakaoSDKCommon
+    - KakaoSDKShare
+    - KakaoSDKStory
+    - KakaoSDKTalk
+    - KakaoSDKTemplate
     - KakaoSDKUser
 
 EXTERNAL SOURCES:
@@ -45,6 +66,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/.pnpm/@capacitor+browser@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/browser"
   CapacitorCordova:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
+  CapacitorKakaoLoginPlugin:
+    :path: "../../node_modules/.pnpm/capacitor-kakao-login-plugin@3.0.0_@capacitor+core@7.4.4/node_modules/capacitor-kakao-login-plugin"
 
 SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
@@ -52,10 +75,15 @@ SPEC CHECKSUMS:
   CapacitorApp: 846d4b4a1dbb19dd1e9029c08ba6f028aa7be862
   CapacitorBrowser: 45c681e7abc3b4384e54eb52bafeef1347d98fa8
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
-  KakaoSDKAuth: 28343159dd60ee9bbb61ff25d45d9769fcef6b8c
-  KakaoSDKCommon: 7938fce8e5ba3e73490f1928e55b20b510a0685b
-  KakaoSDKUser: 35608bb49bbc644f507561d8b8a33dec1c5eb360
+  CapacitorKakaoLoginPlugin: c387bf3fc478013226b6690c6a34947d97abcc54
+  KakaoSDKAuth: 3daf72ec463876e0fe6d0d37c7d6b0b2729169f1
+  KakaoSDKCommon: 516f68bc6b223ed502c34a362d6ecc9145e0dcc0
+  KakaoSDKShare: 8980e83a3a80bd805ab859c102dd41ed6801424e
+  KakaoSDKStory: 63c8deb29ba1baa0bcd6ab9fcf0d3310226a5e41
+  KakaoSDKTalk: 567d2697b419b4f01f2f8bdb28e13100817c4090
+  KakaoSDKTemplate: 0fcfbbb7cc05986fe6690b85e19dd8de0fc634e6
+  KakaoSDKUser: 5b0826033381d314f550dd90fbf70d3612044ad6
 
-PODFILE CHECKSUM: c334ebb577cf3b6f283d8ea8c72bc2a851249cbc
+PODFILE CHECKSUM: 9f502f0c11c34ee0e26b22f0d6072c5ebbe67c3a
 
 COCOAPODS: 1.16.2

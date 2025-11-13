@@ -45,5 +45,29 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- 카카오 SDK 설정 (카카오 개발자 콘솔에서 발급받은 네이티브 앱 키로 변경 필요) -->
+	<key>KAKAO_APP_KEY</key>
+	<string>aa1e70c80567cbfe9b5dfa111ca97ab5</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakaoaa1e70c80567cbfe9b5dfa111ca97ab5</string>
+				<string>com.chingoohaja.app</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaoaa1e70c80567cbfe9b5dfa111ca97ab5</string>
+		<string>kakaokompassauth</string>
+		<string>storykompassauth</string>
+		<string>kakaolink</string>
+		<string>storylink</string>
+		<string>kakaotalk</string>
+		<string>kakaotalk-5.9.7</string>
+		<string>kakaostory-2.9.0</string>
+	</array>
 </dict>
 </plist>

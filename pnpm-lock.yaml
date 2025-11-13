@@ -23,6 +23,9 @@ importers:
       agora-rtc-sdk-ng:
         specifier: ^4.24.0
         version: 4.24.0
+      capacitor-kakao-login-plugin:
+        specifier: ^3.0.0
+        version: 3.0.0(@capacitor/core@7.4.4)
       dotenv:
         specifier: ^17.2.1
         version: 17.2.1
@@ -1765,6 +1768,11 @@ packages:
 
   caniuse-lite@1.0.30001734:
     resolution: {integrity: sha512-uhE1Ye5vgqju6OI71HTQqcBCZrvHugk0MjLak7Q+HfoBgoq5Bi+5YnwjP4fjDgrtYr/l8MVRBvzz9dPD4KyK0A==}
+
+  capacitor-kakao-login-plugin@3.0.0:
+    resolution: {integrity: sha512-T+4hFpqCCtYR9XfltodO6b9H6pLI37AheUvvWVW5ag19MMz/LFPQpX1yA5M24fOg4hsgKfhf91aRi00+iNFVJg==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   chai@5.2.1:
     resolution: {integrity: sha512-5nFxhUrX0PqtyogoYOA8IPswy5sZFTOsBFl/9bNsmDLgsxYTzSZQJDPppDnZPTQbzSEm0hqGjWPzRemQCYbD6A==}
@@ -4908,6 +4916,10 @@ snapshots:
       three: 0.176.0
 
   caniuse-lite@1.0.30001734: {}
+
+  capacitor-kakao-login-plugin@3.0.0(@capacitor/core@7.4.4):
+    dependencies:
+      '@capacitor/core': 7.4.4
 
   chai@5.2.1:
     dependencies:

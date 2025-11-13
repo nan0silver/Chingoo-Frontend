@@ -28,6 +28,10 @@ repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
+    google()
+    mavenCentral()
+    // 카카오 SDK 저장소
+    maven { url 'https://devrepo.kakao.com/nexus/content/groups/public/' }
 }
 
 dependencies {
@@ -40,6 +44,12 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    
+    // 카카오 SDK 의존성 (MainActivity와 AndroidManifest에서 사용하기 위해 명시적으로 추가)
+    // v2-common: KakaoSdk.init() 사용
+    // v2-auth: AuthCodeHandlerActivity 사용
+    implementation "com.kakao.sdk:v2-common:2.20.1"
+    implementation "com.kakao.sdk:v2-auth:2.20.1"
 }
 
 apply from: 'capacitor.build.gradle'

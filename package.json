@@ -21,6 +21,7 @@
     "typecheck": "tsc",
     "android:dev": "npx cap run android --livereload --external",
     "android:build": "pnpm build && npx cap sync && npx cap run android",
+    "android:clean-build": "rm -rf android/capacitor-cordova-android-plugins/build android/app/build android/build && pnpm build && npx cap sync android && npx cap run android",
     "android:sync": "npx cap sync android"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@capacitor/core": "^7.4.4",
     "@stomp/stompjs": "^7.2.0",
     "agora-rtc-sdk-ng": "^4.24.0",
+    "capacitor-kakao-login-plugin": "^3.0.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "sockjs-client": "^1.6.1",

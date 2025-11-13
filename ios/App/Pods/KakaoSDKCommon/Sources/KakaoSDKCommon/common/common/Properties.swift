@@ -22,7 +22,9 @@ public class Properties {
     
     public static func saveCodable<T: Codable>(key: String, data:T?) {
         if let encoded = try? JSONEncoder().encode(data) {
+            SdkLog.v("save-plain : \(encoded as NSData)")
             guard let crypted = SdkCrypto.shared.encrypt(data: encoded) else { return }
+            SdkLog.v("save-crypted : \(crypted as NSData)")
             UserDefaults.standard.set(crypted, forKey:key)
             UserDefaults.standard.synchronize()
         }
@@ -30,7 +32,9 @@ public class Properties {
     
     public static func loadCodable<T: Codable>(key: String) -> T? {
         if let data = UserDefaults.standard.data(forKey: key) {
+            SdkLog.v("load-crypted : \(data as NSData)")
             guard let plain = SdkCrypto.shared.decrypt(data: data) else { return nil }
+            SdkLog.v("load-plain : \(plain as NSData)")
             return try? JSONDecoder().decode(T.self, from:plain)
         }
         return nil

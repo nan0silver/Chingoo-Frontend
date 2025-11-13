@@ -16,7 +16,6 @@ import UIKit
 import Foundation
 import KakaoSDKCommon
 import KakaoSDKAuth
-import AuthenticationServices
 
 /// 카카오 로그인의 주요 기능을 제공하는 클래스입니다.
 ///
@@ -51,19 +50,6 @@ final public class UserApi {
     
     /// 간편하게 API를 호출할 수 있도록 제공되는 공용 싱글톤 객체입니다.
     public static let shared = UserApi()
-    
-#if swift(>=5.8)
-    @_documentation(visibility: private)
-#endif
-    public var presentationContextProvider: Any?
-#if swift(>=5.8)
-    @_documentation(visibility: private)
-#endif
-    public var authenticateSession: ASWebAuthenticationSession?
-    
-    init() {
-        self.presentationContextProvider = DefaultASWebAuthenticationPresentationContextProvider()
-    }
 }
 
 // MARK: Login APIs
@@ -426,11 +412,5 @@ extension UserApi {
                             
                             completion(nil, SdkError())
         }
-    }
-    
-    /// 배송지 선택하기
-    public func selectShippingAddress(completion: @escaping (Int64?, Error?) -> Void) {
-        self._requestShippingAddress(continuePath: Paths.shippingAddressList,
-                                     completion: completion)
     }
 }

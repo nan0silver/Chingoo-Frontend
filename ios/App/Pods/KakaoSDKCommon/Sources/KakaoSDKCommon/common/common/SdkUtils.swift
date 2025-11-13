@@ -72,16 +72,3 @@ extension SdkUtils {
         }
     }
 }
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-extension SdkUtils {
-    static public func makeParametersForApps(returnUrl: String = KakaoSDK.shared.redirectUri()) -> [String:Any] {
-        var parameters = [String:Any]()
-        parameters["app_key"] = try! KakaoSDK.shared.appKey()        
-        parameters["return_url"] = returnUrl
-        parameters["ka"] = Constants.kaHeader
-        return parameters
-    }
-}

@@ -34,12 +34,37 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>CapacitorKakaoLoginPlugin.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>KakaoSDKAuth.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>
 		</dict>
 		<key>KakaoSDKCommon.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>KakaoSDKShare.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>KakaoSDKStory.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>KakaoSDKTalk.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
+		<key>KakaoSDKTemplate.xcscheme</key>
 		<dict>
 			<key>isShown</key>
 			<false/>

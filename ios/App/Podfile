@@ -13,15 +13,17 @@ def capacitor_pods
   pod 'CapacitorCordova', :path => '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios'
   pod 'CapacitorApp', :path => '../../node_modules/.pnpm/@capacitor+app@7.1.0_@capacitor+core@7.4.4/node_modules/@capacitor/app'
   pod 'CapacitorBrowser', :path => '../../node_modules/.pnpm/@capacitor+browser@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/browser'
+  pod 'CapacitorKakaoLoginPlugin', :path => '../../node_modules/.pnpm/capacitor-kakao-login-plugin@3.0.0_@capacitor+core@7.4.4/node_modules/capacitor-kakao-login-plugin'
 end
 
 target 'App' do
   capacitor_pods
   # Add your Pods here
   pod 'Alamofire', '~> 5.9'
-  pod 'KakaoSDKCommon', '~> 2.21.1'
-  pod 'KakaoSDKAuth', '~> 2.21.1'
-  pod 'KakaoSDKUser', '~> 2.21.1'
+  # KakaoSDK는 CapacitorKakaoLoginPlugin이 자동으로 관리하므로 제거
+  # pod 'KakaoSDKCommon', '~> 2.21.1'
+  # pod 'KakaoSDKAuth', '~> 2.21.1'
+  # pod 'KakaoSDKUser', '~> 2.21.1'
 end
 
 post_install do |installer|

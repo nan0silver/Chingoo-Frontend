@@ -4,4 +4,7 @@
     <string name="title_activity_main">Chingoo-haja</string>
     <string name="package_name">com.chingoohaja.app</string>
     <string name="custom_url_scheme">com.chingoohaja.app</string>
+    <!-- 카카오 SDK 설정 (카카오 개발자 콘솔에서 발급받은 네이티브 앱 키로 변경 필요) -->
+    <string name="kakao_app_key">aa1e70c80567cbfe9b5dfa111ca97ab5</string>
+    <string name="kakao_scheme">kakaoaa1e70c80567cbfe9b5dfa111ca97ab5</string>
 </resources>

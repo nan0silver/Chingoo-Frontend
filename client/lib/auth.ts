@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { App } from "@capacitor/app";
+import { KakaoLoginPlugin } from "capacitor-kakao-login-plugin";
 import {
   OAuthProvider,
   OAuthConfigResponse,
@@ -418,102 +419,142 @@ export const startSocialLogin = async (
     sessionStorage.setItem("oauth_redirect_uri", config.data.redirect_uri);
 
     if (isMobile) {
-      // 모바일: In-App Browser로 OAuth 페이지 열기
-      logger.log("모바일: In-App Browser로 OAuth 페이지 열기");
+      // 모바일: 카카오는 네이티브 플러그인 사용, 다른 제공자는 기존 방식
+      if (provider === "kakao") {
+        logger.log("모바일: 카카오 네이티브 플러그인으로 로그인");
 
-      await Browser.open({
-        url: config.data.authorization_url,
-        windowName: "_self",
-      });
+        try {
+          // 카카오 네이티브 로그인 실행
+          const kakaoResult = await KakaoLoginPlugin.goLogin();
+          logger.log("카카오 로그인 성공:", kakaoResult);
 
-      // Deep Link 리스너 등록 (한 번만 등록되도록 체크)
-      if (!window.oauthDeepLinkListenerRegistered) {
-        window.oauthDeepLinkListenerRegistered = true;
+          // 카카오 액세스 토큰을 백엔드로 전달하여 우리 서버 토큰 받기
+          // TODO: 백엔드 API가 카카오 토큰을 받을 수 있는지 확인 필요
+          // 일단 기존 OAuth 플로우와 호환되도록 처리
+          const result = await processKakaoNativeLogin(kakaoResult.accessToken);
 
-        App.addListener("appUrlOpen", async (event) => {
-          logger.log("Deep Link 수신:", event.url);
-
-          // com.chingoohaja.app://oauth/callback/kakao?code=...
-          try {
-            const url = new URL(event.url);
-            const code = url.searchParams.get("code");
-            const state = url.searchParams.get("state");
-            const error = url.searchParams.get("error");
-
-            if (error) {
-              logger.error("OAuth 에러:", error);
-              await Browser.close();
-              throw new Error(`OAuth 인증 중 오류가 발생했습니다: ${error}`);
-            }
-
-            if (code && state) {
-              // Browser 닫기
-              await Browser.close();
-
-              // 저장된 값들과 비교하여 보안 검증
-              const savedState = sessionStorage.getItem(
-                OAUTH_STORAGE_KEYS.STATE,
-              );
-              const codeVerifier = sessionStorage.getItem(
-                OAUTH_STORAGE_KEYS.CODE_VERIFIER,
-              );
-              const providerStr = sessionStorage.getItem(
-                OAUTH_STORAGE_KEYS.PROVIDER,
-              );
-              const redirectUri = sessionStorage.getItem("oauth_redirect_uri");
-              const provider = (["google", "kakao", "naver"] as const).find(
-                (p) => p === providerStr,
-              );
-
-              if (!provider || !savedState || !codeVerifier || !redirectUri) {
-                throw new Error(
-                  "OAuth 세션 정보가 없습니다. 다시 로그인해주세요.",
-                );
-              }
-
-              if (state !== savedState) {
-                throw new Error(
-                  "OAuth state 검증에 실패했습니다. 보안상 다시 로그인해주세요.",
-                );
-              }
-
-              // 백엔드로 로그인 요청
-              const result = await processSocialLogin(
-                provider,
-                code,
-                state,
-                codeVerifier,
-                redirectUri,
-              );
-
-              // 로그인 성공 - 페이지 이동을 위해 커스텀 이벤트 발생
-              if (result) {
-                logger.log("✅ 모바일 OAuth 로그인 성공");
-                // 앱이 이 이벤트를 감지하여 적절한 페이지로 이동
-                window.dispatchEvent(
-                  new CustomEvent("oauth-login-success", {
-                    detail: { userInfo: result.data.user_info },
-                  }),
-                );
-              }
-            }
-          } catch (error) {
-            logger.error("Deep Link 처리 실패:", error);
-            await Browser.close();
-            // 에러 이벤트 발생
+          // 로그인 성공 - 페이지 이동을 위해 커스텀 이벤트 발생
+          if (result) {
+            logger.log("✅ 모바일 카카오 로그인 성공");
             window.dispatchEvent(
-              new CustomEvent("oauth-login-error", {
-                detail: {
-                  error:
-                    error instanceof Error
-                      ? error.message
-                      : "로그인 처리 중 오류가 발생했습니다.",
-                },
+              new CustomEvent("oauth-login-success", {
+                detail: { userInfo: result.data.user_info },
               }),
             );
-            throw error;
           }
+        } catch (error) {
+          logger.error("카카오 로그인 실패:", error);
+          window.dispatchEvent(
+            new CustomEvent("oauth-login-error", {
+              detail: {
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "카카오 로그인 중 오류가 발생했습니다.",
+              },
+            }),
+          );
+          throw error;
+        }
+      } else {
+        // 구글, 네이버는 기존 In-App Browser 방식 사용
+        logger.log("모바일: In-App Browser로 OAuth 페이지 열기", provider);
+
+        await Browser.open({
+          url: config.data.authorization_url,
+          windowName: "_self",
         });
+
+        // Deep Link 리스너 등록 (한 번만 등록되도록 체크)
+        if (!window.oauthDeepLinkListenerRegistered) {
+          window.oauthDeepLinkListenerRegistered = true;
+
+          App.addListener("appUrlOpen", async (event) => {
+            logger.log("Deep Link 수신:", event.url);
+
+            // com.chingoohaja.app://oauth/callback/kakao?code=...
+            try {
+              const url = new URL(event.url);
+              const code = url.searchParams.get("code");
+              const state = url.searchParams.get("state");
+              const error = url.searchParams.get("error");
+
+              if (error) {
+                logger.error("OAuth 에러:", error);
+                await Browser.close();
+                throw new Error(`OAuth 인증 중 오류가 발생했습니다: ${error}`);
+              }
+
+              if (code && state) {
+                // Browser 닫기
+                await Browser.close();
+
+                // 저장된 값들과 비교하여 보안 검증
+                const savedState = sessionStorage.getItem(
+                  OAUTH_STORAGE_KEYS.STATE,
+                );
+                const codeVerifier = sessionStorage.getItem(
+                  OAUTH_STORAGE_KEYS.CODE_VERIFIER,
+                );
+                const providerStr = sessionStorage.getItem(
+                  OAUTH_STORAGE_KEYS.PROVIDER,
+                );
+                const redirectUri =
+                  sessionStorage.getItem("oauth_redirect_uri");
+                const provider = (["google", "kakao", "naver"] as const).find(
+                  (p) => p === providerStr,
+                );
+
+                if (!provider || !savedState || !codeVerifier || !redirectUri) {
+                  throw new Error(
+                    "OAuth 세션 정보가 없습니다. 다시 로그인해주세요.",
+                  );
+                }
+
+                if (state !== savedState) {
+                  throw new Error(
+                    "OAuth state 검증에 실패했습니다. 보안상 다시 로그인해주세요.",
+                  );
+                }
+
+                // 백엔드로 로그인 요청
+                const result = await processSocialLogin(
+                  provider,
+                  code,
+                  state,
+                  codeVerifier,
+                  redirectUri,
+                );
+
+                // 로그인 성공 - 페이지 이동을 위해 커스텀 이벤트 발생
+                if (result) {
+                  logger.log("✅ 모바일 OAuth 로그인 성공");
+                  // 앱이 이 이벤트를 감지하여 적절한 페이지로 이동
+                  window.dispatchEvent(
+                    new CustomEvent("oauth-login-success", {
+                      detail: { userInfo: result.data.user_info },
+                    }),
+                  );
+                }
+              }
+            } catch (error) {
+              logger.error("Deep Link 처리 실패:", error);
+              await Browser.close();
+              // 에러 이벤트 발생
+              window.dispatchEvent(
+                new CustomEvent("oauth-login-error", {
+                  detail: {
+                    error:
+                      error instanceof Error
+                        ? error.message
+                        : "로그인 처리 중 오류가 발생했습니다.",
+                  },
+                }),
+              );
+              throw error;
+            }
+          });
+        }
       }
     } else {
       // 웹: 일반 리다이렉트
@@ -592,6 +633,100 @@ export const processOAuthCallback =
       redirectUri || undefined,
     );
   };
+
+/**
+ * 카카오 네이티브 로그인으로 받은 액세스 토큰을 백엔드로 전달하는 함수
+ */
+export const processKakaoNativeLogin = async (
+  kakaoAccessToken: string,
+): Promise<OAuthLoginResponse> => {
+  try {
+    logger.log("카카오 네이티브 로그인 토큰을 백엔드로 전달");
+
+    const requestBody = {
+      kakao_access_token: kakaoAccessToken,
+      device_info: `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
+    };
+
+    logger.log("📤 전송할 데이터:", {
+      provider: "kakao",
+      kakao_token_length: kakaoAccessToken?.length || 0,
+    });
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      logger.error("⏰ 카카오 네이티브 로그인 요청 타임아웃 (60초 초과)");
+      controller.abort();
+    }, 60000);
+
+    const startTime = Date.now();
+    logger.apiRequest("POST", `/v1/auth/oauth/kakao/native`);
+
+    let response: Response;
+    try {
+      response = await fetch(`${getApiUrl()}/v1/auth/oauth/kakao/native`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        credentials: "include",
+        signal: controller.signal,
+      });
+
+      const elapsedTime = Date.now() - startTime;
+      logger.log(`✅ 카카오 네이티브 로그인 요청 완료: ${elapsedTime}ms`);
+    } catch (fetchError) {
+      const elapsedTime = Date.now() - startTime;
+      logger.error(
+        `❌ 카카오 네이티브 로그인 요청 실패: ${elapsedTime}ms`,
+        fetchError,
+      );
+      throw fetchError;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!response.ok) {
+      logger.error("카카오 네이티브 로그인 응답 에러:", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const errorData: ApiErrorResponse = await response.json();
+        logger.error("❌ 백엔드 에러 응답:", errorData);
+        throw new Error(errorData.message || "로그인에 실패했습니다.");
+      } else {
+        const text = await response.text();
+        logger.error("예상치 못한 에러 응답:", text);
+        throw new Error(`서버 에러: ${response.status} ${response.statusText}`);
+      }
+    }
+
+    const result: OAuthLoginResponse = await response.json();
+
+    // 토큰 저장
+    setInMemoryToken(result.data.access_token, result.data.expires_in);
+
+    // PII 보안: 최소한의 정보만 저장
+    const minimalUserInfo: UserInfo = {
+      id: result.data.user_info.id,
+      is_new_user: result.data.user_info.is_new_user,
+      is_profile_complete: result.data.user_info.is_profile_complete,
+    };
+    localStorage.setItem(
+      OAUTH_STORAGE_KEYS.USER_INFO,
+      JSON.stringify(minimalUserInfo),
+    );
+
+    return result;
+  } catch (error) {
+    logger.error("카카오 네이티브 로그인 처리 실패:", error);
+    throw error;
+  }
+};
 
 /**
  * 백엔드로 인가 코드를 전송하고 토큰을 받는 함수

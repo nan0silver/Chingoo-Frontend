@@ -44,12 +44,9 @@ public enum Prompt : String {
     case SelectAccount = "select_account"
 }
 
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
 @available(iOS 13.0, *)
 @available(iOSApplicationExtension, unavailable)
-public class DefaultASWebAuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+class DefaultPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         return UIApplication.sdkKeyWindow() ?? ASPresentationAnchor()
     }
@@ -81,12 +78,18 @@ public class AuthController {
     
     //내부 디폴트브라우져용 time delay
     public static let delayForAuthenticationSession : Double = 0.4
-    public static let delayForHandleOpenUrl : Double = 0.1
     
     public init() {
         AUTH_API.checkMigrationAndInitSession()
+        
         resetCodeVerifier()
-        self.presentationContextProvider = DefaultASWebAuthenticationPresentationContextProvider()
+        
+        if #available(iOS 13.0, *) {
+            self.presentationContextProvider = DefaultPresentationContextProvider()
+        }
+        else {
+            self.presentationContextProvider = nil
+        }
     }
     
     public func resetCodeVerifier() {
@@ -207,10 +210,7 @@ public class AuthController {
     public static func handleOpenUrl(url:URL,  options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         if (AuthController.isValidRedirectUri(url)) {
             if let authorizeWithTalkCompletionHandler = AUTH_CONTROLLER.authorizeWithTalkCompletionHandler {
-                DispatchQueue.main.asyncAfter(deadline: .now() + AuthController.delayForHandleOpenUrl) {
-                    authorizeWithTalkCompletionHandler(url)
-                }
-                return true
+                authorizeWithTalkCompletionHandler(url)
             }
         }
         return false

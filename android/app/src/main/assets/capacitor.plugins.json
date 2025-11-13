@@ -6,5 +6,9 @@
 	{
 		"pkg": "@capacitor/browser",
 		"classpath": "com.capacitorjs.plugins.browser.BrowserPlugin"
+	},
+	{
+		"pkg": "capacitor-kakao-login-plugin",
+		"classpath": "com.nerdfrenz.kakao.KakaoLoginPlugin"
 	}
 ]
