@@ -7,15 +7,15 @@ import {
   ActivityStats,
   CallHistoryItem,
 } from "@shared/api";
-import { refreshToken } from "./auth";
+import { refreshToken, getApiUrl } from "./auth";
 import { logger } from "./logger";
 
 /**
  * API 기본 설정
+ * 네이티브 앱에서는 운영 서버(silverld.site)를 사용하고,
+ * 웹에서는 환경변수 또는 프록시를 사용합니다.
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-  ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
-  : "/api"; // 개발/프로덕션 모두 상대 경로 사용 (프록시 또는 같은 도메인)
+const API_BASE_URL = getApiUrl();
 
 /**
  * HTTP 요청 헤더 생성
