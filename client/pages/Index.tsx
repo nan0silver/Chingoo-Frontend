@@ -33,31 +33,58 @@ export default function Index() {
         const authenticated = isAuthenticated();
         const userInfo = getStoredUserInfo();
 
+        console.log("🔍 Index.tsx - 인증 상태 확인:", {
+          authenticated,
+          hasUserInfo: !!userInfo,
+          userInfo: userInfo ? {
+            is_new_user: userInfo.is_new_user,
+            is_profile_complete: userInfo.is_profile_complete,
+            id: userInfo.id,
+          } : null,
+        });
+
         setIsLoggedIn(authenticated);
+
+        // OAuth 콜백에서 처리된 경우 프로필 체크를 스킵
+        const oauthCallbackProcessed = sessionStorage.getItem("oauth_callback_processed");
+        console.log("🔍 OAuth 콜백 플래그 확인:", oauthCallbackProcessed);
+        
+        if (oauthCallbackProcessed === "true") {
+          sessionStorage.removeItem("oauth_callback_processed");
+          console.log("✅ OAuth 콜백에서 이미 처리됨 - 프로필 체크 스킵");
+          setIsLoading(false);
+          return;
+        }
 
         // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
         if (authenticated && userInfo) {
-          if (import.meta.env.DEV) {
-            console.log("인증된 사용자 정보:", {
-              is_new_user: userInfo.is_new_user,
-              is_profile_complete: userInfo.is_profile_complete,
-            });
-          }
+          console.log("📋 인증된 사용자 정보:", {
+            is_new_user: userInfo.is_new_user,
+            is_profile_complete: userInfo.is_profile_complete,
+            id: userInfo.id,
+          });
 
-          if (userInfo.is_new_user || !userInfo.is_profile_complete) {
-            if (import.meta.env.DEV)
-              console.log("프로필 설정 페이지로 리다이렉트");
+          const shouldRedirectToProfile =
+            userInfo.is_new_user || !userInfo.is_profile_complete;
+
+          console.log("🔍 프로필 리다이렉트 결정:", {
+            shouldRedirectToProfile,
+            is_new_user: userInfo.is_new_user,
+            is_profile_complete: userInfo.is_profile_complete,
+          });
+
+          if (shouldRedirectToProfile) {
+            console.log("➡️ 프로필 설정 페이지로 리다이렉트");
             navigate("/profile-setup", { replace: true });
             return;
           } else {
-            if (import.meta.env.DEV)
-              console.log("프로필 완성된 사용자 - 메인 페이지에 머물기");
+            console.log("✅ 프로필 완성된 사용자 - 메인 페이지에 머물기");
             // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
             return;
           }
         }
       } catch (error) {
-        console.error("Error checking auth status:", error);
+        console.error("❌ Error checking auth status:", error);
         setIsLoggedIn(false);
       } finally {
         setIsLoading(false);

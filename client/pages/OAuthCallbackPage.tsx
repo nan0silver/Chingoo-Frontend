@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { processOAuthCallback } from "@/lib/auth";
+import { processOAuthCallback, getStoredUserInfo } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
 
 export default function OAuthCallbackPage() {
@@ -28,22 +28,79 @@ export default function OAuthCallbackPage() {
 
         if (result) {
           console.log("✅ OAuth 콜백 처리 성공");
+          console.log("📋 사용자 정보:", {
+            is_new_user: result.data.user_info.is_new_user,
+            is_profile_complete: result.data.user_info.is_profile_complete,
+            id: result.data.user_info.id,
+          });
           setStatus("success");
           setUserInfo(result.data.user_info);
 
+          // processSocialLogin에서 이미 localStorage에 저장했지만,
+          // 확실하게 하기 위해 여기서도 확인하고 플래그 설정
           // 사용자 정보에 따른 페이지 이동
-          if (
+          const shouldGoToProfileSetup =
             result.data.user_info.is_new_user ||
-            !result.data.user_info.is_profile_complete
-          ) {
+            !result.data.user_info.is_profile_complete;
+
+          console.log("🔍 페이지 이동 결정:", {
+            shouldGoToProfileSetup,
+            is_new_user: result.data.user_info.is_new_user,
+            is_profile_complete: result.data.user_info.is_profile_complete,
+          });
+
+          if (shouldGoToProfileSetup) {
             // 프로필 설정 페이지로 이동
+            console.log("➡️ 프로필 설정 페이지로 이동");
             setTimeout(() => {
               navigate("/profile-setup");
             }, 2000);
           } else {
-            // 메인 페이지로 이동
+            // 메인 페이지로 이동 - OAuth 콜백에서 온 것을 표시
+            // localStorage에 저장된 정보와 일치하는지 확인
+            console.log("➡️ 홈 페이지로 이동 (기존 유저)");
+
+            // localStorage에 저장된 사용자 정보 확인 및 동기화
+            // processSocialLogin에서 이미 저장했지만, 확실하게 동기화
+            const storedUserInfo = getStoredUserInfo();
+            console.log(
+              "📦 localStorage에 저장된 사용자 정보:",
+              storedUserInfo,
+            );
+
+            // 저장된 정보가 서버 응답과 일치하는지 확인하고 필요시 업데이트
+            if (
+              !storedUserInfo ||
+              storedUserInfo.is_new_user !==
+                result.data.user_info.is_new_user ||
+              storedUserInfo.is_profile_complete !==
+                result.data.user_info.is_profile_complete
+            ) {
+              console.warn(
+                "⚠️ localStorage 정보가 서버 응답과 불일치 - 업데이트",
+              );
+              // localStorage 정보 업데이트
+              localStorage.setItem(
+                "user_info",
+                JSON.stringify({
+                  id: result.data.user_info.id,
+                  is_new_user: result.data.user_info.is_new_user,
+                  is_profile_complete:
+                    result.data.user_info.is_profile_complete,
+                }),
+              );
+              console.log("✅ localStorage 사용자 정보 업데이트 완료");
+            }
+
+            // OAuth 콜백 처리 플래그를 즉시 설정 (Index.tsx에서 프로필 체크 스킵)
+            // setTimeout 전에 설정하여 Index.tsx가 실행될 때 플래그가 이미 존재하도록 함
+            sessionStorage.setItem("oauth_callback_processed", "true");
+            console.log(
+              "✅ oauth_callback_processed 플래그 설정 완료 (즉시 설정)",
+            );
+
             setTimeout(() => {
-              navigate("/");
+              navigate("/", { replace: true });
             }, 2000);
           }
         } else {
