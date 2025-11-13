@@ -16,6 +16,12 @@ import com.getcapacitor.BridgeWebChromeClient;
 import com.kakao.sdk.common.KakaoSdk;
 
 import java.lang.reflect.Method;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
+import android.util.Base64;
 
 public class MainActivity extends BridgeActivity {
     private static final int AUDIO_PERMISSION_REQUEST_CODE = 1001;
@@ -30,6 +36,15 @@ public class MainActivity extends BridgeActivity {
         // 카카오 SDK 초기화
         try {
             KakaoSdk.init(this, getResources().getString(R.string.kakao_app_key));
+            
+            // 디버깅: 키 해시 출력 (카카오 개발자 콘솔 등록용)
+            // 키 해시는 Logcat에서 확인 가능: "MainActivity" 태그로 필터링
+            String keyHash = getKeyHash();
+            String keyHashSHA256 = getKeyHashSHA256();
+            android.util.Log.d("MainActivity", "=== 카카오 개발자 콘솔에 등록할 키 해시 ===");
+            android.util.Log.d("MainActivity", "Key Hash (SHA1): " + keyHash);
+            android.util.Log.d("MainActivity", "Key Hash (SHA256): " + keyHashSHA256);
+            android.util.Log.d("MainActivity", "========================================");
         } catch (Exception e) {
             // 카카오 SDK 초기화 실패 시 로그만 출력 (앱은 계속 실행)
             android.util.Log.e("MainActivity", "Kakao SDK initialization failed", e);
@@ -221,5 +236,49 @@ public class MainActivity extends BridgeActivity {
         if (!hasAudioPermission()) {
             Toast.makeText(this, "마이크 권한이 허용되어야 통화가 가능합니다.", Toast.LENGTH_LONG).show();
         }
+    }
+
+    /**
+     * 키 해시 가져오기 (SHA1) - 카카오 개발자 콘솔 등록용
+     */
+    private String getKeyHash() {
+        try {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(
+                getPackageName(),
+                PackageManager.GET_SIGNATURES
+            );
+            for (Signature signature : packageInfo.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                return Base64.encodeToString(md.digest(), Base64.NO_WRAP);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            android.util.Log.e("MainActivity", "Package name not found", e);
+        } catch (NoSuchAlgorithmException e) {
+            android.util.Log.e("MainActivity", "SHA algorithm not found", e);
+        }
+        return null;
+    }
+
+    /**
+     * 키 해시 가져오기 (SHA256) - 카카오 개발자 콘솔 등록용
+     */
+    private String getKeyHashSHA256() {
+        try {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(
+                getPackageName(),
+                PackageManager.GET_SIGNATURES
+            );
+            for (Signature signature : packageInfo.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                md.update(signature.toByteArray());
+                return Base64.encodeToString(md.digest(), Base64.NO_WRAP);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            android.util.Log.e("MainActivity", "Package name not found", e);
+        } catch (NoSuchAlgorithmException e) {
+            android.util.Log.e("MainActivity", "SHA-256 algorithm not found", e);
+        }
+        return null;
     }
 }
