@@ -24,6 +24,8 @@
     "android:sync": "npx cap sync android"
   },
   "dependencies": {
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/browser": "^7.0.2",
     "@capacitor/core": "^7.4.4",
     "@stomp/stompjs": "^7.2.0",
     "agora-rtc-sdk-ng": "^4.24.0",

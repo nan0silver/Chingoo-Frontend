@@ -51,6 +51,39 @@ const AppRoutes = () => {
     initialize();
   }, []);
 
+  // 모바일 OAuth 로그인 성공 이벤트 리스너
+  useEffect(() => {
+    const handleOAuthLoginSuccess = (event: CustomEvent<{ userInfo: any }>) => {
+      const { userInfo } = event.detail;
+      if (import.meta.env.DEV) {
+        console.log("✅ 모바일 OAuth 로그인 성공 이벤트 수신:", userInfo);
+      }
+      
+      // 사용자 정보에 따른 페이지 이동
+      if (userInfo.is_new_user || !userInfo.is_profile_complete) {
+        navigate("/profile-setup", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+    };
+
+    const handleOAuthLoginError = (event: CustomEvent<{ error: string }>) => {
+      const { error } = event.detail;
+      if (import.meta.env.DEV) {
+        console.error("❌ 모바일 OAuth 로그인 에러 이벤트 수신:", error);
+      }
+      navigate("/login", { replace: true });
+    };
+
+    window.addEventListener("oauth-login-success", handleOAuthLoginSuccess as EventListener);
+    window.addEventListener("oauth-login-error", handleOAuthLoginError as EventListener);
+
+    return () => {
+      window.removeEventListener("oauth-login-success", handleOAuthLoginSuccess as EventListener);
+      window.removeEventListener("oauth-login-error", handleOAuthLoginError as EventListener);
+    };
+  }, [navigate]);
+
   // 매칭 상태 변화 감지하여 자동 페이지 이동
   useEffect(() => {
     const previousStatus = previousStatusRef.current;

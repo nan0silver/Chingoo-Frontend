@@ -2,6 +2,10 @@ PODS:
   - Alamofire (5.10.2)
   - Capacitor (7.4.4):
     - CapacitorCordova
+  - CapacitorApp (7.1.0):
+    - Capacitor
+  - CapacitorBrowser (7.0.2):
+    - Capacitor
   - CapacitorCordova (7.4.4)
   - KakaoSDKAuth (2.21.1):
     - KakaoSDKCommon (= 2.21.1)
@@ -18,6 +22,8 @@ PODS:
 DEPENDENCIES:
   - Alamofire (~> 5.9)
   - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/.pnpm/@capacitor+app@7.1.0_@capacitor+core@7.4.4/node_modules/@capacitor/app`)"
+  - "CapacitorBrowser (from `../../node_modules/.pnpm/@capacitor+browser@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/browser`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
   - KakaoSDKAuth (~> 2.21.1)
   - KakaoSDKCommon (~> 2.21.1)
@@ -33,17 +39,23 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/.pnpm/@capacitor+app@7.1.0_@capacitor+core@7.4.4/node_modules/@capacitor/app"
+  CapacitorBrowser:
+    :path: "../../node_modules/.pnpm/@capacitor+browser@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/browser"
   CapacitorCordova:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
 
 SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   Capacitor: 09d9ff8e9618e8c4b3cab2bbee34a17215dd2fef
+  CapacitorApp: 846d4b4a1dbb19dd1e9029c08ba6f028aa7be862
+  CapacitorBrowser: 45c681e7abc3b4384e54eb52bafeef1347d98fa8
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
   KakaoSDKAuth: 28343159dd60ee9bbb61ff25d45d9769fcef6b8c
   KakaoSDKCommon: 7938fce8e5ba3e73490f1928e55b20b510a0685b
   KakaoSDKUser: 35608bb49bbc644f507561d8b8a33dec1c5eb360
 
-PODFILE CHECKSUM: ebb2f0fa6b03e061d2da5535633863ed88da1302
+PODFILE CHECKSUM: c334ebb577cf3b6f283d8ea8c72bc2a851249cbc
 
 COCOAPODS: 1.16.2

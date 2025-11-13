@@ -14,5 +14,8 @@
 			"enabled": true
 		}
 	},
-	"packageClassList": []
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin"
+	]
 }

@@ -55,6 +55,7 @@ export interface OAuthLoginRequest {
   code: string;
   state: string;
   code_verifier: string;
+  redirect_uri?: string;
   device_info?: string;
 }
 

@@ -1,4 +1,6 @@
 import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
+import { App } from "@capacitor/app";
 import {
   OAuthProvider,
   OAuthConfigResponse,
@@ -17,6 +19,13 @@ import {
   SignUpResponse,
 } from "@shared/api";
 import { logger } from "./logger";
+
+// Window 타입 확장
+declare global {
+  interface Window {
+    oauthDeepLinkListenerRegistered?: boolean;
+  }
+}
 
 /**
  * API 설정 - 동적으로 URL을 가져오는 함수
@@ -341,10 +350,14 @@ export const login = async (
  */
 export const getOAuthConfig = async (
   provider: OAuthProvider,
+  platform: "web" | "mobile" = "web",
 ): Promise<OAuthConfigResponse> => {
   try {
-    const url = `${getApiUrl()}/v1/auth/oauth/${provider}/config`;
-    logger.apiRequest("GET", `/v1/auth/oauth/${provider}/config`);
+    const url = `${getApiUrl()}/v1/auth/oauth/${provider}/config?platform=${platform}`;
+    logger.apiRequest(
+      "GET",
+      `/v1/auth/oauth/${provider}/config?platform=${platform}`,
+    );
 
     const controller = new AbortController();
     // 타임아웃을 30초로 증가 (임시 조치 - 백엔드 최적화 필요)
@@ -387,19 +400,126 @@ export const startSocialLogin = async (
   provider: OAuthProvider,
 ): Promise<void> => {
   try {
-    const config = await getOAuthConfig(provider);
+    // 플랫폼 감지
+    const isMobile = Capacitor.isNativePlatform();
+    const platform = isMobile ? "mobile" : "web";
 
-    // 보안을 위해 state와 code_verifier를 sessionStorage에 저장
+    logger.log(`소셜 로그인 시작 (플랫폼: ${platform})`, provider);
+
+    const config = await getOAuthConfig(provider, platform);
+
+    // 보안을 위해 state와 code_verifier, redirect_uri를 sessionStorage에 저장
     sessionStorage.setItem(OAUTH_STORAGE_KEYS.STATE, config.data.state);
     sessionStorage.setItem(
       OAUTH_STORAGE_KEYS.CODE_VERIFIER,
       config.data.code_verifier, // code_challenge가 아닌 code_verifier 사용
     );
     sessionStorage.setItem(OAUTH_STORAGE_KEYS.PROVIDER, provider);
+    sessionStorage.setItem("oauth_redirect_uri", config.data.redirect_uri);
 
-    // 소셜 로그인 페이지로 리다이렉트
-    logger.log("소셜 로그인 리다이렉트 시작:", provider);
-    window.location.href = config.data.authorization_url;
+    if (isMobile) {
+      // 모바일: In-App Browser로 OAuth 페이지 열기
+      logger.log("모바일: In-App Browser로 OAuth 페이지 열기");
+
+      await Browser.open({
+        url: config.data.authorization_url,
+        windowName: "_self",
+      });
+
+      // Deep Link 리스너 등록 (한 번만 등록되도록 체크)
+      if (!window.oauthDeepLinkListenerRegistered) {
+        window.oauthDeepLinkListenerRegistered = true;
+
+        App.addListener("appUrlOpen", async (event) => {
+          logger.log("Deep Link 수신:", event.url);
+
+          // com.chingoohaja.app://oauth/callback/kakao?code=...
+          try {
+            const url = new URL(event.url);
+            const code = url.searchParams.get("code");
+            const state = url.searchParams.get("state");
+            const error = url.searchParams.get("error");
+
+            if (error) {
+              logger.error("OAuth 에러:", error);
+              await Browser.close();
+              throw new Error(`OAuth 인증 중 오류가 발생했습니다: ${error}`);
+            }
+
+            if (code && state) {
+              // Browser 닫기
+              await Browser.close();
+
+              // 저장된 값들과 비교하여 보안 검증
+              const savedState = sessionStorage.getItem(
+                OAUTH_STORAGE_KEYS.STATE,
+              );
+              const codeVerifier = sessionStorage.getItem(
+                OAUTH_STORAGE_KEYS.CODE_VERIFIER,
+              );
+              const providerStr = sessionStorage.getItem(
+                OAUTH_STORAGE_KEYS.PROVIDER,
+              );
+              const redirectUri = sessionStorage.getItem("oauth_redirect_uri");
+              const provider = (["google", "kakao", "naver"] as const).find(
+                (p) => p === providerStr,
+              );
+
+              if (!provider || !savedState || !codeVerifier || !redirectUri) {
+                throw new Error(
+                  "OAuth 세션 정보가 없습니다. 다시 로그인해주세요.",
+                );
+              }
+
+              if (state !== savedState) {
+                throw new Error(
+                  "OAuth state 검증에 실패했습니다. 보안상 다시 로그인해주세요.",
+                );
+              }
+
+              // 백엔드로 로그인 요청
+              const result = await processSocialLogin(
+                provider,
+                code,
+                state,
+                codeVerifier,
+                redirectUri,
+              );
+
+              // 로그인 성공 - 페이지 이동을 위해 커스텀 이벤트 발생
+              if (result) {
+                logger.log("✅ 모바일 OAuth 로그인 성공");
+                // 앱이 이 이벤트를 감지하여 적절한 페이지로 이동
+                window.dispatchEvent(
+                  new CustomEvent("oauth-login-success", {
+                    detail: { userInfo: result.data.user_info },
+                  }),
+                );
+              }
+            }
+          } catch (error) {
+            logger.error("Deep Link 처리 실패:", error);
+            await Browser.close();
+            // 에러 이벤트 발생
+            window.dispatchEvent(
+              new CustomEvent("oauth-login-error", {
+                detail: {
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "로그인 처리 중 오류가 발생했습니다.",
+                },
+              }),
+            );
+            throw error;
+          }
+        });
+      }
+    } else {
+      // 웹: 일반 리다이렉트
+      logger.log("웹: 일반 리다이렉트");
+      window.location.href = config.data.authorization_url;
+    }
   } catch (error) {
     logger.error("소셜 로그인 시작 실패:", error);
     throw error;
@@ -461,7 +581,16 @@ export const processOAuthCallback =
       );
     }
 
-    return await processSocialLogin(provider, code, state, codeVerifier);
+    // redirect_uri 가져오기
+    const redirectUri = sessionStorage.getItem("oauth_redirect_uri");
+
+    return await processSocialLogin(
+      provider,
+      code,
+      state,
+      codeVerifier,
+      redirectUri || undefined,
+    );
   };
 
 /**
@@ -472,12 +601,14 @@ export const processSocialLogin = async (
   code: string,
   state: string,
   codeVerifier: string,
+  redirectUri?: string,
 ): Promise<OAuthLoginResponse> => {
   try {
     const requestBody: OAuthLoginRequest = {
       code,
       state,
       code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
       device_info: `${navigator.platform} - ${navigator.userAgent.split(" ")[0]}`,
     };
 
