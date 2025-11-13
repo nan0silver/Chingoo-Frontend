@@ -174,12 +174,14 @@ export const signup = async (
         // JSON 파싱 시도
         const errorData: ApiErrorResponse = JSON.parse(responseText);
         logger.error("❌ 백엔드 에러 응답:", errorData);
-        
+
         errorMessage = errorData.message || errorMessage;
 
         // 필드별 에러가 있는 경우
         if (errorData.errors && errorData.errors.length > 0) {
-          const errorMessages = errorData.errors.map((err) => err.message).join(", ");
+          const errorMessages = errorData.errors
+            .map((err) => err.message)
+            .join(", ");
           errorMessage = errorMessages || errorMessage;
         }
       } catch (parseError) {
@@ -276,12 +278,14 @@ export const login = async (
         // JSON 파싱 시도
         const errorData: ApiErrorResponse = JSON.parse(responseText);
         logger.error("❌ 백엔드 에러 응답:", errorData);
-        
+
         errorMessage = errorData.message || errorMessage;
 
         // 필드별 에러가 있는 경우
         if (errorData.errors && errorData.errors.length > 0) {
-          const errorMessages = errorData.errors.map((err) => err.message).join(", ");
+          const errorMessages = errorData.errors
+            .map((err) => err.message)
+            .join(", ");
           errorMessage = errorMessages || errorMessage;
         }
       } catch (parseError) {
