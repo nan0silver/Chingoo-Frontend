@@ -232,7 +232,7 @@ export default function ProfileSetupPage() {
 
   return (
     <div
-      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page"
+      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page font-noto"
       aria-busy={showSuccessMessage}
     >
       {/* Privacy Consent Modal */}

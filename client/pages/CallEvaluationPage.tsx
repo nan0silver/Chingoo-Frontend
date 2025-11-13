@@ -95,7 +95,7 @@ export default function CallEvaluationPage({
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative safe-area-page">
+    <div className="min-h-screen bg-white flex flex-col relative safe-area-page font-noto">
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

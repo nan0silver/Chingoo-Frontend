@@ -78,7 +78,7 @@ export default function OAuthCallbackPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page font-noto">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-login-button mx-auto mb-4"></div>
           <h2 className="text-xl font-crimson text-gray-900 mb-2">
@@ -92,7 +92,7 @@ export default function OAuthCallbackPage() {
 
   if (status === "success") {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page font-noto">
         <div className="text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
@@ -127,7 +127,7 @@ export default function OAuthCallbackPage() {
 
   if (status === "error") {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page font-noto">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg

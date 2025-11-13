@@ -192,7 +192,7 @@ export default function HomePage({
   };
 
   return (
-    <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page">
+    <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto">
       {/* Category Request Modal */}
       <CategoryRequestModal
         isOpen={isRequestModalOpen}

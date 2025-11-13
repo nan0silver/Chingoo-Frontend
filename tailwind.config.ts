@@ -12,6 +12,9 @@ export default {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      sans: ["Noto Sans KR", "Inter", "Pretendard", "sans-serif"],
+    },
     extend: {
       screens: {
         xs: { max: "420px" },

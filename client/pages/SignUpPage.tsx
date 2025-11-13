@@ -116,7 +116,7 @@ export default function SignUpPage({ onBack }: SignUpPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col safe-area-page">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <button onClick={onBack} className="p-1">

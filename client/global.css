@@ -134,10 +134,26 @@
 @layer base {
   html {
     overflow-x: hidden;
+    font-family:
+      "Noto Sans KR",
+      "Inter",
+      "Pretendard",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif !important;
   }
 
   * {
     @apply border-border;
+    font-family:
+      "Noto Sans KR",
+      "Inter",
+      "Pretendard",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif !important;
   }
 
   body {
@@ -152,8 +168,50 @@
       -apple-system,
       BlinkMacSystemFont,
       "Segoe UI",
-      sans-serif;
+      sans-serif !important;
     overflow-x: hidden;
+  }
+
+  /* 모든 텍스트 요소에 Noto Sans KR 강제 적용 */
+  p,
+  span,
+  div,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  a,
+  li,
+  td,
+  th {
+    font-family:
+      "Noto Sans KR",
+      "Inter",
+      "Pretendard",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif !important;
+  }
+
+  /* font-crimson과 font-pretendard 클래스도 Noto Sans KR로 오버라이드 */
+  .font-crimson,
+  .font-pretendard {
+    font-family:
+      "Noto Sans KR",
+      "Inter",
+      "Pretendard",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif !important;
   }
 
   @supports (-webkit-touch-callout: none) {

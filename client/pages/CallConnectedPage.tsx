@@ -164,7 +164,7 @@ export default function CallConnectedPage({
 
   return (
     <div
-      className="min-h-screen flex flex-col relative safe-area-page pt-6"
+      className="min-h-screen flex flex-col relative safe-area-page pt-6 font-noto"
       style={{
         background: `linear-gradient(0deg, rgba(120, 90, 0, 0.20) 0%, rgba(120, 90, 0, 0.20) 100%), 
                     radial-gradient(138.99% 139.71% at 10.56% -25.76%, rgba(235, 161, 0, 0.80) 0%, rgba(245, 69, 53, 0.80) 100%)`,
