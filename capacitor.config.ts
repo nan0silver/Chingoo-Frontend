@@ -7,7 +7,8 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: "https",
     hostname: "localhost", // 필요 시 silverld.site로 변경
-    allowNavigation: ["silverld.site"],
+    allowNavigation: ["silverld.site", "*.silverld.site"],
+    cleartext: false,
   },
   plugins: {
     CapacitorHttp: {

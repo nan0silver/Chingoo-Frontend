@@ -41,7 +41,7 @@ export class WebSocketService {
     // SockJS를 사용하여 WebSocket 연결 설정
     // 네이티브 앱에서는 운영 서버의 WebSocket을 사용
     let wsUrl: string;
-    
+
     if (Capacitor.isNativePlatform()) {
       // 네이티브 앱: HTTPS이므로 wss:// 사용
       wsUrl = "https://silverld.site/ws";
@@ -57,8 +57,14 @@ export class WebSocketService {
     // 대신 STOMP CONNECT 헤더로 토큰을 전달합니다
     console.log("🔗 WebSocket URL:", wsUrl);
 
+    const sockJSOptions = {
+      transports: ["websocket", "xhr-streaming", "xhr-polling"],
+      timeout: 20000,
+    };
+
     logger.log("🔗 WebSocket 연결 설정");
-    const socket = new SockJS(wsUrl);
+    //const socket = new SockJS(wsUrl);
+    const socket = new SockJS(wsUrl, null, sockJSOptions);
 
     this.client = new Client({
       webSocketFactory: () => socket,
@@ -66,8 +72,8 @@ export class WebSocketService {
         console.log("STOMP Debug:", str);
       },
       reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
     });
 
     // 연결 성공 시
