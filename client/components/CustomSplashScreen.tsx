@@ -177,30 +177,39 @@ export const CustomSplashScreen = ({
                   }
                 }}
               />
-              {/* 모든 아이콘 아래에 텍스트 표시 */}
-              {isActive && (
-                <div className="flex flex-col items-center">
-                  <h1
-                    className="text-4xl font-bold mb-2"
-                    style={{
-                      color: index === 0 ? "#E77A50" : "#ffffff",
-                    }}
-                  >
-                    친구하자
-                  </h1>
-                  <p
-                    className="text-lg"
-                    style={{
-                      color: index === 0 ? "#6f7371" : "#ffffff",
-                    }}
-                  >
-                    우리의 대화는 관심사로 이어져요
-                  </p>
-                </div>
-              )}
             </div>
           );
         })}
+
+        {/* 텍스트는 아이콘과 별도로 렌더링하여 깜빡임 방지 */}
+        {icons.length > 0 && currentIconIndex >= 0 && (
+          <div
+            className="absolute flex flex-col items-center"
+            style={{
+              top: "calc(50% + 80px)", // 아이콘 아래 위치 (아이콘 높이 + 여백)
+              transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          >
+            <h1
+              className="text-4xl font-bold mb-2"
+              style={{
+                color: currentIconIndex === 0 ? "#E77A50" : "#ffffff",
+                transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            >
+              친구하자
+            </h1>
+            <p
+              className="text-lg"
+              style={{
+                color: currentIconIndex === 0 ? "#6f7371" : "#ffffff",
+                transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            >
+              우리의 대화는 관심사로 이어져요
+            </p>
+          </div>
+        )}
 
         {/* 아이콘이 없는 경우 기본 로딩 표시 */}
         {icons.length === 0 && (
