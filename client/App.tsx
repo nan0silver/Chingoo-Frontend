@@ -227,7 +227,7 @@ const AppRoutes = () => {
         icons={splashIcons}
         iconDuration={400} // 각 아이콘 표시 시간 (밀리초)
         minDisplayDuration={2000} // 최소 표시 시간 (밀리초)
-        enableRotation={true} // 아이콘 회전 애니메이션
+        animationType="slide-up" // 애니메이션 타입: 'slide-up' | 'fade' | 'none'
         backgroundColor="#ffffff" // 배경색
       />
     );

@@ -19,10 +19,13 @@ interface CustomSplashScreenProps {
    */
   minDisplayDuration?: number;
   /**
-   * 아이콘 회전 애니메이션 여부
-   * @default true
+   * 아이콘 애니메이션 타입
+   * 'slide-up': 위로 슬라이드되며 사라짐
+   * 'fade': 페이드 아웃
+   * 'none': 애니메이션 없음
+   * @default 'slide-up'
    */
-  enableRotation?: boolean;
+  animationType?: "slide-up" | "fade" | "none";
   /**
    * 배경색
    * @default "#ffffff"
@@ -32,14 +35,14 @@ interface CustomSplashScreenProps {
 
 /**
  * 커스텀 스플래시 스크린 컴포넌트
- * 여러 아이콘이 순차적으로 돌아가는 애니메이션을 제공합니다.
+ * 여러 아이콘이 순차적으로 표시되며 위로 슬라이드되며 사라지는 애니메이션을 제공합니다.
  */
 export const CustomSplashScreen = ({
   onComplete,
   icons = [],
   iconDuration = 500,
   minDisplayDuration = 2000,
-  enableRotation = true,
+  animationType = "slide-up",
   backgroundColor = "#ffffff",
 }: CustomSplashScreenProps) => {
   const [currentIconIndex, setCurrentIconIndex] = useState(0);
@@ -54,7 +57,9 @@ export const CustomSplashScreen = ({
       } catch (error) {
         // 웹 환경에서는 에러가 발생할 수 있으므로 무시
         if (import.meta.env.DEV) {
-          console.log("네이티브 스플래시 스크린 숨기기 실패 (웹 환경일 수 있음)");
+          console.log(
+            "네이티브 스플래시 스크린 숨기기 실패 (웹 환경일 수 있음)",
+          );
         }
       }
     };
@@ -113,28 +118,51 @@ export const CustomSplashScreen = ({
         {icons.map((icon, index) => {
           const isActive = index === currentIconIndex;
           const isPast = index < currentIconIndex;
+          const isNext = index > currentIconIndex;
+
+          // 애니메이션 스타일 결정
+          let transform = "";
+          let opacity = 1;
+
+          if (animationType === "slide-up") {
+            if (isActive) {
+              // 현재 활성 아이콘: 중앙에 위치
+              transform = "translateY(0)";
+              opacity = 1;
+            } else if (isPast) {
+              // 지나간 아이콘: 위로 이동하며 사라짐
+              transform = "translateY(-100px)";
+              opacity = 0;
+            } else {
+              // 아직 표시되지 않은 아이콘: 투명
+              transform = "translateY(0)";
+              opacity = 0;
+            }
+          } else if (animationType === "fade") {
+            opacity = isActive ? 1 : 0;
+            transform = "translateY(0)";
+          } else {
+            // none
+            opacity = isActive ? 1 : 0;
+            transform = "translateY(0)";
+          }
 
           return (
             <div
               key={index}
               className="absolute flex items-center justify-center"
               style={{
-                opacity: isActive ? 1 : 0,
-                transform: isActive ? "scale(1)" : "scale(0.8)",
-                transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                opacity,
+                transform,
+                transition:
+                  "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 pointerEvents: isActive ? "auto" : "none",
               }}
             >
               <img
                 src={icon}
                 alt={`Splash icon ${index + 1}`}
-                className={`w-32 h-32 object-contain ${
-                  enableRotation && isActive ? "animate-spin" : ""
-                }`}
-                style={{
-                  animationDuration: "1.5s",
-                  animationTimingFunction: "ease-in-out",
-                }}
+                className="w-32 h-32 object-contain"
                 onError={(e) => {
                   // 이미지 로드 실패 시 기본 이미지로 대체
                   if (import.meta.env.DEV) {
@@ -157,4 +185,3 @@ export const CustomSplashScreen = ({
     </div>
   );
 };
-
