@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { SplashScreen } from "@capacitor/splash-screen";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
@@ -35,7 +36,7 @@ const AppRoutes = () => {
   const previousStatusRef = useRef<string | null>(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
 
-  // 앱 초기화: refresh token으로 access token 발급
+  // 앱 초기화: refresh token으로 access token 발급 및 스플래시 스크린 숨기기
   useEffect(() => {
     const initialize = async () => {
       if (import.meta.env.DEV) {
@@ -43,6 +44,20 @@ const AppRoutes = () => {
       }
       await initializeAuth();
       setIsAuthInitialized(true);
+      
+      // 앱이 준비되면 스플래시 스크린 숨기기
+      try {
+        await SplashScreen.hide();
+        if (import.meta.env.DEV) {
+          console.log("✅ 스플래시 스크린 숨김 완료");
+        }
+      } catch (error) {
+        // 웹 환경에서는 에러가 발생할 수 있으므로 무시
+        if (import.meta.env.DEV) {
+          console.log("스플래시 스크린 숨기기 실패 (웹 환경일 수 있음):", error);
+        }
+      }
+      
       if (import.meta.env.DEV) {
         console.log("✅ 인증 초기화 완료");
       }

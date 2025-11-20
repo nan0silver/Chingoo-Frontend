@@ -22,12 +22,14 @@
     "android:dev": "npx cap run android --livereload --external",
     "android:build": "pnpm build && npx cap sync && npx cap run android",
     "android:clean-build": "rm -rf android/capacitor-cordova-android-plugins/build android/app/build android/build && pnpm build && npx cap sync android && npx cap run android",
-    "android:sync": "npx cap sync android"
+    "android:sync": "npx cap sync android",
+    "generate:assets": "npx capacitor-assets generate"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.0",
     "@capacitor/browser": "^7.0.2",
     "@capacitor/core": "^7.4.4",
+    "@capacitor/splash-screen": "^7.0.3",
     "@codetrix-studio/capacitor-google-auth": "3.4.0-rc.4",
     "@stomp/stompjs": "^7.2.0",
     "agora-rtc-sdk-ng": "^4.24.0",
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@capacitor/android": "^7.4.4",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/ios": "^7.4.4",
     "@hookform/resolvers": "^5.2.1",

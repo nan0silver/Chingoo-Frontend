@@ -1,3 +1,5 @@
+/// <reference types="@capacitor/splash-screen" />
+
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
@@ -19,6 +21,20 @@ const config: CapacitorConfig = {
       serverClientId:
         "251609733477-thoh9ldn3b2ve4ap31pt4pelau8bgsaa.apps.googleusercontent.com",
       forceCodeForRefreshToken: true,
+    },
+    SplashScreen: {
+      launchShowDuration: 2000, // 스플래시 스크린 표시 시간 (밀리초)
+      launchAutoHide: true, // 자동으로 숨길지 여부
+      launchFadeOutDuration: 300, // 페이드 아웃 애니메이션 시간 (밀리초)
+      backgroundColor: "#ffffff", // 배경색 (hex 형식)
+      androidSplashResourceName: "splash", // Android 리소스 이름
+      androidScaleType: "CENTER_CROP", // 이미지 스케일 타입: CENTER, CENTER_CROP, CENTER_INSIDE, FIT_CENTER, FIT_XY
+      showSpinner: false, // 스피너 표시 여부
+      androidSpinnerStyle: "large", // Android 스피너 스타일: horizontal, small, large, inverse, smallInverse, largeInverse
+      iosSpinnerStyle: "small", // iOS 스피너 스타일: small, large
+      spinnerColor: "#999999", // 스피너 색상
+      splashFullScreen: true, // 전체 화면 표시 (Android만)
+      splashImmersive: false, // 상태바와 네비게이션 바 숨김 (Android만)
     },
   },
 };
