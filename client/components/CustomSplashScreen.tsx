@@ -133,25 +133,25 @@ export const CustomSplashScreen = ({
 
           if (animationType === "slide-up") {
             if (isActive) {
-              // 현재 활성 아이콘: 텍스트 위에 위치 (아이콘 높이 + 여백 고려)
-              transform = "translate(-50%, -220px)";
+              // 현재 활성 아이콘: 텍스트 위에 위치 (여백 줄임)
+              transform = "translate(-50%, -180px)";
               opacity = 1;
             } else if (isPast) {
               // 지나간 아이콘: 위로 이동하며 사라짐
-              transform = "translate(-50%, -320px)";
+              transform = "translate(-50%, -280px)";
               opacity = 0;
             } else {
               // 아직 표시되지 않은 아이콘: 투명
-              transform = "translate(-50%, -220px)";
+              transform = "translate(-50%, -180px)";
               opacity = 0;
             }
           } else if (animationType === "fade") {
             opacity = isActive ? 1 : 0;
-            transform = "translate(-50%, -220px)";
+            transform = "translate(-50%, -180px)";
           } else {
             // none
             opacity = isActive ? 1 : 0;
-            transform = "translate(-50%, -220px)";
+            transform = "translate(-50%, -180px)";
           }
 
           return (
@@ -197,7 +197,7 @@ export const CustomSplashScreen = ({
             }}
           >
             <h1
-              className="text-5xl font-bold mb-2 font-crimson"
+              className="text-5xl font-bold mb-5 font-crimson"
               style={{
                 color: currentIconIndex === 0 ? "#E77A50" : "#ffffff",
                 transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
