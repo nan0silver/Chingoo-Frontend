@@ -108,10 +108,17 @@ export const CustomSplashScreen = ({
     return null;
   }
 
+  // icon1 (첫 번째 아이콘, index 0)일 때만 배경색을 #E77A50으로 설정
+  const currentBackgroundColor =
+    currentIconIndex === 0 ? backgroundColor : "#E77A50";
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center"
-      style={{ backgroundColor }}
+      style={{
+        backgroundColor: currentBackgroundColor,
+        transition: "background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+      }}
     >
       <div className="relative w-full h-full flex items-center justify-center">
         {/* 모든 아이콘을 렌더링하되, 현재 인덱스만 표시 */}
