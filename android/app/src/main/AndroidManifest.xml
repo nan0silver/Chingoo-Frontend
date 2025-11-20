@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <application
         android:usesCleartextTraffic="true"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -11,11 +9,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <!-- 카카오 SDK 메타데이터 -->
-        <meta-data
-            android:name="com.kakao.sdk.AppKey"
-            android:value="@string/kakao_app_key" />
+        <meta-data android:name="com.kakao.sdk.AppKey" android:value="@string/kakao_app_key" />
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
@@ -24,7 +19,6 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -38,7 +32,8 @@
                 <data
                     android:scheme="https"
                     android:host="chingoohaja.app"
-                    android:pathPrefix="/oauth/callback/kakao" />
+                    android:pathPrefix="/oauth/callback/kakao"
+                />
             </intent-filter>
 
             <intent-filter>
@@ -46,10 +41,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:scheme="com.chingoohaja.app"
-                    android:host="oauth"
-                    android:pathPrefix="/callback/google" />
+                <data android:scheme="com.chingoohaja.app" android:host="oauth" android:pathPrefix="/callback/google" />
             </intent-filter>
 
             <!-- 카카오 로그인 리다이렉트 -->
@@ -59,13 +51,10 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:host="kakaolink" android:scheme="@string/kakao_scheme" />
             </intent-filter>
-
         </activity>
 
         <!-- 카카오 인증 코드 핸들러 -->
-        <activity
-            android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"
-            android:exported="true">
+        <activity android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -80,9 +69,7 @@
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
     </application>
 
@@ -92,9 +79,9 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.CAMERA" tools:node="remove"/>
+    <uses-permission android:name="android.permission.CAMERA" tools:node="remove" />
 
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
-    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
 </manifest>

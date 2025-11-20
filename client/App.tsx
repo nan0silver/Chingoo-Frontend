@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { SplashScreen } from "@capacitor/splash-screen";
+import { Capacitor } from "@capacitor/core";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
@@ -22,6 +24,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import SupportPage from "./pages/SupportPage";
 import AuthGuard from "./components/AuthGuard";
+import { CustomSplashScreen } from "./components/CustomSplashScreen";
 import { useMatchingStore } from "./lib/matchingStore";
 import { CATEGORIES } from "@shared/api";
 import { initializeAuth } from "./lib/auth";
@@ -34,6 +37,18 @@ const AppRoutes = () => {
     useMatchingStore();
   const previousStatusRef = useRef<string | null>(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
+  // 웹 환경에서는 스플래시 스크린을 표시하지 않음
+  const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
+
+  // 스플래시 스크린에 표시할 아이콘들
+  // public 폴더의 파일은 /로 시작하는 절대 경로로 접근합니다
+  const splashIcons = [
+    "/splash-icons/icon1.png",
+    "/splash-icons/icon2.png",
+    "/splash-icons/icon3.png",
+    "/splash-icons/icon4.png",
+    "/splash-icons/icon5.png",
+  ];
 
   // 앱 초기화: refresh token으로 access token 발급
   useEffect(() => {
@@ -43,6 +58,7 @@ const AppRoutes = () => {
       }
       await initializeAuth();
       setIsAuthInitialized(true);
+
       if (import.meta.env.DEV) {
         console.log("✅ 인증 초기화 완료");
       }
@@ -51,6 +67,11 @@ const AppRoutes = () => {
     initialize();
   }, []);
 
+  // 스플래시 스크린 완료 핸들러
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
   // 모바일 OAuth 로그인 성공 이벤트 리스너
   useEffect(() => {
     const handleOAuthLoginSuccess = (event: CustomEvent<{ userInfo: any }>) => {
@@ -58,7 +79,7 @@ const AppRoutes = () => {
       if (import.meta.env.DEV) {
         console.log("✅ 모바일 OAuth 로그인 성공 이벤트 수신:", userInfo);
       }
-      
+
       // 사용자 정보에 따른 페이지 이동
       if (userInfo.is_new_user || !userInfo.is_profile_complete) {
         navigate("/profile-setup", { replace: true });
@@ -75,12 +96,24 @@ const AppRoutes = () => {
       navigate("/login", { replace: true });
     };
 
-    window.addEventListener("oauth-login-success", handleOAuthLoginSuccess as EventListener);
-    window.addEventListener("oauth-login-error", handleOAuthLoginError as EventListener);
+    window.addEventListener(
+      "oauth-login-success",
+      handleOAuthLoginSuccess as EventListener,
+    );
+    window.addEventListener(
+      "oauth-login-error",
+      handleOAuthLoginError as EventListener,
+    );
 
     return () => {
-      window.removeEventListener("oauth-login-success", handleOAuthLoginSuccess as EventListener);
-      window.removeEventListener("oauth-login-error", handleOAuthLoginError as EventListener);
+      window.removeEventListener(
+        "oauth-login-success",
+        handleOAuthLoginSuccess as EventListener,
+      );
+      window.removeEventListener(
+        "oauth-login-error",
+        handleOAuthLoginError as EventListener,
+      );
     };
   }, [navigate]);
 
@@ -185,6 +218,20 @@ const AppRoutes = () => {
   const handleGoHome = () => {
     navigate("/");
   };
+
+  // 스플래시 스크린 표시 (인증 초기화 완료 후에도 스플래시가 끝날 때까지 표시)
+  if (showSplash) {
+    return (
+      <CustomSplashScreen
+        onComplete={handleSplashComplete}
+        icons={splashIcons}
+        iconDuration={400} // 각 아이콘 표시 시간 (밀리초)
+        minDisplayDuration={2000} // 최소 표시 시간 (밀리초)
+        animationType="slide-up" // 애니메이션 타입: 'slide-up' | 'fade' | 'none'
+        backgroundColor="#ffffff" // 배경색
+      />
+    );
+  }
 
   // 인증 초기화 중에는 로딩 화면 표시
   if (!isAuthInitialized) {

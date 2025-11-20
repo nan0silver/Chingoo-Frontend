@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Chingoo-haja</string>
-    <string name="title_activity_main">Chingoo-haja</string>
+    <string name="app_name">친구하자</string>
+    <string name="title_activity_main">친구하자</string>
     <string name="package_name">com.chingoohaja.app</string>
     <string name="custom_url_scheme">com.chingoohaja.app</string>
     <!-- 카카오 SDK 설정 (카카오 개발자 콘솔에서 발급받은 네이티브 앱 키로 변경 필요) -->
