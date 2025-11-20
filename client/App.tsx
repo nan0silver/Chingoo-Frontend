@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { SplashScreen } from "@capacitor/splash-screen";
+import { Capacitor } from "@capacitor/core";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/LoginPage";
@@ -36,7 +37,8 @@ const AppRoutes = () => {
     useMatchingStore();
   const previousStatusRef = useRef<string | null>(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
+  // 웹 환경에서는 스플래시 스크린을 표시하지 않음
+  const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
 
   // 스플래시 스크린에 표시할 아이콘들
   // public 폴더의 파일은 /로 시작하는 절대 경로로 접근합니다
