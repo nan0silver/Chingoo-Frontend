@@ -133,25 +133,25 @@ export const CustomSplashScreen = ({
 
           if (animationType === "slide-up") {
             if (isActive) {
-              // 현재 활성 아이콘: 중앙에 위치
-              transform = "translateY(0)";
+              // 현재 활성 아이콘: 텍스트 위에 위치 (아이콘 높이 + 여백 고려)
+              transform = "translate(-50%, -220px)";
               opacity = 1;
             } else if (isPast) {
               // 지나간 아이콘: 위로 이동하며 사라짐
-              transform = "translateY(-100px)";
+              transform = "translate(-50%, -320px)";
               opacity = 0;
             } else {
               // 아직 표시되지 않은 아이콘: 투명
-              transform = "translateY(0)";
+              transform = "translate(-50%, -220px)";
               opacity = 0;
             }
           } else if (animationType === "fade") {
             opacity = isActive ? 1 : 0;
-            transform = "translateY(0)";
+            transform = "translate(-50%, -220px)";
           } else {
             // none
             opacity = isActive ? 1 : 0;
-            transform = "translateY(0)";
+            transform = "translate(-50%, -220px)";
           }
 
           return (
@@ -161,6 +161,8 @@ export const CustomSplashScreen = ({
               style={{
                 opacity,
                 transform,
+                top: "50%",
+                left: "50%",
                 transition:
                   "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                 pointerEvents: isActive ? "auto" : "none",
@@ -169,7 +171,7 @@ export const CustomSplashScreen = ({
               <img
                 src={icon}
                 alt={`Splash icon ${index + 1}`}
-                className="w-32 h-32 object-contain mb-8"
+                className="w-32 h-32 object-contain"
                 onError={(e) => {
                   // 이미지 로드 실패 시 기본 이미지로 대체
                   if (import.meta.env.DEV) {
@@ -184,14 +186,18 @@ export const CustomSplashScreen = ({
         {/* 텍스트는 아이콘과 별도로 렌더링하여 깜빡임 방지 */}
         {icons.length > 0 && currentIconIndex >= 0 && (
           <div
-            className="absolute flex flex-col items-center"
+            className="absolute flex flex-col items-center justify-center"
             style={{
-              top: "calc(50% + 80px)", // 아이콘 아래 위치 (아이콘 높이 + 여백)
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)", // 정확히 중앙에 배치
               transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              width: "90%",
+              maxWidth: "400px",
             }}
           >
             <h1
-              className="text-4xl font-bold mb-2"
+              className="text-5xl font-bold mb-2 font-crimson"
               style={{
                 color: currentIconIndex === 0 ? "#E77A50" : "#ffffff",
                 transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -200,7 +206,7 @@ export const CustomSplashScreen = ({
               친구하자
             </h1>
             <p
-              className="text-lg"
+              className="text-xl font-bold whitespace-nowrap"
               style={{
                 color: currentIconIndex === 0 ? "#6f7371" : "#ffffff",
                 transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
