@@ -7,6 +7,7 @@
 다음 파일들을 이 폴더에 준비해주세요:
 
 ### 필수 파일
+
 - **icon-only.png** (최소 1024x1024px)
   - 앱 아이콘으로 사용됩니다. 투명 배경이 가능합니다.
 
@@ -14,6 +15,7 @@
   - 스플래시 스크린 이미지입니다. 가로/세로 비율이 1:1인 정사각형 이미지를 권장합니다.
 
 ### 선택 파일
+
 - **icon-foreground.png** (최소 1024x1024px)
   - Android 12+ 어댑티브 아이콘의 전경 이미지입니다.
 
@@ -47,6 +49,6 @@ npx capacitor-assets generate --pwa
 ## 참고
 
 생성된 이미지는 다음 위치에 자동으로 배치됩니다:
+
 - Android: `android/app/src/main/res/`
 - iOS: `ios/App/App/Assets.xcassets/`
-

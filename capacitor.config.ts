@@ -23,10 +23,10 @@ const config: CapacitorConfig = {
       forceCodeForRefreshToken: true,
     },
     SplashScreen: {
-      launchShowDuration: 2000, // 스플래시 스크린 표시 시간 (밀리초)
+      launchShowDuration: 0, // 커스텀 스플래시를 사용하므로 0으로 설정 (즉시 숨김)
       launchAutoHide: true, // 자동으로 숨길지 여부
-      launchFadeOutDuration: 300, // 페이드 아웃 애니메이션 시간 (밀리초)
-      backgroundColor: "#ffffff", // 배경색 (hex 형식)
+      launchFadeOutDuration: 0, // 페이드 아웃 애니메이션 시간 (커스텀 스플래시에서 처리)
+      backgroundColor: "#ffffff", // 배경색 (hex 형식) - 커스텀 스플래시와 동일하게 설정
       androidSplashResourceName: "splash", // Android 리소스 이름
       androidScaleType: "CENTER_CROP", // 이미지 스케일 타입: CENTER, CENTER_CROP, CENTER_INSIDE, FIT_CENTER, FIT_XY
       showSpinner: false, // 스피너 표시 여부
