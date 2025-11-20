@@ -46,7 +46,6 @@ const AppRoutes = () => {
     "/splash-icons/icon3.png",
     "/splash-icons/icon4.png",
     "/splash-icons/icon5.png",
-    "/splash-icons/icon6.png",
   ];
 
   // 앱 초기화: refresh token으로 access token 발급
