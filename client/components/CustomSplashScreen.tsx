@@ -157,7 +157,7 @@ export const CustomSplashScreen = ({
           return (
             <div
               key={index}
-              className="absolute flex items-center justify-center"
+              className="absolute flex flex-col items-center justify-center"
               style={{
                 opacity,
                 transform,
@@ -169,7 +169,7 @@ export const CustomSplashScreen = ({
               <img
                 src={icon}
                 alt={`Splash icon ${index + 1}`}
-                className="w-32 h-32 object-contain"
+                className="w-32 h-32 object-contain mb-8"
                 onError={(e) => {
                   // 이미지 로드 실패 시 기본 이미지로 대체
                   if (import.meta.env.DEV) {
@@ -177,6 +177,27 @@ export const CustomSplashScreen = ({
                   }
                 }}
               />
+              {/* 모든 아이콘 아래에 텍스트 표시 */}
+              {isActive && (
+                <div className="flex flex-col items-center">
+                  <h1
+                    className="text-4xl font-bold mb-2"
+                    style={{
+                      color: index === 0 ? "#E77A50" : "#ffffff",
+                    }}
+                  >
+                    친구하자
+                  </h1>
+                  <p
+                    className="text-lg"
+                    style={{
+                      color: index === 0 ? "#6f7371" : "#ffffff",
+                    }}
+                  >
+                    우리의 대화는 관심사로 이어져요
+                  </p>
+                </div>
+              )}
             </div>
           );
         })}
