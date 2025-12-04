@@ -209,9 +209,9 @@ export default function Index() {
     setShowSettings(true);
   };
 
-  const handleNavigateToPoints = () => {
+  const handleNavigateToFriends = () => {
     setShowComingSoon(true);
-    setComingSoonFeature("포인트");
+    setComingSoonFeature("내 친구");
   };
 
   const handleNavigateToProfile = () => {
@@ -278,7 +278,7 @@ export default function Index() {
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
           onOpenCallHistory={handleNavigateToCallHistory}
-          onNavigateToPoints={handleNavigateToPoints}
+          onNavigateToFriends={handleNavigateToFriends}
           onNavigateToProfile={handleNavigateToProfile}
         />
       )}

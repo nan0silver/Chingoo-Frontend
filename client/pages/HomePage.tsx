@@ -10,7 +10,7 @@ interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
   onOpenCallHistory: () => void;
-  onNavigateToPoints?: () => void;
+  onNavigateToFriends?: () => void;
   onNavigateToProfile?: () => void;
 }
 
@@ -18,7 +18,7 @@ export default function HomePage({
   onStartCall,
   onOpenSettings,
   onOpenCallHistory,
-  onNavigateToPoints,
+  onNavigateToFriends,
   onNavigateToProfile,
 }: HomePageProps) {
   const navigate = useNavigate();
@@ -201,8 +201,8 @@ export default function HomePage({
       case "home":
         // 이미 홈에 있으므로 아무것도 하지 않음
         break;
-      case "points":
-        onNavigateToPoints?.();
+      case "friends":
+        onNavigateToFriends?.();
         break;
       case "profile":
         onNavigateToProfile?.();
