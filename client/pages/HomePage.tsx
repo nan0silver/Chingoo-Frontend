@@ -204,7 +204,7 @@ export default function HomePage({
       case "friends":
         onNavigateToFriends?.();
         break;
-      case "profile":
+      case "settings":
         onNavigateToProfile?.();
         break;
     }

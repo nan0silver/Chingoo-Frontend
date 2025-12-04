@@ -1,7 +1,7 @@
-import { Home, Users, User, type LucideIcon } from "lucide-react";
+import { Home, Users, Settings, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type BottomNavItem = "home" | "friends" | "profile";
+export type BottomNavItem = "home" | "friends" | "settings";
 
 interface BottomNavigationProps {
   activeItem: BottomNavItem;
@@ -19,7 +19,7 @@ export default function BottomNavigation({
   }> = [
     { id: "home", label: "홈", icon: Home },
     { id: "friends", label: "내 친구", icon: Users },
-    { id: "profile", label: "내 정보", icon: User },
+    { id: "settings", label: "설정", icon: Settings },
   ];
 
   return (
