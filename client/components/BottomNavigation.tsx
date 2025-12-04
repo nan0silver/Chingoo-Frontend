@@ -24,12 +24,12 @@ export default function BottomNavigation({
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-grey-100 z-40 safe-area-bottom"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-grey-100 z-40 safe-area-bottom"
       style={{
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
+      <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeItem === item.id;
