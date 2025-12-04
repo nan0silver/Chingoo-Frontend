@@ -197,13 +197,13 @@ export const CustomSplashScreen = ({
             }}
           >
             <h1
-              className="text-5xl font-bold mb-5 font-crimson"
+              className="text-5xl font-bold mb-5 font-cafe24"
               style={{
                 color: currentIconIndex === 0 ? "#E77A50" : "#ffffff",
                 transition: "color 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              친구하자
+              강낭콩콜
             </h1>
             <p
               className="text-xl font-bold whitespace-nowrap"

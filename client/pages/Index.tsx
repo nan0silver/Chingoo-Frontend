@@ -209,6 +209,15 @@ export default function Index() {
     setShowSettings(true);
   };
 
+  const handleNavigateToFriends = () => {
+    setShowComingSoon(true);
+    setComingSoonFeature("내 친구");
+  };
+
+  const handleNavigateToProfile = () => {
+    setShowSettings(true);
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -269,6 +278,8 @@ export default function Index() {
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
           onOpenCallHistory={handleNavigateToCallHistory}
+          onNavigateToFriends={handleNavigateToFriends}
+          onNavigateToProfile={handleNavigateToProfile}
         />
       )}
     </div>

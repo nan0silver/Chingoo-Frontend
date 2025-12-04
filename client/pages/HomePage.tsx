@@ -4,17 +4,22 @@ import { getUserProfile, getStoredToken } from "@/lib/auth";
 import { useMatchingStore } from "@/lib/matchingStore";
 import { CATEGORIES, CategoryRequest } from "@shared/api";
 import CategoryRequestModal from "@/components/CategoryRequestModal";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
   onOpenCallHistory: () => void;
+  onNavigateToFriends?: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 export default function HomePage({
   onStartCall,
   onOpenSettings,
   onOpenCallHistory,
+  onNavigateToFriends,
+  onNavigateToProfile,
 }: HomePageProps) {
   const navigate = useNavigate();
   const { startMatching, status, error } = useMatchingStore();
@@ -191,8 +196,22 @@ export default function HomePage({
     }
   };
 
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        // 이미 홈에 있으므로 아무것도 하지 않음
+        break;
+      case "friends":
+        onNavigateToFriends?.();
+        break;
+      case "settings":
+        onNavigateToProfile?.();
+        break;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto">
+    <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto pb-20">
       {/* Category Request Modal */}
       <CategoryRequestModal
         isOpen={isRequestModalOpen}
@@ -243,24 +262,9 @@ export default function HomePage({
       <div className="flex items-center justify-between px-8 py-4">
         {/* Logo */}
         <div className="flex items-center">
-          <svg width="90" height="28" viewBox="0 0 90 28" fill="none">
-            <path
-              d="M67.8945 7.44597V4.56752H79.6163V7.44597H75.5525V9.61661C75.5525 10.6076 75.4585 11.4805 75.2706 12.2827C76.3276 13.722 78.7472 15.9634 80.4855 16.8835L79.123 19.8328C77.5726 19.0306 75.4115 17.1431 74.0726 15.2792C73.7907 15.751 73.4853 16.1993 73.1564 16.6712C72.2638 17.9453 70.2671 19.8328 68.9281 20.517L67.0019 17.8037C67.7771 17.4026 69.116 16.3409 70.0557 15.2792C71.5591 13.604 72.1228 12.0232 72.1228 9.73458V7.44597H67.8945ZM81.8244 3.55298H85.2306V10.7963H88.3548V14.0287H85.2306V23.8201H81.8244V3.55298Z"
-              fill="black"
-            />
-            <path
-              d="M51.7229 10.5604C55.0586 10.5604 57.4781 12.6838 57.4781 15.869C57.4781 19.0542 55.0586 21.154 51.7229 21.154C48.3638 21.154 45.9912 19.0778 45.9912 15.869C45.9912 12.6838 48.3638 10.5604 51.7229 10.5604ZM59.7332 23.8201V3.55296H63.1393V10.985H66.2636V14.2174H63.1393V23.8201H59.7332ZM45.0751 6.4786H50.1255L49.7732 3.48218H53.8371L53.4847 6.4786H58.3472V9.33347H45.0751V6.4786ZM51.7229 13.2029C50.1725 13.2029 49.1155 14.1938 49.1155 15.869C49.1155 17.5677 50.1725 18.5115 51.7229 18.5115C53.2733 18.5115 54.3304 17.5441 54.3304 15.869C54.3304 14.1938 53.2733 13.2029 51.7229 13.2029Z"
-              fill="black"
-            />
-            <path
-              d="M23.1718 14.4297H35.9507C36.2091 13.368 36.4675 11.6928 36.6319 10.0176C36.7259 9.05028 36.7729 7.87058 36.7963 6.78526H25.5679V3.85962H40.3434C40.3669 6.10104 40.2964 7.89418 40.1085 9.7581C39.8971 11.504 39.4743 13.3444 39.1219 14.4297H43.0683V17.3553H34.8936V24.693H31.2526V17.3553H23.1718V14.4297Z"
-              fill="black"
-            />
-            <path
-              d="M6.13102 2.93945H10.1009L9.84253 5.36963H13.8594V8.22449H9.81904V8.76715C9.81904 9.3334 9.72508 9.87606 9.56065 10.3951C10.9936 11.4569 13.1077 12.4714 14.3292 12.8253L13.5071 15.7745C11.9802 15.4206 9.70159 14.123 8.19819 12.7781C7.91631 13.132 7.58744 13.4623 7.25857 13.7927C6.01357 14.9959 4.18131 16.0813 2.67791 16.5059L1.57385 13.5331C2.46649 13.2028 3.82895 12.5658 4.74508 11.8108C5.91961 10.8434 6.41291 9.94684 6.41291 8.76715V8.22449H2.16112V5.36963H6.36593L6.13102 2.93945ZM8.40961 17.1194V21.4843H19.92V24.4807H4.95649V17.1194H8.40961ZM16.232 3.5529H19.6381V18.2519H16.232V3.5529Z"
-              fill="black"
-            />
-          </svg>
+          <h1 className="text-3xl font-bold text-black font-cafe24">
+            강낭콩콜
+          </h1>
         </div>
 
         {/* Right side buttons */}
@@ -406,6 +410,9 @@ export default function HomePage({
           </button>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation activeItem="home" onItemClick={handleBottomNavClick} />
     </div>
   );
 }

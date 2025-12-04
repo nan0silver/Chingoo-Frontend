@@ -3,6 +3,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=Pretendard:wght@400;500&display=swap");
 
 @font-face {
+  font-family: "Cafe24Surround";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff")
+    format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Noto Sans KR";
   font-style: normal;
   font-weight: 400;
@@ -226,5 +234,13 @@
   .safe-area-page {
     padding-top: calc(env(safe-area-inset-top, 0px) + theme("spacing.6"));
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + theme("spacing.6"));
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .font-cafe24 {
+    font-family: "Cafe24Surround", sans-serif !important;
   }
 }
