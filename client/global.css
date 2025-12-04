@@ -236,6 +236,10 @@
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + theme("spacing.6"));
   }
 
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .font-cafe24 {
     font-family: "Cafe24Surround", sans-serif !important;
   }

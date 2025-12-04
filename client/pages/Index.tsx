@@ -209,6 +209,15 @@ export default function Index() {
     setShowSettings(true);
   };
 
+  const handleNavigateToPoints = () => {
+    setShowComingSoon(true);
+    setComingSoonFeature("포인트");
+  };
+
+  const handleNavigateToProfile = () => {
+    setShowSettings(true);
+  };
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -269,6 +278,8 @@ export default function Index() {
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
           onOpenCallHistory={handleNavigateToCallHistory}
+          onNavigateToPoints={handleNavigateToPoints}
+          onNavigateToProfile={handleNavigateToProfile}
         />
       )}
     </div>

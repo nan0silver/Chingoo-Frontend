@@ -4,17 +4,22 @@ import { getUserProfile, getStoredToken } from "@/lib/auth";
 import { useMatchingStore } from "@/lib/matchingStore";
 import { CATEGORIES, CategoryRequest } from "@shared/api";
 import CategoryRequestModal from "@/components/CategoryRequestModal";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
   onOpenCallHistory: () => void;
+  onNavigateToPoints?: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 export default function HomePage({
   onStartCall,
   onOpenSettings,
   onOpenCallHistory,
+  onNavigateToPoints,
+  onNavigateToProfile,
 }: HomePageProps) {
   const navigate = useNavigate();
   const { startMatching, status, error } = useMatchingStore();
@@ -191,8 +196,22 @@ export default function HomePage({
     }
   };
 
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        // 이미 홈에 있으므로 아무것도 하지 않음
+        break;
+      case "points":
+        onNavigateToPoints?.();
+        break;
+      case "profile":
+        onNavigateToProfile?.();
+        break;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto">
+    <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto pb-20">
       {/* Category Request Modal */}
       <CategoryRequestModal
         isOpen={isRequestModalOpen}
@@ -391,6 +410,9 @@ export default function HomePage({
           </button>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation activeItem="home" onItemClick={handleBottomNavClick} />
     </div>
   );
 }
