@@ -1,14 +1,32 @@
 /**
  * 마지막 통화 시간을 표시 형식으로 변환
+ * - 통화 이력이 없는 경우: "아직 친구와의 통화 내역이 없습니다."
  * - 하루 전: "하루 전"
  * - 이틀 전: "이틀 전"
  * - 3일 이후 ~ 일주일 전: "(숫자)일 전"
  * - 일주일 넘어가면: 날짜 형식 (MM/DD)
  */
-export function formatLastCallTime(lastCallAt: string): string {
+export function formatLastCallTime(lastCallAt: string | null | undefined): string {
+  // 통화 이력이 없는 경우
+  if (!lastCallAt || lastCallAt.trim() === "") {
+    return "아직 친구와의 통화 내역이 없습니다.";
+  }
+
   const now = new Date();
   const lastCall = new Date(lastCallAt);
+  
+  // 유효하지 않은 날짜인 경우
+  if (isNaN(lastCall.getTime())) {
+    return "아직 친구와의 통화 내역이 없습니다.";
+  }
+
   const diffMs = now.getTime() - lastCall.getTime();
+  
+  // diffMs가 유효하지 않은 경우 (음수이거나 NaN)
+  if (isNaN(diffMs) || diffMs < 0) {
+    return "아직 친구와의 통화 내역이 없습니다.";
+  }
+
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays === 1) {

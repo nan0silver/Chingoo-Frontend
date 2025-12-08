@@ -439,7 +439,7 @@ export interface CategoryRequestResponse {
 export interface Friend {
   id: number;
   nickname: string;
-  lastCallAt: string; // 마지막 통화 시간 (ISO 8601 형식)
+  lastCallAt: string | null; // 마지막 통화 시간 (ISO 8601 형식, 통화 이력이 없으면 null)
 }
 
 /**
