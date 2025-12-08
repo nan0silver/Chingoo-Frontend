@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { Friend } from "@shared/api";
 import { formatLastCallTime } from "@/lib/dateUtils";
 import FriendRequestModal from "@/components/FriendRequestModal";
 import { Plus } from "lucide-react";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface FriendsPageProps {
   onBack: () => void;
@@ -15,6 +17,7 @@ export default function FriendsPage({
   onBack,
   onNavigateToRequests,
 }: FriendsPageProps) {
+  const navigate = useNavigate();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,24 +117,22 @@ export default function FriendsPage({
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {onNavigateToRequests && (
-            <button
-              onClick={onNavigateToRequests}
-              className="p-2 hover:bg-grey-50 rounded-lg transition-colors"
-              title="친구 요청"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-orange-accent"
-                />
-              </svg>
-            </button>
-          )}
+          <button
+            onClick={() => navigate("/friends/requests")}
+            className="p-2 hover:bg-grey-50 rounded-lg transition-colors"
+            title="친구 요청"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-orange-accent"
+              />
+            </svg>
+          </button>
           <button
             onClick={() => setIsRequestModalOpen(true)}
             className="p-2 bg-orange-accent text-white rounded-lg hover:bg-opacity-90 transition-colors"
@@ -204,6 +205,24 @@ export default function FriendsPage({
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem="friends"
+        onItemClick={(item) => {
+          switch (item) {
+            case "home":
+              navigate("/");
+              break;
+            case "friends":
+              // 이미 친구 목록 페이지에 있음
+              break;
+            case "settings":
+              navigate("/settings");
+              break;
+          }
+        }}
+      />
     </div>
   );
 }

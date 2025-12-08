@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getUserProfile, getStoredToken } from "@/lib/auth";
 import { useMatchingStore } from "@/lib/matchingStore";
 import { CATEGORIES, CategoryRequest } from "@shared/api";
@@ -10,18 +10,15 @@ interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
   onOpenCallHistory: () => void;
-  onNavigateToFriends?: () => void;
-  onNavigateToProfile?: () => void;
 }
 
 export default function HomePage({
   onStartCall,
   onOpenSettings,
   onOpenCallHistory,
-  onNavigateToFriends,
-  onNavigateToProfile,
 }: HomePageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { startMatching, status, error } = useMatchingStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -199,15 +196,25 @@ export default function HomePage({
   const handleBottomNavClick = (item: BottomNavItem) => {
     switch (item) {
       case "home":
-        // 이미 홈에 있으므로 아무것도 하지 않음
+        navigate("/");
         break;
       case "friends":
-        onNavigateToFriends?.();
+        navigate("/friends");
         break;
       case "settings":
-        onNavigateToProfile?.();
+        navigate("/settings");
         break;
     }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    if (location.pathname.startsWith("/friends")) {
+      return "friends";
+    } else if (location.pathname === "/settings") {
+      return "settings";
+    }
+    return "home";
   };
 
   return (
@@ -412,7 +419,10 @@ export default function HomePage({
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation activeItem="home" onItemClick={handleBottomNavClick} />
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }

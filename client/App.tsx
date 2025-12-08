@@ -23,6 +23,8 @@ import CallHistoryPage from "./pages/CallHistoryPage";
 import SettingsPage from "./pages/SettingsPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import SupportPage from "./pages/SupportPage";
+import FriendsPage from "./pages/FriendsPage";
+import FriendRequestsPage from "./pages/FriendRequestsPage";
 import AuthGuard from "./components/AuthGuard";
 import { CustomSplashScreen } from "./components/CustomSplashScreen";
 import { useMatchingStore } from "./lib/matchingStore";
@@ -210,6 +212,27 @@ const AppRoutes = () => {
     navigate("/support");
   };
 
+  const handleNavigateToFriends = () => {
+    navigate("/friends");
+  };
+
+  const handleNavigateToFriendRequests = () => {
+    navigate("/friends/requests");
+  };
+
+  const handleBackFromFriends = () => {
+    navigate("/");
+  };
+
+  const handleBackFromFriendRequests = () => {
+    navigate("/friends");
+  };
+
+  const handleFriendRequestHandled = () => {
+    // 친구 요청 처리 후 친구 목록으로 이동
+    navigate("/friends");
+  };
+
   const handleLogout = async () => {
     // 로그아웃 로직 구현
     navigate("/login");
@@ -381,6 +404,32 @@ const AppRoutes = () => {
             <AuthGuard>
               <div className="max-w-md mx-auto">
                 <SupportPage onBack={handleBack} />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <FriendsPage
+                  onBack={handleBackFromFriends}
+                  onNavigateToRequests={handleNavigateToFriendRequests}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/friends/requests"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <FriendRequestsPage
+                  onBack={handleBackFromFriendRequests}
+                  onRequestHandled={handleFriendRequestHandled}
+                />
               </div>
             </AuthGuard>
           }

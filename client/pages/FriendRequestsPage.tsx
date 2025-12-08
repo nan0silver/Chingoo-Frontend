@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { FriendRequest } from "@shared/api";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface FriendRequestsPageProps {
   onBack: () => void;
@@ -12,6 +14,7 @@ export default function FriendRequestsPage({
   onBack,
   onRequestHandled,
 }: FriendRequestsPageProps) {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -242,6 +245,24 @@ export default function FriendRequestsPage({
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem="friends"
+        onItemClick={(item) => {
+          switch (item) {
+            case "home":
+              navigate("/");
+              break;
+            case "friends":
+              navigate("/friends");
+              break;
+            case "settings":
+              navigate("/settings");
+              break;
+          }
+        }}
+      />
     </div>
   );
 }
