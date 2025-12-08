@@ -176,9 +176,9 @@ export default function FriendsPage({
           </div>
         ) : (
           <div className="space-y-3">
-            {friends.map((friend) => (
+            {friends.map((friend, index) => (
               <div
-                key={friend.id}
+                key={friend.id ?? `friend-${index}`}
                 className="bg-white border border-grey-100 rounded-2xl p-4 flex items-center justify-between hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">

@@ -6,7 +6,9 @@
  * - 3일 이후 ~ 일주일 전: "(숫자)일 전"
  * - 일주일 넘어가면: 날짜 형식 (MM/DD)
  */
-export function formatLastCallTime(lastCallAt: string | null | undefined): string {
+export function formatLastCallTime(
+  lastCallAt: string | null | undefined,
+): string {
   // 통화 이력이 없는 경우
   if (!lastCallAt || lastCallAt.trim() === "") {
     return "아직 친구와의 통화 내역이 없습니다.";
@@ -14,14 +16,14 @@ export function formatLastCallTime(lastCallAt: string | null | undefined): strin
 
   const now = new Date();
   const lastCall = new Date(lastCallAt);
-  
+
   // 유효하지 않은 날짜인 경우
   if (isNaN(lastCall.getTime())) {
     return "아직 친구와의 통화 내역이 없습니다.";
   }
 
   const diffMs = now.getTime() - lastCall.getTime();
-  
+
   // diffMs가 유효하지 않은 경우 (음수이거나 NaN)
   if (isNaN(diffMs) || diffMs < 0) {
     return "아직 친구와의 통화 내역이 없습니다.";
@@ -53,4 +55,3 @@ export function formatLastCallTime(lastCallAt: string | null | undefined): strin
     return `${diffHours}시간 전`;
   }
 }
-
