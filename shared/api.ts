@@ -432,3 +432,24 @@ export interface CategoryRequestResponse {
     created_at: string;
   };
 }
+
+/**
+ * 친구 정보
+ */
+export interface Friend {
+  id: number;
+  nickname: string;
+  lastCallAt: string; // 마지막 통화 시간 (ISO 8601 형식)
+}
+
+/**
+ * 친구 목록 응답
+ */
+export interface FriendsResponse {
+  data: {
+    friends: Friend[];
+    totalCount: number;
+  };
+  message: string;
+  timestamp: string;
+}

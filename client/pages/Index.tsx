@@ -10,6 +10,7 @@ import MyActivityPage from "./MyActivityPage";
 import CallHistoryPage from "./CallHistoryPage";
 import ComingSoonPage from "./ComingSoonPage";
 import SupportPage from "./SupportPage";
+import FriendsPage from "./FriendsPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -23,6 +24,7 @@ export default function Index() {
   const [showCallHistory, setShowCallHistory] = useState<boolean>(false);
   const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
   const [showSupport, setShowSupport] = useState<boolean>(false);
+  const [showFriends, setShowFriends] = useState<boolean>(false);
   const [comingSoonFeature, setComingSoonFeature] = useState<string>("");
   const navigate = useNavigate();
 
@@ -210,8 +212,11 @@ export default function Index() {
   };
 
   const handleNavigateToFriends = () => {
-    setShowComingSoon(true);
-    setComingSoonFeature("내 친구");
+    setShowFriends(true);
+  };
+
+  const handleBackFromFriends = () => {
+    setShowFriends(false);
   };
 
   const handleNavigateToProfile = () => {
@@ -242,6 +247,8 @@ export default function Index() {
           featureName={comingSoonFeature}
           onBack={handleBackFromComingSoon}
         />
+      ) : showFriends ? (
+        <FriendsPage onBack={handleBackFromFriends} />
       ) : showCallHistory ? (
         <CallHistoryPage onBack={handleBackFromCallHistory} />
       ) : showActivity ? (

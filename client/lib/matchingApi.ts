@@ -6,6 +6,8 @@ import {
   CategoriesResponse,
   ActivityStats,
   CallHistoryItem,
+  Friend,
+  FriendsResponse,
 } from "@shared/api";
 import { refreshToken, getApiUrl } from "./auth";
 import { logger } from "./logger";
@@ -943,6 +945,68 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("통화 평가 중 오류가 발생했습니다.");
+    }
+  }
+
+  /**
+   * 친구 목록 조회
+   * GET /api/v1/friendships
+   */
+  async getFriends(): Promise<Friend[]> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/friendships`;
+      logger.apiRequest("GET", "/v1/friendships", {});
+      if (import.meta.env.DEV) {
+        console.log("🔍 친구 목록 요청 URL:", url);
+        console.log("🔍 baseUrl:", this.baseUrl);
+      }
+
+      let response = await fetch(url, {
+        method: "GET",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "GET",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: FriendsResponse =
+        await handleApiResponse<FriendsResponse>(response);
+
+      // API 응답을 Friend 타입으로 변환
+      const friends: Friend[] = result.data.friends.map((friend: any) => ({
+        id: friend.id || friend.user_id,
+        nickname: friend.nickname || friend.nick_name,
+        lastCallAt:
+          friend.last_call_at || friend.lastCallAt || friend.last_called_at,
+      }));
+
+      if (import.meta.env.DEV) {
+        console.log("👥 친구 목록:", friends);
+      }
+
+      return friends;
+    } catch (error) {
+      logger.error("친구 목록 조회 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("친구 목록을 불러올 수 없습니다.");
     }
   }
 }
