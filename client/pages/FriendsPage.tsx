@@ -263,7 +263,7 @@ export default function FriendsPage({
             </svg>
           </button>
           <h1 className="text-2xl font-bold text-grey-900 font-cafe24">
-            내 친구
+            친구 목록
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -283,18 +283,11 @@ export default function FriendsPage({
               />
             </svg>
           </button>
-          <button
-            onClick={() => setIsRequestModalOpen(true)}
-            className="p-2 bg-orange-accent text-white rounded-lg hover:bg-opacity-90 transition-colors"
-            title="친구 추가"
-          >
-            <Plus className="w-6 h-6" />
-          </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-8 py-6">
+      <div className="flex-1 px-8 py-6 overflow-y-auto pb-32">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -368,6 +361,16 @@ export default function FriendsPage({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Floating Add Friend Button */}
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-30">
+        <button
+          onClick={() => setIsRequestModalOpen(true)}
+          className="w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all bg-gradient-to-r from-yellow-300 to-red-gradient shadow-lg"
+        >
+          친구 추가
+        </button>
       </div>
 
       {/* Bottom Navigation */}
