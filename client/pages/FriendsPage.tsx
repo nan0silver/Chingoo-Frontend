@@ -3,15 +3,22 @@ import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { Friend } from "@shared/api";
 import { formatLastCallTime } from "@/lib/dateUtils";
+import FriendRequestModal from "@/components/FriendRequestModal";
+import { Plus } from "lucide-react";
 
 interface FriendsPageProps {
   onBack: () => void;
+  onNavigateToRequests?: () => void;
 }
 
-export default function FriendsPage({ onBack }: FriendsPageProps) {
+export default function FriendsPage({
+  onBack,
+  onNavigateToRequests,
+}: FriendsPageProps) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
   // 친구 목록 조회
   useEffect(() => {
@@ -57,8 +64,37 @@ export default function FriendsPage({ onBack }: FriendsPageProps) {
     fetchFriends();
   }, []);
 
+  // 친구 요청 전송
+  const handleSendFriendRequest = async (nickname: string) => {
+    const matchingApi = getMatchingApiService();
+    const token = getStoredToken();
+
+    if (!token) {
+      throw new Error("로그인이 필요합니다.");
+    }
+
+    matchingApi.setToken(token);
+    await matchingApi.sendFriendRequest({ nickname });
+
+    // 성공 시 친구 목록 새로고침
+    const data = await matchingApi.getFriends();
+    const sortedFriends = data.sort((a, b) => {
+      const dateA = new Date(a.lastCallAt).getTime();
+      const dateB = new Date(b.lastCallAt).getTime();
+      return dateB - dateA;
+    });
+    setFriends(sortedFriends);
+  };
+
   return (
     <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto pb-20">
+      {/* Friend Request Modal */}
+      <FriendRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        onSubmit={handleSendFriendRequest}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4 bg-white border-b border-grey-100">
         <div className="flex items-center gap-3">
@@ -74,8 +110,35 @@ export default function FriendsPage({ onBack }: FriendsPageProps) {
             </svg>
           </button>
           <h1 className="text-2xl font-bold text-grey-900 font-cafe24">
-            친구 목록
+            내 친구
           </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {onNavigateToRequests && (
+            <button
+              onClick={onNavigateToRequests}
+              className="p-2 hover:bg-grey-50 rounded-lg transition-colors"
+              title="친구 요청"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-orange-accent"
+                />
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={() => setIsRequestModalOpen(true)}
+            className="p-2 bg-orange-accent text-white rounded-lg hover:bg-opacity-90 transition-colors"
+            title="친구 추가"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
         </div>
       </div>
 

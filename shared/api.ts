@@ -453,3 +453,62 @@ export interface FriendsResponse {
   message: string;
   timestamp: string;
 }
+
+/**
+ * 친구 요청 정보
+ */
+export interface FriendRequest {
+  id: number; // friendshipId
+  requesterId: number;
+  requesterNickname: string;
+  receiverId: number;
+  receiverNickname: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 친구 요청 전송 요청
+ */
+export interface SendFriendRequestRequest {
+  nickname: string;
+}
+
+/**
+ * 친구 요청 전송 응답
+ */
+export interface SendFriendRequestResponse {
+  message: string;
+  data?: {
+    friendshipId: number;
+    requesterId: number;
+    receiverId: number;
+    status: string;
+  };
+  timestamp: string;
+}
+
+/**
+ * 친구 요청 목록 응답
+ */
+export interface FriendRequestsResponse {
+  data: {
+    requests: FriendRequest[];
+    totalCount: number;
+  };
+  message: string;
+  timestamp: string;
+}
+
+/**
+ * 친구 요청 수락/거절 응답
+ */
+export interface FriendRequestActionResponse {
+  message: string;
+  data?: {
+    friendshipId: number;
+    status: string;
+  };
+  timestamp: string;
+}

@@ -8,6 +8,11 @@ import {
   CallHistoryItem,
   Friend,
   FriendsResponse,
+  FriendRequest,
+  SendFriendRequestRequest,
+  SendFriendRequestResponse,
+  FriendRequestsResponse,
+  FriendRequestActionResponse,
 } from "@shared/api";
 import { refreshToken, getApiUrl } from "./auth";
 import { logger } from "./logger";
@@ -1007,6 +1012,230 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("친구 목록을 불러올 수 없습니다.");
+    }
+  }
+
+  /**
+   * 친구 요청 전송
+   * POST /api/v1/friendships
+   */
+  async sendFriendRequest(
+    request: SendFriendRequestRequest,
+  ): Promise<SendFriendRequestResponse> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/friendships`;
+      logger.apiRequest("POST", "/v1/friendships", request);
+
+      let response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+        credentials: "include",
+        body: JSON.stringify(request),
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "POST",
+            headers: createHeaders(newToken),
+            credentials: "include",
+            body: JSON.stringify(request),
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: SendFriendRequestResponse =
+        await handleApiResponse<SendFriendRequestResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 친구 요청 전송 성공:", result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error("친구 요청 전송 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("친구 요청을 보낼 수 없습니다.");
+    }
+  }
+
+  /**
+   * 친구 요청 목록 조회 (나에게 온 요청들)
+   * GET /api/v1/friendships/requests
+   */
+  async getFriendRequests(): Promise<FriendRequest[]> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/friendships/requests`;
+      logger.apiRequest("GET", "/v1/friendships/requests", {});
+
+      let response = await fetch(url, {
+        method: "GET",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "GET",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: FriendRequestsResponse =
+        await handleApiResponse<FriendRequestsResponse>(response);
+
+      // API 응답을 FriendRequest 타입으로 변환
+      const requests: FriendRequest[] = result.data.requests.map(
+        (request: any) => ({
+          id: request.id || request.friendship_id,
+          requesterId: request.requester_id || request.requesterId,
+          requesterNickname:
+            request.requester_nickname || request.requesterNickname,
+          receiverId: request.receiver_id || request.receiverId,
+          receiverNickname:
+            request.receiver_nickname || request.receiverNickname,
+          status: request.status || "PENDING",
+          createdAt: request.created_at || request.createdAt,
+          updatedAt: request.updated_at || request.updatedAt,
+        }),
+      );
+
+      if (import.meta.env.DEV) {
+        console.log("📬 친구 요청 목록:", requests);
+      }
+
+      return requests;
+    } catch (error) {
+      logger.error("친구 요청 목록 조회 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("친구 요청 목록을 불러올 수 없습니다.");
+    }
+  }
+
+  /**
+   * 친구 요청 수락
+   * PUT /api/v1/friendships/{friendshipId}/accept
+   */
+  async acceptFriendRequest(
+    friendshipId: number,
+  ): Promise<FriendRequestActionResponse> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/friendships/${friendshipId}/accept`;
+      logger.apiRequest("PUT", `/v1/friendships/${friendshipId}/accept`, {});
+
+      let response = await fetch(url, {
+        method: "PUT",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "PUT",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: FriendRequestActionResponse =
+        await handleApiResponse<FriendRequestActionResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 친구 요청 수락 성공:", result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error("친구 요청 수락 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("친구 요청을 수락할 수 없습니다.");
+    }
+  }
+
+  /**
+   * 친구 요청 거절
+   * PUT /api/v1/friendships/{friendshipId}/reject
+   */
+  async rejectFriendRequest(
+    friendshipId: number,
+  ): Promise<FriendRequestActionResponse> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/friendships/${friendshipId}/reject`;
+      logger.apiRequest("PUT", `/v1/friendships/${friendshipId}/reject`, {});
+
+      let response = await fetch(url, {
+        method: "PUT",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "PUT",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: FriendRequestActionResponse =
+        await handleApiResponse<FriendRequestActionResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 친구 요청 거절 성공:", result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error("친구 요청 거절 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("친구 요청을 거절할 수 없습니다.");
     }
   }
 }

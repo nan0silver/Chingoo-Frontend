@@ -11,6 +11,7 @@ import CallHistoryPage from "./CallHistoryPage";
 import ComingSoonPage from "./ComingSoonPage";
 import SupportPage from "./SupportPage";
 import FriendsPage from "./FriendsPage";
+import FriendRequestsPage from "./FriendRequestsPage";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -25,6 +26,7 @@ export default function Index() {
   const [showComingSoon, setShowComingSoon] = useState<boolean>(false);
   const [showSupport, setShowSupport] = useState<boolean>(false);
   const [showFriends, setShowFriends] = useState<boolean>(false);
+  const [showFriendRequests, setShowFriendRequests] = useState<boolean>(false);
   const [comingSoonFeature, setComingSoonFeature] = useState<string>("");
   const navigate = useNavigate();
 
@@ -219,6 +221,20 @@ export default function Index() {
     setShowFriends(false);
   };
 
+  const handleNavigateToFriendRequests = () => {
+    setShowFriendRequests(true);
+  };
+
+  const handleBackFromFriendRequests = () => {
+    setShowFriendRequests(false);
+  };
+
+  const handleFriendRequestHandled = () => {
+    // 친구 요청 처리 후 친구 목록 새로고침을 위해 FriendsPage로 이동
+    setShowFriendRequests(false);
+    setShowFriends(true);
+  };
+
   const handleNavigateToProfile = () => {
     setShowSettings(true);
   };
@@ -247,8 +263,16 @@ export default function Index() {
           featureName={comingSoonFeature}
           onBack={handleBackFromComingSoon}
         />
+      ) : showFriendRequests ? (
+        <FriendRequestsPage
+          onBack={handleBackFromFriendRequests}
+          onRequestHandled={handleFriendRequestHandled}
+        />
       ) : showFriends ? (
-        <FriendsPage onBack={handleBackFromFriends} />
+        <FriendsPage
+          onBack={handleBackFromFriends}
+          onNavigateToRequests={handleNavigateToFriendRequests}
+        />
       ) : showCallHistory ? (
         <CallHistoryPage onBack={handleBackFromCallHistory} />
       ) : showActivity ? (
