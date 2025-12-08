@@ -13,6 +13,7 @@ import {
   SendFriendRequestResponse,
   FriendRequestsResponse,
   FriendRequestActionResponse,
+  DeleteFriendResponse,
 } from "@shared/api";
 import { refreshToken, getApiUrl } from "./auth";
 import { logger } from "./logger";
@@ -995,12 +996,26 @@ export class MatchingApiService {
         await handleApiResponse<FriendsResponse>(response);
 
       // API 응답을 Friend 타입으로 변환
-      const friends: Friend[] = result.data.friends.map((friend: any) => ({
-        id: friend.id || friend.user_id,
-        nickname: friend.nickname || friend.nick_name,
-        lastCallAt:
-          friend.last_call_at || friend.lastCallAt || friend.last_called_at,
-      }));
+      const friends: Friend[] = result.data.friends.map((friend: any) => {
+        // 백엔드에서 반환하는 ID 필드명 확인 (friend_id, id, friendshipId, friendship_id 등)
+        const friendId =
+          friend.friend_id ||
+          friend.id ||
+          friend.friendshipId ||
+          friend.friendship_id ||
+          friend.user_id;
+
+        if (import.meta.env.DEV && !friendId) {
+          console.warn("⚠️ 친구 ID가 없습니다:", friend);
+        }
+
+        return {
+          id: friendId,
+          nickname: friend.nickname || friend.nick_name,
+          lastCallAt:
+            friend.last_call_at || friend.lastCallAt || friend.last_called_at,
+        };
+      });
 
       if (import.meta.env.DEV) {
         console.log("👥 친구 목록:", friends);
@@ -1236,6 +1251,73 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("친구 요청을 거절할 수 없습니다.");
+    }
+  }
+
+  /**
+   * 친구 삭제
+   * DELETE /api/v1/friendships/{friendId}
+   * 백엔드에서 Long 타입을 사용하므로 문자열로 변환하여 전달
+   */
+  async deleteFriend(friendId: number | string): Promise<DeleteFriendResponse> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      // friendId 유효성 검사
+      if (friendId === undefined || friendId === null || friendId === "") {
+        throw new Error("친구 ID가 유효하지 않습니다.");
+      }
+
+      // Long 타입 지원을 위해 명시적으로 문자열로 변환
+      const friendIdStr = String(friendId);
+
+      if (import.meta.env.DEV) {
+        console.log("🗑️ 친구 삭제 API 호출:", {
+          friendId,
+          friendIdStr,
+          url: `${this.baseUrl}/v1/friendships/${friendIdStr}`,
+        });
+      }
+
+      const url = `${this.baseUrl}/v1/friendships/${friendIdStr}`;
+      logger.apiRequest("DELETE", `/v1/friendships/${friendIdStr}`, {});
+
+      let response = await fetch(url, {
+        method: "DELETE",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "DELETE",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: DeleteFriendResponse =
+        await handleApiResponse<DeleteFriendResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 친구 삭제 성공:", result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error("친구 삭제 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("친구를 삭제할 수 없습니다.");
     }
   }
 }

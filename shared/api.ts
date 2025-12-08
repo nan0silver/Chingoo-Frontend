@@ -512,3 +512,11 @@ export interface FriendRequestActionResponse {
   };
   timestamp: string;
 }
+
+/**
+ * 친구 삭제 응답
+ */
+export interface DeleteFriendResponse {
+  message: string;
+  timestamp: string;
+}
