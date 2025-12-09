@@ -422,6 +422,33 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="/friends/requests/received"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <FriendRequestsPage
+                  onBack={handleBackFromFriendRequests}
+                  onRequestHandled={handleFriendRequestHandled}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        <Route
+          path="/friends/requests/sent"
+          element={
+            <AuthGuard>
+              <div className="max-w-md mx-auto">
+                <FriendRequestsPage
+                  onBack={handleBackFromFriendRequests}
+                  onRequestHandled={handleFriendRequestHandled}
+                />
+              </div>
+            </AuthGuard>
+          }
+        />
+        {/* 기존 라우트 호환성을 위해 유지 (받은 요청으로 리다이렉트) */}
+        <Route
           path="/friends/requests"
           element={
             <AuthGuard>

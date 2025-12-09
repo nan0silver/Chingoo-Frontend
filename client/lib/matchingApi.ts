@@ -1086,7 +1086,7 @@ export class MatchingApiService {
 
   /**
    * 친구 요청 목록 조회 (나에게 온 요청들)
-   * GET /api/v1/friendships/requests
+   * GET /api/v1/friendships/requests/received
    */
   async getFriendRequests(): Promise<FriendRequest[]> {
     if (!this.token) {
@@ -1094,8 +1094,8 @@ export class MatchingApiService {
     }
 
     try {
-      const url = `${this.baseUrl}/v1/friendships/requests`;
-      logger.apiRequest("GET", "/v1/friendships/requests", {});
+      const url = `${this.baseUrl}/v1/friendships/requests/received`;
+      logger.apiRequest("GET", "/v1/friendships/requests/received", {});
 
       let response = await fetch(url, {
         method: "GET",
@@ -1147,6 +1147,83 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("친구 요청 목록을 불러올 수 없습니다.");
+    }
+  }
+
+  /**
+   * 보낸 친구 요청 목록 조회 (내가 보낸 요청들)
+   * GET /api/v1/friendships/requests/sent
+   * 또는 현재 사용자 ID를 기준으로 필터링
+   */
+  async getSentFriendRequests(currentUserId: number): Promise<FriendRequest[]> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      // 먼저 보낸 요청 전용 엔드포인트를 시도
+      let url = `${this.baseUrl}/v1/friendships/requests/sent`;
+      logger.apiRequest("GET", "/v1/friendships/requests/sent", {});
+
+      let response = await fetch(url, {
+        method: "GET",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 404 에러면 보낸 요청 엔드포인트가 없다는 의미
+      if (response.status === 404) {
+        if (import.meta.env.DEV) {
+          console.log("⚠️ 보낸 요청 전용 엔드포인트 없음");
+        }
+        // 빈 배열 반환 (보낸 요청을 가져올 수 없음)
+        return [];
+      }
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "GET",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: FriendRequestsResponse =
+        await handleApiResponse<FriendRequestsResponse>(response);
+
+      // API 응답을 FriendRequest 타입으로 변환
+      const requests: FriendRequest[] = result.data.requests.map(
+        (request: any) => ({
+          id: request.id || request.friendship_id,
+          requesterId: request.requester_id || request.requesterId,
+          requesterNickname:
+            request.requester_nickname || request.requesterNickname,
+          receiverId: request.receiver_id || request.receiverId,
+          receiverNickname:
+            request.receiver_nickname || request.receiverNickname,
+          status: request.status || "PENDING",
+          createdAt: request.created_at || request.createdAt,
+          updatedAt: request.updated_at || request.updatedAt,
+        }),
+      );
+
+      if (import.meta.env.DEV) {
+        console.log("📤 보낸 친구 요청 목록:", requests);
+      }
+
+      return requests;
+    } catch (error) {
+      logger.error("보낸 친구 요청 목록 조회 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("보낸 친구 요청 목록을 불러올 수 없습니다.");
     }
   }
 

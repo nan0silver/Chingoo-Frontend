@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
-import { getStoredToken } from "@/lib/auth";
+import { getStoredToken, getStoredUserInfo } from "@/lib/auth";
 import { FriendRequest } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
@@ -15,10 +15,15 @@ export default function FriendRequestsPage({
   onRequestHandled,
 }: FriendRequestsPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
+
+  // 현재 경로에 따라 받은 요청인지 보낸 요청인지 판단
+  const isReceivedRequests = location.pathname.includes("/received");
+  const isSentRequests = location.pathname.includes("/sent");
 
   // 친구 요청 목록 조회
   const fetchRequests = async () => {
@@ -28,13 +33,26 @@ export default function FriendRequestsPage({
 
       const matchingApi = getMatchingApiService();
       const token = getStoredToken();
+      const userInfo = getStoredUserInfo();
 
       if (!token) {
         throw new Error("로그인이 필요합니다.");
       }
 
+      if (!userInfo?.id) {
+        throw new Error("사용자 정보를 불러올 수 없습니다.");
+      }
+
       matchingApi.setToken(token);
-      const data = await matchingApi.getFriendRequests();
+      let data: FriendRequest[];
+
+      if (isSentRequests) {
+        // 보낸 요청 조회
+        data = await matchingApi.getSentFriendRequests(userInfo.id);
+      } else {
+        // 받은 요청 조회 (getFriendRequests()는 이미 받은 요청만 반환)
+        data = await matchingApi.getFriendRequests();
+      }
 
       // PENDING 상태만 필터링 (수락/거절된 요청은 제외)
       const pendingRequests = data.filter(
@@ -51,7 +69,10 @@ export default function FriendRequestsPage({
       setRequests(sortedRequests);
 
       if (import.meta.env.DEV) {
-        console.log("📬 친구 요청 목록:", sortedRequests);
+        console.log(
+          isSentRequests ? "📤 보낸 친구 요청 목록:" : "📬 받은 친구 요청 목록:",
+          sortedRequests,
+        );
       }
     } catch (err) {
       console.error("친구 요청 목록 조회 실패:", err);
@@ -67,7 +88,7 @@ export default function FriendRequestsPage({
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [location.pathname]);
 
   // 친구 요청 수락
   const handleAccept = async (friendshipId: number) => {
@@ -142,6 +163,42 @@ export default function FriendRequestsPage({
     }
   };
 
+  // 보낸 친구 요청 취소
+  const handleCancel = async (friendshipId: number) => {
+    if (processingIds.has(friendshipId)) return;
+
+    try {
+      setProcessingIds((prev) => new Set(prev).add(friendshipId));
+
+      const matchingApi = getMatchingApiService();
+      const token = getStoredToken();
+
+      if (!token) {
+        throw new Error("로그인이 필요합니다.");
+      }
+
+      matchingApi.setToken(token);
+      // 보낸 요청 취소는 거절과 동일한 API 사용
+      await matchingApi.rejectFriendRequest(friendshipId);
+
+      // 요청 목록에서 제거
+      setRequests((prev) => prev.filter((req) => req.id !== friendshipId));
+    } catch (err) {
+      console.error("친구 요청 취소 실패:", err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : "친구 요청을 취소할 수 없습니다.",
+      );
+    } finally {
+      setProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(friendshipId);
+        return next;
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-grey-50 flex flex-col safe-area-page font-noto pb-20">
       {/* Header */}
@@ -159,7 +216,7 @@ export default function FriendRequestsPage({
             </svg>
           </button>
           <h1 className="text-2xl font-bold text-grey-900 font-cafe24">
-            친구 요청
+            {isSentRequests ? "보낸 친구 요청" : "받은 친구 요청"}
           </h1>
         </div>
       </div>
@@ -189,7 +246,9 @@ export default function FriendRequestsPage({
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <p className="text-grey-900 font-crimson text-lg">
-                받은 친구 요청이 없습니다.
+                {isSentRequests
+                  ? "보낸 친구 요청이 없습니다."
+                  : "받은 친구 요청이 없습니다."}
               </p>
             </div>
           </div>
@@ -197,6 +256,10 @@ export default function FriendRequestsPage({
           <div className="space-y-3">
             {requests.map((request) => {
               const isProcessing = processingIds.has(request.id);
+              // 받은 요청인지 보낸 요청인지에 따라 표시할 닉네임 결정
+              const displayNickname = isSentRequests
+                ? request.receiverNickname
+                : request.requesterNickname;
 
               return (
                 <div
@@ -207,38 +270,52 @@ export default function FriendRequestsPage({
                     {/* 프로필 아이콘 */}
                     <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-orange-accent font-crimson text-lg font-bold">
-                        {request.requesterNickname.charAt(0)}
+                        {displayNickname.charAt(0)}
                       </span>
                     </div>
 
                     {/* 요청 정보 */}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-grey-900 font-crimson text-lg font-semibold truncate">
-                        {request.requesterNickname}
+                        {displayNickname}
                       </h3>
                       <p className="text-grey-400 font-crimson text-sm mt-1">
-                        친구 요청을 보냈습니다
+                        {isSentRequests
+                          ? "친구 요청을 보냈습니다"
+                          : "친구 요청을 보냈습니다"}
                       </p>
                     </div>
                   </div>
 
-                  {/* 액션 버튼 */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleReject(request.id)}
-                      disabled={isProcessing}
-                      className="flex-1 h-10 border-2 border-grey-100 text-grey-900 font-crimson text-base font-semibold rounded-lg hover:bg-grey-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isProcessing ? "처리 중..." : "거절"}
-                    </button>
-                    <button
-                      onClick={() => handleAccept(request.id)}
-                      disabled={isProcessing}
-                      className="flex-1 h-10 bg-orange-accent text-white font-crimson text-base font-semibold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isProcessing ? "처리 중..." : "수락"}
-                    </button>
-                  </div>
+                  {/* 액션 버튼 - 보낸 요청은 취소만, 받은 요청은 수락/거절 */}
+                  {isSentRequests ? (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleCancel(request.id)}
+                        disabled={isProcessing}
+                        className="w-full h-10 border-2 border-grey-100 text-grey-900 font-crimson text-base font-semibold rounded-lg hover:bg-grey-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isProcessing ? "처리 중..." : "요청 취소"}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleReject(request.id)}
+                        disabled={isProcessing}
+                        className="flex-1 h-10 border-2 border-grey-100 text-grey-900 font-crimson text-base font-semibold rounded-lg hover:bg-grey-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isProcessing ? "처리 중..." : "거절"}
+                      </button>
+                      <button
+                        onClick={() => handleAccept(request.id)}
+                        disabled={isProcessing}
+                        className="flex-1 h-10 bg-orange-accent text-white font-crimson text-base font-semibold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isProcessing ? "처리 중..." : "수락"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

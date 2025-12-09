@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
-import { getStoredToken } from "@/lib/auth";
+import { getStoredToken, getStoredUserInfo } from "@/lib/auth";
 import { Friend } from "@shared/api";
 import { formatLastCallTime } from "@/lib/dateUtils";
 import FriendRequestModal from "@/components/FriendRequestModal";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Inbox, Send } from "lucide-react";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface FriendsPageProps {
@@ -28,8 +28,10 @@ export default function FriendsPage({
     id: number;
     nickname: string;
   } | null>(null);
+  const [receivedRequestCount, setReceivedRequestCount] = useState<number>(0);
+  const [sentRequestCount, setSentRequestCount] = useState<number>(0);
 
-  // 친구 목록 조회
+  // 친구 목록 및 요청 개수 조회
   useEffect(() => {
     const fetchFriends = async () => {
       try {
@@ -38,6 +40,7 @@ export default function FriendsPage({
 
         const matchingApi = getMatchingApiService();
         const token = getStoredToken();
+        const userInfo = getStoredUserInfo();
 
         if (!token) {
           throw new Error("로그인이 필요합니다.");
@@ -58,6 +61,27 @@ export default function FriendsPage({
         });
 
         setFriends(sortedFriends);
+
+        // 친구 요청 개수 조회
+        if (userInfo?.id) {
+          try {
+            // getFriendRequests()는 이미 받은 요청만 반환하므로 필터링 불필요
+            const receivedRequests = await matchingApi.getFriendRequests();
+            const pendingReceived = receivedRequests.filter(
+              (req) => req.status === "PENDING",
+            );
+            setReceivedRequestCount(pendingReceived.length);
+
+            // 보낸 요청 개수 조회
+            const sentRequests = await matchingApi.getSentFriendRequests(
+              userInfo.id,
+            );
+            setSentRequestCount(sentRequests.length);
+          } catch (reqErr) {
+            console.error("친구 요청 개수 조회 실패:", reqErr);
+            // 요청 개수 조회 실패해도 친구 목록은 표시
+          }
+        }
 
         if (import.meta.env.DEV) {
           console.log("👥 친구 목록:", sortedFriends);
@@ -267,21 +291,31 @@ export default function FriendsPage({
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          {/* 받은 요청 버튼 */}
           <button
-            onClick={() => navigate("/friends/requests")}
-            className="p-2 hover:bg-grey-50 rounded-lg transition-colors"
-            title="친구 요청"
+            onClick={() => navigate("/friends/requests/received")}
+            className="relative p-2 hover:bg-grey-50 rounded-lg transition-colors"
+            title="받은 친구 요청"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-orange-accent"
-              />
-            </svg>
+            <Inbox className="w-6 h-6 text-orange-accent" strokeWidth={2} />
+            {receivedRequestCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {receivedRequestCount > 9 ? "9+" : receivedRequestCount}
+              </span>
+            )}
+          </button>
+          {/* 보낸 요청 버튼 */}
+          <button
+            onClick={() => navigate("/friends/requests/sent")}
+            className="relative p-2 hover:bg-grey-50 rounded-lg transition-colors"
+            title="보낸 친구 요청"
+          >
+            <Send className="w-6 h-6 text-orange-accent" strokeWidth={2} />
+            {sentRequestCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-orange-accent text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {sentRequestCount > 9 ? "9+" : sentRequestCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
