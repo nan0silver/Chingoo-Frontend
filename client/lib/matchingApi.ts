@@ -1199,18 +1199,21 @@ export class MatchingApiService {
         await handleApiResponse<FriendRequestsResponse>(response);
 
       // API 응답을 FriendRequest 타입으로 변환
+      // 보낸 요청의 경우: addressee_id, addressee_nickname 사용
       const requests: FriendRequest[] = result.data.requests.map(
         (request: any) => ({
           id: request.id || request.friendship_id,
-          requesterId: request.requester_id || request.requesterId,
-          requesterNickname:
-            request.requester_nickname || request.requesterNickname,
-          receiverId: request.receiver_id || request.receiverId,
+          requesterId: currentUserId, // 보낸 요청이므로 현재 사용자가 요청자
+          requesterNickname: "", // 보낸 요청에서는 요청자 닉네임이 필요 없음
+          receiverId: request.addressee_id || request.receiver_id || request.receiverId,
           receiverNickname:
-            request.receiver_nickname || request.receiverNickname,
+            request.addressee_nickname ||
+            request.receiver_nickname ||
+            request.receiverNickname ||
+            "",
           status: request.status || "PENDING",
-          createdAt: request.created_at || request.createdAt,
-          updatedAt: request.updated_at || request.updatedAt,
+          createdAt: request.requested_at || request.created_at || request.createdAt,
+          updatedAt: request.updated_at || request.updatedAt || request.requested_at || request.created_at,
         }),
       );
 

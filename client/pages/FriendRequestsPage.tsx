@@ -258,8 +258,8 @@ export default function FriendRequestsPage({
               const isProcessing = processingIds.has(request.id);
               // 받은 요청인지 보낸 요청인지에 따라 표시할 닉네임 결정
               const displayNickname = isSentRequests
-                ? request.receiverNickname
-                : request.requesterNickname;
+                ? request.receiverNickname || ""
+                : request.requesterNickname || "";
 
               return (
                 <div
@@ -270,7 +270,9 @@ export default function FriendRequestsPage({
                     {/* 프로필 아이콘 */}
                     <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-orange-accent font-crimson text-lg font-bold">
-                        {displayNickname.charAt(0)}
+                        {displayNickname && displayNickname.length > 0
+                          ? displayNickname.charAt(0)
+                          : "?"}
                       </span>
                     </div>
 
