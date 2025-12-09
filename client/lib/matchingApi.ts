@@ -1209,15 +1209,21 @@ export class MatchingApiService {
           id: request.id || request.friendship_id,
           requesterId: currentUserId, // 보낸 요청이므로 현재 사용자가 요청자
           requesterNickname: "", // 보낸 요청에서는 요청자 닉네임이 필요 없음
-          receiverId: request.addressee_id || request.receiver_id || request.receiverId,
+          receiverId:
+            request.addressee_id || request.receiver_id || request.receiverId,
           receiverNickname:
             request.addressee_nickname ||
             request.receiver_nickname ||
             request.receiverNickname ||
             "",
           status: request.status || "PENDING",
-          createdAt: request.requested_at || request.created_at || request.createdAt,
-          updatedAt: request.updated_at || request.updatedAt || request.requested_at || request.created_at,
+          createdAt:
+            request.requested_at || request.created_at || request.createdAt,
+          updatedAt:
+            request.updated_at ||
+            request.updatedAt ||
+            request.requested_at ||
+            request.created_at,
         }),
       );
 
@@ -1299,7 +1305,11 @@ export class MatchingApiService {
 
     try {
       const url = `${this.baseUrl}/v1/friendships/requests/${friendshipId}`;
-      logger.apiRequest("DELETE", `/v1/friendships/requests/${friendshipId}`, {});
+      logger.apiRequest(
+        "DELETE",
+        `/v1/friendships/requests/${friendshipId}`,
+        {},
+      );
 
       let response = await fetch(url, {
         method: "DELETE",

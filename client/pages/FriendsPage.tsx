@@ -379,8 +379,8 @@ export default function FriendsPage({
                       {friend.lastCallAt &&
                         friend.lastCallCategoryName &&
                         friend.lastCallCategoryName.trim() !== "" && (
-                          <span className="text-grey-400 font-crimson text-sm">
-                            · {friend.lastCallCategoryName}
+                          <span className="bg-orange-50 text-orange-accent font-crimson text-xs font-medium px-2 py-0.5 rounded-md">
+                            {friend.lastCallCategoryName}
                           </span>
                         )}
                     </div>
