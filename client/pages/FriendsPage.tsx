@@ -290,14 +290,17 @@ export default function FriendsPage({
             친구 목록
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* 받은 요청 버튼 */}
           <button
             onClick={() => navigate("/friends/requests/received")}
-            className="relative p-2 hover:bg-grey-50 rounded-lg transition-colors"
+            className="relative flex flex-col items-center gap-1 p-2 hover:bg-grey-50 rounded-lg transition-colors"
             title="받은 친구 요청"
           >
-            <Inbox className="w-6 h-6 text-orange-accent" strokeWidth={2} />
+            <Inbox className="w-7 h-7 text-orange-accent" strokeWidth={2} />
+            <span className="text-grey-600 font-crimson text-xs whitespace-pre-line text-center">
+              받은 친구{"\n"}요청
+            </span>
             {receivedRequestCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {receivedRequestCount > 9 ? "9+" : receivedRequestCount}
@@ -307,10 +310,13 @@ export default function FriendsPage({
           {/* 보낸 요청 버튼 */}
           <button
             onClick={() => navigate("/friends/requests/sent")}
-            className="relative p-2 hover:bg-grey-50 rounded-lg transition-colors"
+            className="relative flex flex-col items-center gap-1 p-2 hover:bg-grey-50 rounded-lg transition-colors"
             title="보낸 친구 요청"
           >
-            <Send className="w-6 h-6 text-orange-accent" strokeWidth={2} />
+            <Send className="w-7 h-7 text-orange-accent" strokeWidth={2} />
+            <span className="text-grey-600 font-crimson text-xs whitespace-pre-line text-center">
+              보낸 친구{"\n"}요청
+            </span>
             {sentRequestCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-orange-accent text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {sentRequestCount > 9 ? "9+" : sentRequestCount}
