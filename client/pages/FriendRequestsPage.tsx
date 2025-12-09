@@ -55,9 +55,7 @@ export default function FriendRequestsPage({
       }
 
       // PENDING 상태만 필터링 (수락/거절된 요청은 제외)
-      const pendingRequests = data.filter(
-        (req) => req.status === "PENDING",
-      );
+      const pendingRequests = data.filter((req) => req.status === "PENDING");
 
       // 최신 요청이 위로 오도록 정렬
       const sortedRequests = pendingRequests.sort((a, b) => {
@@ -70,7 +68,9 @@ export default function FriendRequestsPage({
 
       if (import.meta.env.DEV) {
         console.log(
-          isSentRequests ? "📤 보낸 친구 요청 목록:" : "📬 받은 친구 요청 목록:",
+          isSentRequests
+            ? "📤 보낸 친구 요청 목록:"
+            : "📬 받은 친구 요청 목록:",
           sortedRequests,
         );
       }
@@ -115,9 +115,7 @@ export default function FriendRequestsPage({
     } catch (err) {
       console.error("친구 요청 수락 실패:", err);
       alert(
-        err instanceof Error
-          ? err.message
-          : "친구 요청을 수락할 수 없습니다.",
+        err instanceof Error ? err.message : "친구 요청을 수락할 수 없습니다.",
       );
     } finally {
       setProcessingIds((prev) => {
@@ -150,9 +148,7 @@ export default function FriendRequestsPage({
     } catch (err) {
       console.error("친구 요청 거절 실패:", err);
       alert(
-        err instanceof Error
-          ? err.message
-          : "친구 요청을 거절할 수 없습니다.",
+        err instanceof Error ? err.message : "친구 요청을 거절할 수 없습니다.",
       );
     } finally {
       setProcessingIds((prev) => {
@@ -186,9 +182,7 @@ export default function FriendRequestsPage({
     } catch (err) {
       console.error("친구 요청 취소 실패:", err);
       alert(
-        err instanceof Error
-          ? err.message
-          : "친구 요청을 취소할 수 없습니다.",
+        err instanceof Error ? err.message : "친구 요청을 취소할 수 없습니다.",
       );
     } finally {
       setProcessingIds((prev) => {
@@ -278,13 +272,17 @@ export default function FriendRequestsPage({
 
                     {/* 요청 정보 */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-grey-900 font-crimson text-lg font-semibold truncate">
-                        {displayNickname}
-                      </h3>
+                      <p className="text-grey-900 font-crimson text-lg mt-1">
+                        <span className="font-semibold truncate">
+                          {displayNickname}
+                        </span>
+                        <span className="text-grey-400 font-crimson text-sm font-normal">
+                          {" "}
+                          {isSentRequests ? "님께" : "님이"}
+                        </span>
+                      </p>
                       <p className="text-grey-400 font-crimson text-sm mt-1">
-                        {isSentRequests
-                          ? "친구 요청을 보냈습니다"
-                          : "친구 요청을 보냈습니다"}
+                        친구 요청을 보냈습니다.
                       </p>
                     </div>
                   </div>
@@ -345,4 +343,3 @@ export default function FriendRequestsPage({
     </div>
   );
 }
-
