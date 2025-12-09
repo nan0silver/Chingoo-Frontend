@@ -1014,6 +1014,10 @@ export class MatchingApiService {
           nickname: friend.nickname || friend.nick_name,
           lastCallAt:
             friend.last_call_at || friend.lastCallAt || friend.last_called_at,
+          lastCallCategoryName:
+            friend.last_call_category_name ||
+            friend.lastCallCategoryName ||
+            null,
         };
       });
 

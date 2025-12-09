@@ -440,6 +440,7 @@ export interface Friend {
   id: number;
   nickname: string;
   lastCallAt: string | null; // 마지막 통화 시간 (ISO 8601 형식, 통화 이력이 없으면 null)
+  lastCallCategoryName: string | null; // 마지막 통화 카테고리 이름 (통화 이력이 없으면 null)
 }
 
 /**

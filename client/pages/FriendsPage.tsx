@@ -372,9 +372,18 @@ export default function FriendsPage({
                     <h3 className="text-grey-900 font-crimson text-lg font-semibold truncate">
                       {friend.nickname}
                     </h3>
-                    <p className="text-grey-400 font-crimson text-sm mt-1">
-                      {formatLastCallTime(friend.lastCallAt)}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-grey-400 font-crimson text-sm">
+                        {formatLastCallTime(friend.lastCallAt)}
+                      </p>
+                      {friend.lastCallAt &&
+                        friend.lastCallCategoryName &&
+                        friend.lastCallCategoryName.trim() !== "" && (
+                          <span className="text-grey-400 font-crimson text-sm">
+                            · {friend.lastCallCategoryName}
+                          </span>
+                        )}
+                    </div>
                   </div>
                 </div>
 
