@@ -210,8 +210,11 @@ export default function Index() {
   };
 
   const handleNavigateToFriends = () => {
-    setShowComingSoon(true);
-    setComingSoonFeature("내 친구");
+    navigate("/friends");
+  };
+
+  const handleNavigateToFriendRequests = () => {
+    navigate("/friends/requests");
   };
 
   const handleNavigateToProfile = () => {
@@ -278,8 +281,6 @@ export default function Index() {
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
           onOpenCallHistory={handleNavigateToCallHistory}
-          onNavigateToFriends={handleNavigateToFriends}
-          onNavigateToProfile={handleNavigateToProfile}
         />
       )}
     </div>
