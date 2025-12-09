@@ -178,8 +178,8 @@ export default function FriendRequestsPage({
       }
 
       matchingApi.setToken(token);
-      // 보낸 요청 취소는 거절과 동일한 API 사용
-      await matchingApi.rejectFriendRequest(friendshipId);
+      // 보낸 요청 취소는 DELETE /api/v1/friendships/requests/{friendshipId} 사용
+      await matchingApi.cancelSentFriendRequest(friendshipId);
 
       // 요청 목록에서 제거
       setRequests((prev) => prev.filter((req) => req.id !== friendshipId));

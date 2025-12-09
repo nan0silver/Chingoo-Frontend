@@ -1283,6 +1283,58 @@ export class MatchingApiService {
   }
 
   /**
+   * 보낸 친구 요청 취소
+   * DELETE /api/v1/friendships/requests/{friendshipId}
+   */
+  async cancelSentFriendRequest(
+    friendshipId: number,
+  ): Promise<FriendRequestActionResponse> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const url = `${this.baseUrl}/v1/friendships/requests/${friendshipId}`;
+      logger.apiRequest("DELETE", `/v1/friendships/requests/${friendshipId}`, {});
+
+      let response = await fetch(url, {
+        method: "DELETE",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "DELETE",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: FriendRequestActionResponse =
+        await handleApiResponse<FriendRequestActionResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 보낸 친구 요청 취소 성공:", result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error("보낸 친구 요청 취소 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("보낸 친구 요청을 취소할 수 없습니다.");
+    }
+  }
+
+  /**
    * 친구 요청 거절
    * PUT /api/v1/friendships/{friendshipId}/reject
    */
