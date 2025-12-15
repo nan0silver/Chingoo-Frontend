@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCall } from "@/lib/useCall";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { UserPlus } from "lucide-react";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -30,6 +31,7 @@ export default function CallEvaluationPage({
   const [friendRequestMessage, setFriendRequestMessage] = useState<string>("");
   const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
 
@@ -200,8 +202,33 @@ export default function CallEvaluationPage({
     }
   };
 
+  // 하단 네비게이션 핸들러
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    if (location.pathname.startsWith("/friends")) {
+      return "friends";
+    } else if (location.pathname === "/settings") {
+      return "settings";
+    }
+    return "home";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col relative safe-area-page font-noto">
+    <div className="min-h-screen bg-white flex flex-col relative safe-area-page font-noto pb-20">
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -515,46 +542,11 @@ export default function CallEvaluationPage({
         </div>
       )}
 
-      {/* Buttons Container */}
-      <div className="flex-1 flex items-end pb-8">
-        <div className="w-full px-5">
-          <div className="flex gap-2">
-            {/* Call Again Button */}
-            <button
-              onClick={() => {
-                // 다시 통화하기 전에 partner 정보 삭제
-                clearPartner();
-                if (import.meta.env.DEV) {
-                  console.log("✅ 다시 통화하기 - partner 정보 삭제 완료");
-                }
-                onCallAgain();
-              }}
-              className="flex-1 h-14 border border-orange-500 rounded-lg flex items-center justify-center bg-white"
-            >
-              <span className="text-orange-500 font-crimson text-xl font-bold">
-                다시 통화하기
-              </span>
-            </button>
-
-            {/* Select Interests Button */}
-            <button
-              onClick={() => {
-                // 관심사 선택 전에 partner 정보 삭제
-                clearPartner();
-                if (import.meta.env.DEV) {
-                  console.log("✅ 관심사 선택 - partner 정보 삭제 완료");
-                }
-                onSelectInterests();
-              }}
-              className="flex-1 h-14 bg-orange-500 rounded-lg flex items-center justify-center"
-            >
-              <span className="text-white font-crimson text-xl font-bold">
-                관심사 선택
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }
