@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useCall } from "@/lib/useCall";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
+import { UserPlus } from "lucide-react";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -21,6 +22,12 @@ export default function CallEvaluationPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [friendRequestStatus, setFriendRequestStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [friendRequestMessage, setFriendRequestMessage] = useState<string>("");
+  const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
 
@@ -31,6 +38,90 @@ export default function CallEvaluationPage({
       console.log("🔍 CallEvaluationPage - callId:", callId);
     }
   }, [partner, callId]);
+
+  // 친구 추가 함수
+  const handleAddFriend = async () => {
+    if (!partner?.nickname) {
+      alert("상대방 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsAddingFriend(true);
+    setFriendRequestStatus("idle");
+    setFriendRequestMessage("");
+
+    try {
+      const token = getStoredToken();
+      if (!token) {
+        throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      }
+
+      matchingApiService.setToken(token);
+
+      await matchingApiService.sendFriendRequest({
+        nickname: partner.nickname,
+      });
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 친구 요청 전송 성공");
+      }
+
+      setFriendRequestStatus("success");
+      setFriendRequestMessage("친구 요청을 보냈습니다!");
+      setShowFriendRequestModal(true);
+    } catch (error: any) {
+      console.error("❌ 친구 요청 전송 실패:", error);
+
+      // 에러 메시지 처리
+      let errorMessage = "친구 요청을 보낼 수 없습니다.";
+
+      if (error?.message) {
+        const message = error.message.toLowerCase();
+
+        // 이미 요청을 보낸 경우 (가장 구체적인 메시지부터 체크)
+        if (
+          message.includes("이미 친구 요청을 보냈습니다") ||
+          message.includes("이미 요청") ||
+          message.includes("already requested") ||
+          message.includes("pending")
+        ) {
+          errorMessage = "이미 친구 요청을 보냈습니다.";
+        }
+        // 상대방이 이미 요청을 보낸 경우
+        else if (
+          message.includes("상대방") ||
+          message.includes("receiver") ||
+          message.includes("받은 요청")
+        ) {
+          errorMessage =
+            "상대방이 이미 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
+        }
+        // 동시 요청 (409 Conflict)
+        else if (message.includes("409") || message.includes("conflict")) {
+          errorMessage =
+            "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
+        }
+        // 이미 친구인 경우 (더 일반적인 메시지는 나중에 체크)
+        else if (
+          message.includes("이미 친구") ||
+          message.includes("already friend") ||
+          message.includes("already exists")
+        ) {
+          errorMessage = "이미 친구입니다.";
+        }
+        // 기타 에러는 서버 메시지 사용
+        else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      setFriendRequestStatus("error");
+      setFriendRequestMessage(errorMessage);
+      setShowFriendRequestModal(true);
+    } finally {
+      setIsAddingFriend(false);
+    }
+  };
 
   // 평가 제출 함수
   const handleSubmitEvaluation = async () => {
@@ -124,6 +215,77 @@ export default function CallEvaluationPage({
               {selectedRating === "good" ? "좋았어요" : "별로였어요"}로
               평가되었습니다.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Friend Request Modal */}
+      {showFriendRequestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div
+              className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                friendRequestStatus === "success"
+                  ? "bg-green-100"
+                  : "bg-red-100"
+              }`}
+            >
+              {friendRequestStatus === "success" ? (
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                  className="text-green-600"
+                >
+                  <path
+                    d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                  className="text-red-600"
+                >
+                  <path
+                    d="M24 8L8 24M8 8L24 24"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </div>
+            <h3
+              className={`text-xl font-bold mb-2 ${
+                friendRequestStatus === "success"
+                  ? "text-gray-900"
+                  : "text-red-600"
+              }`}
+            >
+              {friendRequestStatus === "success"
+                ? "친구 요청 완료"
+                : "친구 요청 실패"}
+            </h3>
+            <p className="text-gray-600 mb-6">{friendRequestMessage}</p>
+            <button
+              onClick={() => setShowFriendRequestModal(false)}
+              className={`w-full h-12 rounded-lg font-crimson text-lg font-semibold ${
+                friendRequestStatus === "success"
+                  ? "bg-orange-500 text-white hover:bg-orange-600"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              } transition-colors`}
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
@@ -239,6 +401,52 @@ export default function CallEvaluationPage({
           {isSubmitting ? "제출 중..." : "평가 제출하기"}
         </button>
       </div>
+
+      {/* Add Friend Button */}
+      {partner?.nickname && (
+        <div className="flex justify-center mt-4 px-5">
+          <button
+            onClick={handleAddFriend}
+            disabled={isAddingFriend}
+            className={`w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 ${
+              !isAddingFriend
+                ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {isAddingFriend ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>요청 중...</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-5 h-5" strokeWidth={2} />
+                <span>친구 추가</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Buttons Container */}
       <div className="flex-1 flex items-end pb-8">
