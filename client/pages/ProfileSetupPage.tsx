@@ -58,12 +58,8 @@ export default function ProfileSetupPage() {
 
   // 현재 경로에 따라 activeItem 결정
   const getActiveItem = (): BottomNavItem => {
-    if (location.pathname.startsWith("/friends")) {
-      return "friends";
-    } else if (location.pathname === "/settings") {
-      return "settings";
-    }
-    return "home";
+    // ProfileSetupPage는 설정 페이지에서 접근하므로 항상 "settings" 활성화
+    return "settings";
   };
 
   useEffect(() => {
