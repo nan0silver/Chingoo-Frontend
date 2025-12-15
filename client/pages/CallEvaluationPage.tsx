@@ -182,18 +182,6 @@ export default function CallEvaluationPage({
 
       // 성공 모달 표시
       setShowSuccessModal(true);
-
-      // 평가 제출 후 partner 정보 삭제
-      clearPartner();
-      if (import.meta.env.DEV) {
-        console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
-      }
-
-      // 2초 후 홈페이지로 이동
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        onGoHome();
-      }, 2000);
     } catch (error) {
       console.error("❌ 평가 제출 실패:", error);
       alert("평가 제출에 실패했습니다. 다시 시도해주세요.");
@@ -253,10 +241,16 @@ export default function CallEvaluationPage({
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               평가가 제출되었습니다!
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-6">
               {selectedRating === "good" ? "좋았어요" : "별로였어요"}로
               평가되었습니다.
             </p>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
