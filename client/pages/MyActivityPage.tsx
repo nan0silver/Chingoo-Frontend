@@ -125,7 +125,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-5 py-5">
+      <div className="flex-1 px-5 py-5 pb-24 overflow-y-auto">
         {/* 로딩 상태 */}
         {isLoading && (
           <div className="flex items-center justify-center h-64">
