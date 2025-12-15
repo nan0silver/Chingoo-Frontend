@@ -313,11 +313,7 @@ export default function CallEvaluationPage({
                 <p className="text-gray-600 mb-6">{friendRequestMessage}</p>
                 <button
                   onClick={() => setShowFriendRequestModal(false)}
-                  className={`w-full h-12 rounded-lg font-crimson text-lg font-semibold ${
-                    friendRequestStatus === "success"
-                      ? "bg-orange-500 text-white hover:bg-orange-600"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  } transition-colors`}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
                 >
                   확인
                 </button>
