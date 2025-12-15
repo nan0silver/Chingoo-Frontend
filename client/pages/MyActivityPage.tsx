@@ -68,7 +68,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
 
     const { callCount, totalDurationMinutes } = stats.weeklyStats;
 
-    if (callCount >= 3 || totalDurationMinutes >= 90) {
+    if (callCount >= 4 || totalDurationMinutes >= 90) {
       return { level: "EXCELLENT", displayName: "우수회원" };
     } else if (callCount >= 1) {
       return { level: "GOOD", displayName: "일반회원" };
