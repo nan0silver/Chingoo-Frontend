@@ -30,6 +30,10 @@ export default function CallEvaluationPage({
   >("idle");
   const [friendRequestMessage, setFriendRequestMessage] = useState<string>("");
   const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
+  const [showEvaluationErrorModal, setShowEvaluationErrorModal] =
+    useState(false);
+  const [evaluationErrorMessage, setEvaluationErrorMessage] =
+    useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
   const { partner, clearPartner, callId } = useCall();
@@ -182,9 +186,29 @@ export default function CallEvaluationPage({
 
       // 성공 모달 표시
       setShowSuccessModal(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ 평가 제출 실패:", error);
-      alert("평가 제출에 실패했습니다. 다시 시도해주세요.");
+
+      // 에러 메시지 처리
+      let errorMessage = "평가 제출에 실패했습니다. 다시 시도해주세요.";
+
+      if (error?.message) {
+        const message = error.message.toLowerCase();
+
+        // 이미 평가를 완료한 경우
+        if (
+          message.includes("이미 평가를 완료했습니다") ||
+          message.includes("already evaluated") ||
+          message.includes("already completed")
+        ) {
+          errorMessage = "이미 평가를 완료했습니다.";
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      setEvaluationErrorMessage(errorMessage);
+      setShowEvaluationErrorModal(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -377,6 +401,77 @@ export default function CallEvaluationPage({
           </div>
         </div>
       )}
+
+      {/* Evaluation Error Modal */}
+      {showEvaluationErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            {evaluationErrorMessage === "이미 평가를 완료했습니다." ? (
+              // 이미 평가 완료한 경우: 초록색 체크 아이콘과 메시지만 표시
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    className="text-green-600"
+                  >
+                    <path
+                      d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-900 font-crimson text-lg font-bold mb-6">
+                  {evaluationErrorMessage}
+                </p>
+                <button
+                  onClick={() => setShowEvaluationErrorModal(false)}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                >
+                  확인
+                </button>
+              </>
+            ) : (
+              // 기타 에러: 빨간색 X 아이콘과 에러 메시지 표시
+              <>
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    className="text-red-600"
+                  >
+                    <path
+                      d="M24 8L8 24M8 8L24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-red-600">
+                  평가 제출 실패
+                </h3>
+                <p className="text-gray-600 mb-6">{evaluationErrorMessage}</p>
+                <button
+                  onClick={() => setShowEvaluationErrorModal(false)}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                >
+                  확인
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-center mt-8">
         <h1 className="text-orange-500 font-crimson text-2xl font-bold">
