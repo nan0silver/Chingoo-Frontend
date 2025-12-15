@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCall } from "@/lib/useCall";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
@@ -28,6 +29,7 @@ export default function CallEvaluationPage({
   >("idle");
   const [friendRequestMessage, setFriendRequestMessage] = useState<string>("");
   const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
+  const navigate = useNavigate();
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
 
@@ -264,12 +266,28 @@ export default function CallEvaluationPage({
                 <p className="text-gray-900 font-crimson text-lg font-bold mb-6 whitespace-pre-line">
                   {friendRequestMessage}
                 </p>
-                <button
-                  onClick={() => setShowFriendRequestModal(false)}
-                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
-                >
-                  확인
-                </button>
+                <div className="flex flex-col gap-2">
+                  {(friendRequestMessage ===
+                    "상대방이 이미 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요." ||
+                    friendRequestMessage ===
+                      "상대방이 동시에 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요.") && (
+                    <button
+                      onClick={() => {
+                        setShowFriendRequestModal(false);
+                        navigate("/friends/requests/received");
+                      }}
+                      className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                    >
+                      받은 친구 요청 보기
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowFriendRequestModal(false)}
+                    className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                  >
+                    확인
+                  </button>
+                </div>
               </>
             ) : (
               // 기타 경우: 기존 로직 유지
