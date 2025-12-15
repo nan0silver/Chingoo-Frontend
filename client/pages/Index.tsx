@@ -280,7 +280,6 @@ export default function Index() {
         <HomePage
           onStartCall={handleStartCall}
           onOpenSettings={handleOpenSettings}
-          onOpenCallHistory={handleNavigateToCallHistory}
         />
       )}
     </div>

@@ -9,13 +9,11 @@ import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 interface HomePageProps {
   onStartCall: (category: string) => void;
   onOpenSettings: () => void;
-  onOpenCallHistory: () => void;
 }
 
 export default function HomePage({
   onStartCall,
   onOpenSettings,
-  onOpenCallHistory,
 }: HomePageProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -278,7 +276,7 @@ export default function HomePage({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={onOpenCallHistory}
+            onClick={() => navigate("/call-history")}
             className="px-3 py-1 border-2 border-orange-accent text-orange-accent font-crimson text-sm font-bold rounded hover:bg-orange-50 transition-colors"
           >
             통화 기록
