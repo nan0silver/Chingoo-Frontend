@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   getStoredUserInfo,
   getUserProfile,
   updateUserProfile,
 } from "@/lib/auth";
 import { UserInfo, UserProfile } from "@shared/api";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -19,6 +20,7 @@ export default function ProfileSetupPage() {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 공통 성공 처리 함수
   const scheduleSuccessNavigate = () => {
@@ -38,6 +40,30 @@ export default function ProfileSetupPage() {
       is_new_user: false,
     };
     localStorage.setItem("user_info", JSON.stringify(updatedUserInfo));
+  };
+
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    if (location.pathname.startsWith("/friends")) {
+      return "friends";
+    } else if (location.pathname === "/settings") {
+      return "settings";
+    }
+    return "home";
   };
 
   useEffect(() => {
@@ -232,7 +258,7 @@ export default function ProfileSetupPage() {
 
   return (
     <div
-      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page font-noto"
+      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page font-noto pb-20"
       aria-busy={showSuccessMessage}
     >
       {/* Privacy Consent Modal */}
@@ -495,6 +521,12 @@ export default function ProfileSetupPage() {
           </button>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }
