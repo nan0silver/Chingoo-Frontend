@@ -230,13 +230,9 @@ export default function CallEvaluationPage({
   };
 
   // 현재 경로에 따라 activeItem 결정
-  const getActiveItem = (): BottomNavItem => {
-    if (location.pathname.startsWith("/friends")) {
-      return "friends";
-    } else if (location.pathname === "/settings") {
-      return "settings";
-    }
-    return "home";
+  const getActiveItem = (): BottomNavItem | null => {
+    // 통화 평가 페이지에서는 아무 버튼도 활성화하지 않음
+    return null;
   };
 
   return (

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export type BottomNavItem = "home" | "friends" | "settings";
 
 interface BottomNavigationProps {
-  activeItem: BottomNavItem;
+  activeItem: BottomNavItem | null;
   onItemClick: (item: BottomNavItem) => void;
 }
 
