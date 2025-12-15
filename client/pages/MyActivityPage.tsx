@@ -33,7 +33,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
         matchingApi.setToken(token);
         const data = await matchingApi.getActivityStats();
 
-        // 디버깅: 받은 데이터 확인
+        // 디버깅: 받은 데이터 확인 (개발 환경에서만)
         if (import.meta.env.DEV) {
           console.log("📊 MyActivityPage - 받은 데이터:", data);
           console.log("📊 주간:", data.weeklyStats);

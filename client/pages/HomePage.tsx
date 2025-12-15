@@ -94,22 +94,10 @@ export default function HomePage({
     if (!selectedCategory || isStartingMatching) return;
 
     try {
-      if (import.meta.env.DEV) {
-        console.log("🏠 HomePage: handleStartCall 호출됨");
-        console.log("🏠 선택된 카테고리:", selectedCategory);
-      }
       setIsStartingMatching(true);
 
       // 실제 매칭 API 호출
-      if (import.meta.env.DEV) {
-        console.log("🏠 실제 매칭 시작");
-      }
       await startMatching({ category_id: parseInt(selectedCategory) });
-
-      // 매칭 성공 시 연결 페이지로 이동
-      if (import.meta.env.DEV) {
-        console.log("🏠 ConnectingCallPage로 이동");
-      }
       navigate("/connecting-call");
     } catch (error) {
       console.error("🏠 매칭 시작 실패:", error);
@@ -146,10 +134,6 @@ export default function HomePage({
         category_name: categoryName,
       };
 
-      if (import.meta.env.DEV) {
-        console.log("📤 카테고리 요청 전송:", requestBody);
-      }
-
       const response = await fetch(`${API_BASE_URL}/v1/categories/request`, {
         method: "POST",
         headers: {
@@ -166,10 +150,6 @@ export default function HomePage({
       }
 
       const data = await response.json();
-
-      if (import.meta.env.DEV) {
-        console.log("✅ 카테고리 요청 성공:", data);
-      }
 
       // 성공 모달 표시
       setShowSuccessModal(true);

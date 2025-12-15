@@ -33,52 +33,81 @@ export default function Index() {
         const authenticated = isAuthenticated();
         const userInfo = getStoredUserInfo();
 
-        console.log("🔍 Index.tsx - 인증 상태 확인:", {
-          authenticated,
-          hasUserInfo: !!userInfo,
-          userInfo: userInfo ? {
-            is_new_user: userInfo.is_new_user,
-            is_profile_complete: userInfo.is_profile_complete,
-            id: userInfo.id,
-          } : null,
-        });
+        if (import.meta.env.DEV) {
+          console.log("🔍 Index.tsx - 인증 상태 확인:", {
+            authenticated,
+            hasUserInfo: !!userInfo,
+            userInfo: userInfo ? {
+              is_new_user: userInfo.is_new_user,
+              is_profile_complete: userInfo.is_profile_complete,
+              id: userInfo.id,
+            } : null,
+          });
+        }
 
         setIsLoggedIn(authenticated);
 
         // OAuth 콜백에서 처리된 경우 프로필 체크를 스킵
-        const oauthCallbackProcessed = sessionStorage.getItem("oauth_callback_processed");
-        console.log("🔍 OAuth 콜백 플래그 확인:", oauthCallbackProcessed);
+        let oauthCallbackProcessed: string | null = null;
+        try {
+          oauthCallbackProcessed = sessionStorage.getItem("oauth_callback_processed");
+          if (import.meta.env.DEV) {
+            console.log("🔍 OAuth 콜백 플래그 확인:", oauthCallbackProcessed);
+          }
+        } catch (storageError) {
+          // sessionStorage 접근이 차단된 경우
+          if (import.meta.env.DEV) {
+            console.warn("sessionStorage 접근 불가:", storageError);
+          }
+        }
         
         if (oauthCallbackProcessed === "true") {
-          sessionStorage.removeItem("oauth_callback_processed");
-          console.log("✅ OAuth 콜백에서 이미 처리됨 - 프로필 체크 스킵");
+          try {
+            sessionStorage.removeItem("oauth_callback_processed");
+          } catch (storageError) {
+            // sessionStorage 접근이 차단된 경우 무시
+            if (import.meta.env.DEV) {
+              console.warn("sessionStorage 삭제 실패:", storageError);
+            }
+          }
+          if (import.meta.env.DEV) {
+            console.log("✅ OAuth 콜백에서 이미 처리됨 - 프로필 체크 스킵");
+          }
           setIsLoading(false);
           return;
         }
 
         // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
         if (authenticated && userInfo) {
-          console.log("📋 인증된 사용자 정보:", {
-            is_new_user: userInfo.is_new_user,
-            is_profile_complete: userInfo.is_profile_complete,
-            id: userInfo.id,
-          });
+          if (import.meta.env.DEV) {
+            console.log("📋 인증된 사용자 정보:", {
+              is_new_user: userInfo.is_new_user,
+              is_profile_complete: userInfo.is_profile_complete,
+              id: userInfo.id,
+            });
+          }
 
           const shouldRedirectToProfile =
             userInfo.is_new_user || !userInfo.is_profile_complete;
 
-          console.log("🔍 프로필 리다이렉트 결정:", {
-            shouldRedirectToProfile,
-            is_new_user: userInfo.is_new_user,
-            is_profile_complete: userInfo.is_profile_complete,
-          });
+          if (import.meta.env.DEV) {
+            console.log("🔍 프로필 리다이렉트 결정:", {
+              shouldRedirectToProfile,
+              is_new_user: userInfo.is_new_user,
+              is_profile_complete: userInfo.is_profile_complete,
+            });
+          }
 
           if (shouldRedirectToProfile) {
-            console.log("➡️ 프로필 설정 페이지로 리다이렉트");
+            if (import.meta.env.DEV) {
+              console.log("➡️ 프로필 설정 페이지로 리다이렉트");
+            }
             navigate("/profile-setup", { replace: true });
             return;
           } else {
-            console.log("✅ 프로필 완성된 사용자 - 메인 페이지에 머물기");
+            if (import.meta.env.DEV) {
+              console.log("✅ 프로필 완성된 사용자 - 메인 페이지에 머물기");
+            }
             // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
             return;
           }

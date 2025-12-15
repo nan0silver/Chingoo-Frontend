@@ -94,11 +94,6 @@ export default function SettingsPage({
       onNavigateToComingSoon("보호자 알림");
     } else if (optionId === "support") {
       onNavigateToSupport();
-    } else {
-      // For other options, just log for now
-      if (import.meta.env.DEV) {
-        console.log(`Clicked: ${optionId}`);
-      }
     }
   };
 
