@@ -74,6 +74,7 @@ export default function CallEvaluationPage({
 
       // 에러 메시지 처리
       let errorMessage = "친구 요청을 보낼 수 없습니다.";
+      let isAlreadyFriend = false;
 
       if (error?.message) {
         const message = error.message.toLowerCase();
@@ -108,6 +109,7 @@ export default function CallEvaluationPage({
           message.includes("already exists")
         ) {
           errorMessage = "이미 친구입니다.";
+          isAlreadyFriend = true;
         }
         // 기타 에러는 서버 메시지 사용
         else {
@@ -115,7 +117,7 @@ export default function CallEvaluationPage({
         }
       }
 
-      setFriendRequestStatus("error");
+      setFriendRequestStatus(isAlreadyFriend ? "success" : "error");
       setFriendRequestMessage(errorMessage);
       setShowFriendRequestModal(true);
     } finally {
@@ -223,69 +225,104 @@ export default function CallEvaluationPage({
       {showFriendRequestModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
-            <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                friendRequestStatus === "success"
-                  ? "bg-green-100"
-                  : "bg-red-100"
-              }`}
-            >
-              {friendRequestStatus === "success" ? (
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                  className="text-green-600"
+            {friendRequestMessage === "이미 친구입니다." ? (
+              // 이미 친구인 경우: 초록색 체크 아이콘과 메시지만 표시
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    className="text-green-600"
+                  >
+                    <path
+                      d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <p className="text-green-600 font-crimson text-xl font-bold mb-6">
+                  {friendRequestMessage}
+                </p>
+                <button
+                  onClick={() => setShowFriendRequestModal(false)}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
                 >
-                  <path
-                    d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                  className="text-red-600"
+                  확인
+                </button>
+              </>
+            ) : (
+              // 기타 경우: 기존 로직 유지
+              <>
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    friendRequestStatus === "success"
+                      ? "bg-green-100"
+                      : "bg-red-100"
+                  }`}
                 >
-                  <path
-                    d="M24 8L8 24M8 8L24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </div>
-            <h3
-              className={`text-xl font-bold mb-2 ${
-                friendRequestStatus === "success"
-                  ? "text-gray-900"
-                  : "text-red-600"
-              }`}
-            >
-              {friendRequestStatus === "success"
-                ? "친구 요청 완료"
-                : "친구 요청 실패"}
-            </h3>
-            <p className="text-gray-600 mb-6">{friendRequestMessage}</p>
-            <button
-              onClick={() => setShowFriendRequestModal(false)}
-              className={`w-full h-12 rounded-lg font-crimson text-lg font-semibold ${
-                friendRequestStatus === "success"
-                  ? "bg-orange-500 text-white hover:bg-orange-600"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              } transition-colors`}
-            >
-              확인
-            </button>
+                  {friendRequestStatus === "success" ? (
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 32 32"
+                      fill="none"
+                      className="text-green-600"
+                    >
+                      <path
+                        d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 32 32"
+                      fill="none"
+                      className="text-red-600"
+                    >
+                      <path
+                        d="M24 8L8 24M8 8L24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <h3
+                  className={`text-xl font-bold mb-2 ${
+                    friendRequestStatus === "success"
+                      ? "text-gray-900"
+                      : "text-red-600"
+                  }`}
+                >
+                  {friendRequestStatus === "success"
+                    ? "친구 요청 완료"
+                    : "친구 요청 실패"}
+                </h3>
+                <p className="text-gray-600 mb-6">{friendRequestMessage}</p>
+                <button
+                  onClick={() => setShowFriendRequestModal(false)}
+                  className={`w-full h-12 rounded-lg font-crimson text-lg font-semibold ${
+                    friendRequestStatus === "success"
+                      ? "bg-orange-500 text-white hover:bg-orange-600"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  } transition-colors`}
+                >
+                  확인
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
