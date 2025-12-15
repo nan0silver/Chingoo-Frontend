@@ -90,7 +90,7 @@ export default function CallEvaluationPage({
           message.includes("from")
         ) {
           errorMessage =
-            "상대방이 이미 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
+            "상대방이 이미 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요.";
           receivedRequestFromPartner = true;
         }
         // 이미 요청을 보낸 경우
@@ -239,9 +239,9 @@ export default function CallEvaluationPage({
             {friendRequestMessage === "이미 친구입니다." ||
             friendRequestMessage === "이미 친구 요청을 보냈습니다." ||
             friendRequestMessage ===
-              "상대방이 이미 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요." ||
+              "상대방이 이미 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요." ||
             friendRequestMessage ===
-              "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요." ? (
+              "상대방이 동시에 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요." ? (
               // 이미 친구인 경우, 이미 요청을 보낸 경우, 또는 상대방이 이미 요청을 보낸 경우: 초록색 체크 아이콘과 메시지만 표시
               <>
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -261,7 +261,7 @@ export default function CallEvaluationPage({
                     />
                   </svg>
                 </div>
-                <p className="text-gray-900 font-crimson text-xl font-bold mb-6">
+                <p className="text-gray-900 font-crimson text-lg font-bold mb-6 whitespace-pre-line">
                   {friendRequestMessage}
                 </p>
                 <button
