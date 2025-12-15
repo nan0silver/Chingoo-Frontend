@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCall } from "@/lib/useCall";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
+import { UserPlus } from "lucide-react";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -21,6 +24,18 @@ export default function CallEvaluationPage({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isAddingFriend, setIsAddingFriend] = useState(false);
+  const [friendRequestStatus, setFriendRequestStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [friendRequestMessage, setFriendRequestMessage] = useState<string>("");
+  const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
+  const [showEvaluationErrorModal, setShowEvaluationErrorModal] =
+    useState(false);
+  const [evaluationErrorMessage, setEvaluationErrorMessage] =
+    useState<string>("");
+  const navigate = useNavigate();
+  const location = useLocation();
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
 
@@ -31,6 +46,103 @@ export default function CallEvaluationPage({
       console.log("🔍 CallEvaluationPage - callId:", callId);
     }
   }, [partner, callId]);
+
+  // 친구 추가 함수
+  const handleAddFriend = async () => {
+    if (!partner?.nickname) {
+      alert("상대방 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    setIsAddingFriend(true);
+    setFriendRequestStatus("idle");
+    setFriendRequestMessage("");
+
+    try {
+      const token = getStoredToken();
+      if (!token) {
+        throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      }
+
+      matchingApiService.setToken(token);
+
+      await matchingApiService.sendFriendRequest({
+        nickname: partner.nickname,
+      });
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 친구 요청 전송 성공");
+      }
+
+      setFriendRequestStatus("success");
+      setFriendRequestMessage("친구 요청을 보냈습니다!");
+      setShowFriendRequestModal(true);
+    } catch (error: any) {
+      console.error("❌ 친구 요청 전송 실패:", error);
+
+      // 에러 메시지 처리
+      let errorMessage = "친구 요청을 보낼 수 없습니다.";
+      let isAlreadyFriend = false;
+      let isAlreadyRequested = false;
+      let receivedRequestFromPartner = false;
+
+      if (error?.message) {
+        const message = error.message.toLowerCase();
+
+        // 상대방이 이미 요청을 보낸 경우 (가장 구체적인 메시지부터 체크)
+        if (
+          message.includes("해당 사용자로부터 이미 친구 요청을 받았습니다") ||
+          message.includes("이미 친구 요청을 받았습니다") ||
+          message.includes("받은 요청") ||
+          message.includes("receiver") ||
+          message.includes("from")
+        ) {
+          errorMessage =
+            "상대방이 이미 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요.";
+          receivedRequestFromPartner = true;
+        }
+        // 이미 요청을 보낸 경우
+        else if (
+          message.includes("이미 친구 요청을 보냈습니다") ||
+          message.includes("이미 요청") ||
+          message.includes("already requested") ||
+          message.includes("pending")
+        ) {
+          errorMessage = "이미 친구 요청을 보냈습니다.";
+          isAlreadyRequested = true;
+        }
+        // 동시 요청 (409 Conflict)
+        else if (message.includes("409") || message.includes("conflict")) {
+          errorMessage =
+            "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
+          receivedRequestFromPartner = true;
+        }
+        // 이미 친구인 경우 (더 일반적인 메시지는 나중에 체크)
+        else if (
+          message.includes("이미 친구") ||
+          message.includes("already friend") ||
+          message.includes("already exists")
+        ) {
+          errorMessage = "이미 친구입니다.";
+          isAlreadyFriend = true;
+        }
+        // 기타 에러는 서버 메시지 사용
+        else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      setFriendRequestStatus(
+        isAlreadyFriend || isAlreadyRequested || receivedRequestFromPartner
+          ? "success"
+          : "error",
+      );
+      setFriendRequestMessage(errorMessage);
+      setShowFriendRequestModal(true);
+    } finally {
+      setIsAddingFriend(false);
+    }
+  };
 
   // 평가 제출 함수
   const handleSubmitEvaluation = async () => {
@@ -74,28 +186,61 @@ export default function CallEvaluationPage({
 
       // 성공 모달 표시
       setShowSuccessModal(true);
+    } catch (error: any) {
+      console.error("❌ 평가 제출 실패:", error);
 
-      // 평가 제출 후 partner 정보 삭제
-      clearPartner();
-      if (import.meta.env.DEV) {
-        console.log("✅ 평가 제출 후 partner 정보 삭제 완료");
+      // 에러 메시지 처리
+      let errorMessage = "평가 제출에 실패했습니다. 다시 시도해주세요.";
+
+      if (error?.message) {
+        const message = error.message.toLowerCase();
+
+        // 이미 평가를 완료한 경우
+        if (
+          message.includes("이미 평가를 완료했습니다") ||
+          message.includes("already evaluated") ||
+          message.includes("already completed")
+        ) {
+          errorMessage = "이미 평가를 완료했습니다.";
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
       }
 
-      // 2초 후 홈페이지로 이동
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        onGoHome();
-      }, 2000);
-    } catch (error) {
-      console.error("❌ 평가 제출 실패:", error);
-      alert("평가 제출에 실패했습니다. 다시 시도해주세요.");
+      setEvaluationErrorMessage(errorMessage);
+      setShowEvaluationErrorModal(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // 하단 네비게이션 핸들러
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    if (location.pathname.startsWith("/friends")) {
+      return "friends";
+    } else if (location.pathname === "/settings") {
+      return "settings";
+    }
+    return "home";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col relative safe-area-page font-noto">
+    <div className="min-h-screen bg-white flex flex-col relative safe-area-page font-noto pb-20">
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -120,13 +265,213 @@ export default function CallEvaluationPage({
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               평가가 제출되었습니다!
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-6">
               {selectedRating === "good" ? "좋았어요" : "별로였어요"}로
               평가되었습니다.
             </p>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
+
+      {/* Friend Request Modal */}
+      {showFriendRequestModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            {friendRequestMessage === "이미 친구입니다." ||
+            friendRequestMessage === "이미 친구 요청을 보냈습니다." ||
+            friendRequestMessage ===
+              "상대방이 이미 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요." ||
+            friendRequestMessage ===
+              "상대방이 동시에 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요." ? (
+              // 이미 친구인 경우, 이미 요청을 보낸 경우, 또는 상대방이 이미 요청을 보낸 경우: 초록색 체크 아이콘과 메시지만 표시
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    className="text-green-600"
+                  >
+                    <path
+                      d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-900 font-crimson text-lg font-bold mb-6 whitespace-pre-line">
+                  {friendRequestMessage}
+                </p>
+                <div className="flex flex-col gap-2">
+                  {(friendRequestMessage ===
+                    "상대방이 이미 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요." ||
+                    friendRequestMessage ===
+                      "상대방이 동시에 친구 요청을 보냈습니다.\n받은 친구 요청에서 확인해주세요.") && (
+                    <button
+                      onClick={() => {
+                        setShowFriendRequestModal(false);
+                        navigate("/friends/requests/received");
+                      }}
+                      className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                    >
+                      받은 친구 요청 보기
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowFriendRequestModal(false)}
+                    className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                  >
+                    확인
+                  </button>
+                </div>
+              </>
+            ) : (
+              // 기타 경우: 기존 로직 유지
+              <>
+                <div
+                  className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    friendRequestStatus === "success"
+                      ? "bg-green-100"
+                      : "bg-red-100"
+                  }`}
+                >
+                  {friendRequestStatus === "success" ? (
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 32 32"
+                      fill="none"
+                      className="text-green-600"
+                    >
+                      <path
+                        d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 32 32"
+                      fill="none"
+                      className="text-red-600"
+                    >
+                      <path
+                        d="M24 8L8 24M8 8L24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <h3
+                  className={`text-xl font-bold mb-2 ${
+                    friendRequestStatus === "success"
+                      ? "text-gray-900"
+                      : "text-red-600"
+                  }`}
+                >
+                  {friendRequestStatus === "success"
+                    ? "친구 요청 완료"
+                    : "친구 요청 실패"}
+                </h3>
+                <p className="text-gray-600 mb-6">{friendRequestMessage}</p>
+                <button
+                  onClick={() => setShowFriendRequestModal(false)}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                >
+                  확인
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Evaluation Error Modal */}
+      {showEvaluationErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            {evaluationErrorMessage === "이미 평가를 완료했습니다." ? (
+              // 이미 평가 완료한 경우: 초록색 체크 아이콘과 메시지만 표시
+              <>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    className="text-green-600"
+                  >
+                    <path
+                      d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-900 font-crimson text-lg font-bold mb-6">
+                  {evaluationErrorMessage}
+                </p>
+                <button
+                  onClick={() => setShowEvaluationErrorModal(false)}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                >
+                  확인
+                </button>
+              </>
+            ) : (
+              // 기타 에러: 빨간색 X 아이콘과 에러 메시지 표시
+              <>
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 32 32"
+                    fill="none"
+                    className="text-red-600"
+                  >
+                    <path
+                      d="M24 8L8 24M8 8L24 24"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-red-600">
+                  평가 제출 실패
+                </h3>
+                <p className="text-gray-600 mb-6">{evaluationErrorMessage}</p>
+                <button
+                  onClick={() => setShowEvaluationErrorModal(false)}
+                  className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                >
+                  확인
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-center mt-8">
         <h1 className="text-orange-500 font-crimson text-2xl font-bold">
@@ -240,46 +585,57 @@ export default function CallEvaluationPage({
         </button>
       </div>
 
-      {/* Buttons Container */}
-      <div className="flex-1 flex items-end pb-8">
-        <div className="w-full px-5">
-          <div className="flex gap-2">
-            {/* Call Again Button */}
-            <button
-              onClick={() => {
-                // 다시 통화하기 전에 partner 정보 삭제
-                clearPartner();
-                if (import.meta.env.DEV) {
-                  console.log("✅ 다시 통화하기 - partner 정보 삭제 완료");
-                }
-                onCallAgain();
-              }}
-              className="flex-1 h-14 border border-orange-500 rounded-lg flex items-center justify-center bg-white"
-            >
-              <span className="text-orange-500 font-crimson text-xl font-bold">
-                다시 통화하기
-              </span>
-            </button>
-
-            {/* Select Interests Button */}
-            <button
-              onClick={() => {
-                // 관심사 선택 전에 partner 정보 삭제
-                clearPartner();
-                if (import.meta.env.DEV) {
-                  console.log("✅ 관심사 선택 - partner 정보 삭제 완료");
-                }
-                onSelectInterests();
-              }}
-              className="flex-1 h-14 bg-orange-500 rounded-lg flex items-center justify-center"
-            >
-              <span className="text-white font-crimson text-xl font-bold">
-                관심사 선택
-              </span>
-            </button>
-          </div>
+      {/* Add Friend Button */}
+      {partner?.nickname && (
+        <div className="flex justify-center mt-4 px-5">
+          <button
+            onClick={handleAddFriend}
+            disabled={isAddingFriend}
+            className={`w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 ${
+              !isAddingFriend
+                ? "bg-white border-2 border-orange-500 text-orange-500 hover:bg-orange-50"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {isAddingFriend ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>요청 중...</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="w-5 h-5" strokeWidth={2} />
+                <span>친구 추가</span>
+              </>
+            )}
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }
