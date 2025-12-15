@@ -76,12 +76,25 @@ export default function CallEvaluationPage({
       let errorMessage = "친구 요청을 보낼 수 없습니다.";
       let isAlreadyFriend = false;
       let isAlreadyRequested = false;
+      let receivedRequestFromPartner = false;
 
       if (error?.message) {
         const message = error.message.toLowerCase();
 
-        // 이미 요청을 보낸 경우 (가장 구체적인 메시지부터 체크)
+        // 상대방이 이미 요청을 보낸 경우 (가장 구체적인 메시지부터 체크)
         if (
+          message.includes("해당 사용자로부터 이미 친구 요청을 받았습니다") ||
+          message.includes("이미 친구 요청을 받았습니다") ||
+          message.includes("받은 요청") ||
+          message.includes("receiver") ||
+          message.includes("from")
+        ) {
+          errorMessage =
+            "상대방이 이미 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
+          receivedRequestFromPartner = true;
+        }
+        // 이미 요청을 보낸 경우
+        else if (
           message.includes("이미 친구 요청을 보냈습니다") ||
           message.includes("이미 요청") ||
           message.includes("already requested") ||
@@ -90,19 +103,11 @@ export default function CallEvaluationPage({
           errorMessage = "이미 친구 요청을 보냈습니다.";
           isAlreadyRequested = true;
         }
-        // 상대방이 이미 요청을 보낸 경우
-        else if (
-          message.includes("상대방") ||
-          message.includes("receiver") ||
-          message.includes("받은 요청")
-        ) {
-          errorMessage =
-            "상대방이 이미 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
-        }
         // 동시 요청 (409 Conflict)
         else if (message.includes("409") || message.includes("conflict")) {
           errorMessage =
             "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
+          receivedRequestFromPartner = true;
         }
         // 이미 친구인 경우 (더 일반적인 메시지는 나중에 체크)
         else if (
@@ -120,7 +125,9 @@ export default function CallEvaluationPage({
       }
 
       setFriendRequestStatus(
-        isAlreadyFriend || isAlreadyRequested ? "success" : "error",
+        isAlreadyFriend || isAlreadyRequested || receivedRequestFromPartner
+          ? "success"
+          : "error",
       );
       setFriendRequestMessage(errorMessage);
       setShowFriendRequestModal(true);
@@ -230,8 +237,12 @@ export default function CallEvaluationPage({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
             {friendRequestMessage === "이미 친구입니다." ||
-            friendRequestMessage === "이미 친구 요청을 보냈습니다." ? (
-              // 이미 친구인 경우 또는 이미 요청을 보낸 경우: 초록색 체크 아이콘과 메시지만 표시
+            friendRequestMessage === "이미 친구 요청을 보냈습니다." ||
+            friendRequestMessage ===
+              "상대방이 이미 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요." ||
+            friendRequestMessage ===
+              "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요." ? (
+              // 이미 친구인 경우, 이미 요청을 보낸 경우, 또는 상대방이 이미 요청을 보낸 경우: 초록색 체크 아이콘과 메시지만 표시
               <>
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
