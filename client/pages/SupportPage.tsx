@@ -1,8 +1,11 @@
+import { useNavigate } from "react-router-dom";
+
 interface SupportPageProps {
   onBack: () => void;
 }
 
 export default function SupportPage({ onBack }: SupportPageProps) {
+  const navigate = useNavigate();
   const email = "chingoohaja@gmail.com";
 
   const handleCopyEmail = () => {
@@ -18,7 +21,7 @@ export default function SupportPage({ onBack }: SupportPageProps) {
     <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <button onClick={onBack} className="p-1">
+        <button onClick={() => navigate("/settings")} className="p-1">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M15 18L9 12L15 6"
@@ -104,7 +107,7 @@ export default function SupportPage({ onBack }: SupportPageProps) {
             </button>
 
             <button
-              onClick={onBack}
+              onClick={() => navigate("/settings")}
               className="w-full h-14 bg-white border-2 border-gray-200 text-gray-700 font-crimson text-xl font-semibold rounded-lg hover:bg-gray-50 transition-colors"
             >
               돌아가기

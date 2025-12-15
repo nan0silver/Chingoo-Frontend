@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { ActivityStats } from "@shared/api";
@@ -8,6 +9,7 @@ interface MyActivityPageProps {
 }
 
 export default function MyActivityPage({ onBack }: MyActivityPageProps) {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
     <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <button onClick={onBack} className="p-1">
+        <button onClick={() => navigate("/settings")} className="p-1">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M15 18L9 12L15 6"
@@ -257,7 +259,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
             {/* Back Button */}
             <div className="mt-8 flex justify-center">
               <button
-                onClick={onBack}
+                onClick={() => navigate("/settings")}
                 className="w-full max-w-sm h-14 bg-gradient-to-r from-yellow-300 to-red-gradient text-white font-crimson text-xl font-semibold rounded-lg hover:opacity-90 transition-opacity"
               >
                 돌아가기
