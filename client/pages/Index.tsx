@@ -37,11 +37,13 @@ export default function Index() {
           console.log("🔍 Index.tsx - 인증 상태 확인:", {
             authenticated,
             hasUserInfo: !!userInfo,
-            userInfo: userInfo ? {
-              is_new_user: userInfo.is_new_user,
-              is_profile_complete: userInfo.is_profile_complete,
-              id: userInfo.id,
-            } : null,
+            userInfo: userInfo
+              ? {
+                  is_new_user: userInfo.is_new_user,
+                  is_profile_complete: userInfo.is_profile_complete,
+                  id: userInfo.id,
+                }
+              : null,
           });
         }
 
@@ -50,7 +52,9 @@ export default function Index() {
         // OAuth 콜백에서 처리된 경우 프로필 체크를 스킵
         let oauthCallbackProcessed: string | null = null;
         try {
-          oauthCallbackProcessed = sessionStorage.getItem("oauth_callback_processed");
+          oauthCallbackProcessed = sessionStorage.getItem(
+            "oauth_callback_processed",
+          );
           if (import.meta.env.DEV) {
             console.log("🔍 OAuth 콜백 플래그 확인:", oauthCallbackProcessed);
           }
@@ -60,7 +64,7 @@ export default function Index() {
             console.warn("sessionStorage 접근 불가:", storageError);
           }
         }
-        
+
         if (oauthCallbackProcessed === "true") {
           try {
             sessionStorage.removeItem("oauth_callback_processed");
@@ -306,9 +310,7 @@ export default function Index() {
           onGoHome={handleGoHome}
         />
       ) : (
-        <HomePage
-          onStartCall={handleStartCall}
-        />
+        <HomePage onStartCall={handleStartCall} />
       )}
     </div>
   );

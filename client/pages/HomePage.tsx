@@ -10,9 +10,7 @@ interface HomePageProps {
   onStartCall: (category: string) => void;
 }
 
-export default function HomePage({
-  onStartCall,
-}: HomePageProps) {
+export default function HomePage({ onStartCall }: HomePageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { startMatching, status, error } = useMatchingStore();
