@@ -8,12 +8,10 @@ import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
-  onOpenSettings: () => void;
 }
 
 export default function HomePage({
   onStartCall,
-  onOpenSettings,
 }: HomePageProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -283,7 +281,7 @@ export default function HomePage({
           </button>
           <button
             type="button"
-            onClick={onOpenSettings}
+            onClick={() => navigate("/settings")}
             className="p-3"
             title="설정"
           >

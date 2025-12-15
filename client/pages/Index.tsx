@@ -279,7 +279,6 @@ export default function Index() {
       ) : (
         <HomePage
           onStartCall={handleStartCall}
-          onOpenSettings={handleOpenSettings}
         />
       )}
     </div>
