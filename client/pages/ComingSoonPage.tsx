@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
 interface ComingSoonPageProps {
   featureName?: string;
@@ -21,12 +22,36 @@ export default function ComingSoonPage({
     if (onBack) {
       onBack();
     } else {
-      navigate(-1);
+      navigate("/settings");
     }
   };
 
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    if (location.pathname.startsWith("/friends")) {
+      return "friends";
+    } else if (location.pathname === "/settings") {
+      return "settings";
+    }
+    return "home";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto pb-20">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <button onClick={handleBack} className="p-1">
@@ -75,23 +100,21 @@ export default function ComingSoonPage({
           </p>
 
           {/* Additional Info */}
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 mb-8">
+          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6">
             <p className="text-orange-600 font-pretendard text-base leading-relaxed">
               더 나은 서비스를 제공하기 위해
               <br />
               열심히 개발하고 있습니다. 🚀
             </p>
           </div>
-
-          {/* Back Button */}
-          <button
-            onClick={handleBack}
-            className="w-full max-w-sm h-14 bg-gradient-to-r from-yellow-300 to-red-gradient text-white font-crimson text-xl font-semibold rounded-lg hover:opacity-90 transition-opacity"
-          >
-            돌아가기
-          </button>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }
