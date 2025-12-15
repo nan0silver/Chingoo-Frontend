@@ -75,6 +75,7 @@ export default function CallEvaluationPage({
       // 에러 메시지 처리
       let errorMessage = "친구 요청을 보낼 수 없습니다.";
       let isAlreadyFriend = false;
+      let isAlreadyRequested = false;
 
       if (error?.message) {
         const message = error.message.toLowerCase();
@@ -87,6 +88,7 @@ export default function CallEvaluationPage({
           message.includes("pending")
         ) {
           errorMessage = "이미 친구 요청을 보냈습니다.";
+          isAlreadyRequested = true;
         }
         // 상대방이 이미 요청을 보낸 경우
         else if (
@@ -117,7 +119,9 @@ export default function CallEvaluationPage({
         }
       }
 
-      setFriendRequestStatus(isAlreadyFriend ? "success" : "error");
+      setFriendRequestStatus(
+        isAlreadyFriend || isAlreadyRequested ? "success" : "error",
+      );
       setFriendRequestMessage(errorMessage);
       setShowFriendRequestModal(true);
     } finally {
@@ -225,8 +229,9 @@ export default function CallEvaluationPage({
       {showFriendRequestModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
-            {friendRequestMessage === "이미 친구입니다." ? (
-              // 이미 친구인 경우: 초록색 체크 아이콘과 메시지만 표시
+            {friendRequestMessage === "이미 친구입니다." ||
+            friendRequestMessage === "이미 친구 요청을 보냈습니다." ? (
+              // 이미 친구인 경우 또는 이미 요청을 보낸 경우: 초록색 체크 아이콘과 메시지만 표시
               <>
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg
@@ -245,7 +250,7 @@ export default function CallEvaluationPage({
                     />
                   </svg>
                 </div>
-                <p className="text-green-600 font-crimson text-xl font-bold mb-6">
+                <p className="text-gray-900 font-crimson text-xl font-bold mb-6">
                   {friendRequestMessage}
                 </p>
                 <button
