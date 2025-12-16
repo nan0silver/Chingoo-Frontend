@@ -281,7 +281,7 @@ export default function Index() {
       ) : showCallHistory ? (
         <CallHistoryPage onBack={handleBackFromCallHistory} />
       ) : showActivity ? (
-        <MyActivityPage onBack={handleBackFromActivity} />
+        <MyActivityPage />
       ) : showSettings ? (
         <SettingsPage
           onBack={handleCloseSettings}
