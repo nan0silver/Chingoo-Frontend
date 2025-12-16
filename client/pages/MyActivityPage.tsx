@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { ActivityStats } from "@shared/api";
@@ -9,7 +9,6 @@ interface MyActivityPageProps {}
 
 export default function MyActivityPage({}: MyActivityPageProps) {
   const navigate = useNavigate();
-  const location = useLocation();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
