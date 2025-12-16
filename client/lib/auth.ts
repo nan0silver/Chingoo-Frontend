@@ -34,25 +34,31 @@ declare global {
  */
 export const getApiUrl = (): string => {
   // 네이티브 앱이면 무조건 운영 서버
-  console.log("🔍 현재 URL:", window.location.href);
-  console.log("🔍 현재 Origin:", window.location.origin);
-  console.log("🔍 Capacitor Native:", Capacitor.isNativePlatform());
+  if (import.meta.env.DEV) {
+    console.log("🔍 현재 URL:", window.location.href);
+    console.log("🔍 현재 Origin:", window.location.origin);
+    console.log("🔍 Capacitor Native:", Capacitor.isNativePlatform());
+  }
 
   if (Capacitor.isNativePlatform()) {
-    console.log("✅ 네이티브 앱 - 운영 서버 사용");
+    if (import.meta.env.DEV) {
+      console.log("✅ 네이티브 앱 - 운영 서버 사용");
+    }
     return "https://silverld.site/api";
-    // console.log("✅ 네이티브 앱 - Spring Boot 직접 연결 (8080)");
-    // return "http://43.202.193.103:8080/api";
   }
 
   // 웹에서는 환경변수 사용
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl) {
-    console.log("✅ 웹 - 환경변수 사용:", envUrl);
+    if (import.meta.env.DEV) {
+      console.log("✅ 웹 - 환경변수 사용:", envUrl);
+    }
     return String(envUrl).replace(/\/$/, "");
   }
 
-  console.log("✅ 웹 개발 - 프록시 사용");
+  if (import.meta.env.DEV) {
+    console.log("✅ 웹 개발 - 프록시 사용");
+  }
   return "/api";
 };
 
@@ -1003,15 +1009,30 @@ export const processSocialLogin = async (
       is_new_user: result.data.user_info.is_new_user,
       is_profile_complete: result.data.user_info.is_profile_complete,
     };
-    localStorage.setItem(
-      OAUTH_STORAGE_KEYS.USER_INFO,
-      JSON.stringify(minimalUserInfo),
-    );
+    try {
+      localStorage.setItem(
+        OAUTH_STORAGE_KEYS.USER_INFO,
+        JSON.stringify(minimalUserInfo),
+      );
+    } catch (storageError) {
+      // localStorage 접근이 차단된 경우 (예: iframe, 서드파티 쿠키 차단 등)
+      if (import.meta.env.DEV) {
+        console.warn("localStorage 저장 실패:", storageError);
+      }
+      // 에러를 throw하지 않고 계속 진행 (메모리 기반으로 동작 가능)
+    }
 
     // sessionStorage 정리
-    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
-    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
-    sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
+    try {
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.STATE);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.CODE_VERIFIER);
+      sessionStorage.removeItem(OAUTH_STORAGE_KEYS.PROVIDER);
+    } catch (storageError) {
+      // sessionStorage 접근이 차단된 경우 무시
+      if (import.meta.env.DEV) {
+        console.warn("sessionStorage 정리 실패:", storageError);
+      }
+    }
 
     return result;
   } catch (error) {
@@ -1042,13 +1063,23 @@ export const getStoredToken = (
  * 저장된 사용자 정보를 가져오는 함수
  */
 export const getStoredUserInfo = (): UserInfo | null => {
-  const userInfoStr = localStorage.getItem(OAUTH_STORAGE_KEYS.USER_INFO);
-  if (!userInfoStr) return null;
-
   try {
-    return JSON.parse(userInfoStr);
-  } catch (error) {
-    logger.error("사용자 정보 파싱 실패:", error);
+    const userInfoStr = localStorage.getItem(OAUTH_STORAGE_KEYS.USER_INFO);
+    if (!userInfoStr) return null;
+
+    try {
+      return JSON.parse(userInfoStr);
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        logger.error("사용자 정보 파싱 실패:", error);
+      }
+      return null;
+    }
+  } catch (storageError) {
+    // localStorage 접근이 차단된 경우 (예: iframe, 서드파티 쿠키 차단 등)
+    if (import.meta.env.DEV) {
+      console.warn("localStorage 접근 불가:", storageError);
+    }
     return null;
   }
 };
@@ -1331,11 +1362,15 @@ export const updateUserProfile = async (
  */
 export const initializeAuth = async (): Promise<boolean> => {
   try {
-    logger.log("🚀 앱 초기화: 인증 상태 확인...");
+    if (import.meta.env.DEV) {
+      logger.log("🚀 앱 초기화: 인증 상태 확인...");
+    }
 
     // 이미 메모리에 토큰이 있으면 스킵
     if (getInMemoryToken()) {
-      logger.log("✅ 메모리에 토큰이 이미 존재 - 초기화 스킵");
+      if (import.meta.env.DEV) {
+        logger.log("✅ 메모리에 토큰이 이미 존재 - 초기화 스킵");
+      }
       return true;
     }
 
@@ -1343,10 +1378,14 @@ export const initializeAuth = async (): Promise<boolean> => {
     const token = await refreshToken();
 
     if (token) {
-      logger.log("✅ 앱 초기화 성공: 토큰 발급 완료");
+      if (import.meta.env.DEV) {
+        logger.log("✅ 앱 초기화 성공: 토큰 발급 완료");
+      }
       return true;
     } else {
-      logger.log("ℹ️ 앱 초기화: 저장된 refresh token 없음 (로그인 필요)");
+      if (import.meta.env.DEV) {
+        logger.log("ℹ️ 앱 초기화: 저장된 refresh token 없음 (로그인 필요)");
+      }
       return false;
     }
   } catch (error) {
@@ -1362,7 +1401,9 @@ export const initializeAuth = async (): Promise<boolean> => {
 export const refreshToken = async (): Promise<string | null> => {
   // 이미 갱신 중이면 기존 요청이 완료될 때까지 대기
   if (isRefreshingToken) {
-    logger.log("🔄 이미 토큰 갱신 중 - 대기...");
+    if (import.meta.env.DEV) {
+      logger.log("🔄 이미 토큰 갱신 중 - 대기...");
+    }
     return new Promise((resolve) => {
       subscribeTokenRefresh((token: string) => {
         resolve(token);
@@ -1372,7 +1413,9 @@ export const refreshToken = async (): Promise<string | null> => {
 
   try {
     isRefreshingToken = true;
-    logger.log("🔄 토큰 갱신 시작...");
+    if (import.meta.env.DEV) {
+      logger.log("🔄 토큰 갱신 시작...");
+    }
 
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
@@ -1390,14 +1433,18 @@ export const refreshToken = async (): Promise<string | null> => {
         credentials: "include", // 쿠키를 포함하여 요청
         signal: controller.signal,
       });
-      logger.log(`📡 토큰 갱신 API 응답 상태: ${response.status}`);
+      if (import.meta.env.DEV) {
+        logger.log(`📡 토큰 갱신 API 응답 상태: ${response.status}`);
+      }
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
       if (response.status === 401) {
-        logger.warn("❌ 리프레시 토큰이 만료되었습니다.");
+        if (import.meta.env.DEV) {
+          logger.warn("❌ 리프레시 토큰이 만료되었습니다.");
+        }
         clearInMemoryToken(); // 메모리 토큰 삭제
         isRefreshingToken = false;
         onTokenRefreshed(""); // 대기 중인 요청들에게 알림
@@ -1410,13 +1457,16 @@ export const refreshToken = async (): Promise<string | null> => {
     }
 
     const result = await response.json();
-    logger.log("📦 토큰 갱신 응답 데이터:", result);
+    if (import.meta.env.DEV) {
+      logger.log("📦 토큰 갱신 응답 데이터:", result);
+    }
 
     // 새로운 access_token을 메모리에 저장
     setInMemoryToken(result.data.access_token, result.data.expires_in);
-    logger.log("💾 새로운 access_token 메모리 저장 완료");
-
-    logger.log("✅ 토큰 갱신 성공");
+    if (import.meta.env.DEV) {
+      logger.log("💾 새로운 access_token 메모리 저장 완료");
+      logger.log("✅ 토큰 갱신 성공");
+    }
 
     // 대기 중인 다른 요청들에게 새 토큰 전달
     isRefreshingToken = false;

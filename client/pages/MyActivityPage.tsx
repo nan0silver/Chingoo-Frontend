@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { ActivityStats } from "@shared/api";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
-interface MyActivityPageProps {
-  onBack: () => void;
-}
-
-export default function MyActivityPage({ onBack }: MyActivityPageProps) {
+export default function MyActivityPage() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +28,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
         matchingApi.setToken(token);
         const data = await matchingApi.getActivityStats();
 
-        // 디버깅: 받은 데이터 확인
+        // 디버깅: 받은 데이터 확인 (개발 환경에서만)
         if (import.meta.env.DEV) {
           console.log("📊 MyActivityPage - 받은 데이터:", data);
           console.log("📊 주간:", data.weeklyStats);
@@ -68,7 +67,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
 
     const { callCount, totalDurationMinutes } = stats.weeklyStats;
 
-    if (callCount >= 3 || totalDurationMinutes >= 90) {
+    if (callCount >= 4 || totalDurationMinutes >= 90) {
       return { level: "EXCELLENT", displayName: "우수회원" };
     } else if (callCount >= 1) {
       return { level: "GOOD", displayName: "일반회원" };
@@ -79,11 +78,31 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
 
   const grade = getGrade();
 
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    // MyActivityPage는 설정 페이지에서 접근하므로 항상 "settings" 활성화
+    return "settings";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto pb-20">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <button onClick={onBack} className="p-1">
+        <button onClick={() => navigate("/settings")} className="p-1">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M15 18L9 12L15 6"
@@ -101,7 +120,7 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-5 py-5">
+      <div className="flex-1 px-5 py-5 pb-24 overflow-y-auto">
         {/* 로딩 상태 */}
         {isLoading && (
           <div className="flex items-center justify-center h-64">
@@ -253,19 +272,15 @@ export default function MyActivityPage({ onBack }: MyActivityPageProps) {
                 </div>
               </div>
             </div>
-
-            {/* Back Button */}
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={onBack}
-                className="w-full max-w-sm h-14 bg-gradient-to-r from-yellow-300 to-red-gradient text-white font-crimson text-xl font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                돌아가기
-              </button>
-            </div>
           </>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }

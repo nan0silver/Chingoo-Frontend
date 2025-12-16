@@ -39,10 +39,6 @@ export default function CallHistoryPage({ onBack }: CallHistoryPageProps) {
       setCurrentPage(data.pagination.currentPage);
       setTotalPages(data.pagination.totalPages);
       setHasNext(data.pagination.hasNext);
-
-      if (import.meta.env.DEV) {
-        console.log("📞 통화 이력:", data);
-      }
     } catch (err) {
       console.error("통화 이력 조회 실패:", err);
       setError(

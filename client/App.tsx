@@ -356,7 +356,7 @@ const AppRoutes = () => {
           element={
             <AuthGuard>
               <div className="max-w-md mx-auto">
-                <MyActivityPage onBack={handleBack} />
+                <MyActivityPage />
               </div>
             </AuthGuard>
           }

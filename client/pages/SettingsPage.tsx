@@ -1,3 +1,6 @@
+import { useNavigate, useLocation } from "react-router-dom";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+
 interface SettingsPageProps {
   onBack: () => void;
   onNavigateToActivity: () => void;
@@ -15,6 +18,8 @@ export default function SettingsPage({
   onNavigateToSupport,
   onLogout,
 }: SettingsPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const settingsOptions = [
     {
       id: "subscription",
@@ -89,16 +94,35 @@ export default function SettingsPage({
       onNavigateToComingSoon("보호자 알림");
     } else if (optionId === "support") {
       onNavigateToSupport();
-    } else {
-      // For other options, just log for now
-      if (import.meta.env.DEV) {
-        console.log(`Clicked: ${optionId}`);
-      }
     }
   };
 
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    if (location.pathname.startsWith("/friends")) {
+      return "friends";
+    } else if (location.pathname === "/settings") {
+      return "settings";
+    }
+    return "home";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto pb-20">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <button onClick={onBack} className="p-1">
@@ -179,6 +203,12 @@ export default function SettingsPage({
           </button>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }

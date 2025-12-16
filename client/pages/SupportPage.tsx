@@ -1,8 +1,13 @@
+import { useNavigate, useLocation } from "react-router-dom";
+import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+
 interface SupportPageProps {
   onBack: () => void;
 }
 
 export default function SupportPage({ onBack }: SupportPageProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const email = "chingoohaja@gmail.com";
 
   const handleCopyEmail = () => {
@@ -14,11 +19,31 @@ export default function SupportPage({ onBack }: SupportPageProps) {
     window.location.href = `mailto:${email}`;
   };
 
+  const handleBottomNavClick = (item: BottomNavItem) => {
+    switch (item) {
+      case "home":
+        navigate("/");
+        break;
+      case "friends":
+        navigate("/friends");
+        break;
+      case "settings":
+        navigate("/settings");
+        break;
+    }
+  };
+
+  // 현재 경로에 따라 activeItem 결정
+  const getActiveItem = (): BottomNavItem => {
+    // SupportPage는 설정 페이지에서 접근하므로 항상 "settings" 활성화
+    return "settings";
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto pb-20">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <button onClick={onBack} className="p-1">
+        <button onClick={() => navigate("/settings")} className="p-1">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M15 18L9 12L15 6"
@@ -102,13 +127,6 @@ export default function SupportPage({ onBack }: SupportPageProps) {
             >
               이메일 보내기
             </button>
-
-            <button
-              onClick={onBack}
-              className="w-full h-14 bg-white border-2 border-gray-200 text-gray-700 font-crimson text-xl font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              돌아가기
-            </button>
           </div>
 
           {/* Additional Info */}
@@ -121,6 +139,12 @@ export default function SupportPage({ onBack }: SupportPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeItem={getActiveItem()}
+        onItemClick={handleBottomNavClick}
+      />
     </div>
   );
 }
