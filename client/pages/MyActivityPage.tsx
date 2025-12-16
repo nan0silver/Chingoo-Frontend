@@ -5,9 +5,7 @@ import { getStoredToken } from "@/lib/auth";
 import { ActivityStats } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
-interface MyActivityPageProps {}
-
-export default function MyActivityPage({}: MyActivityPageProps) {
+export default function MyActivityPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<ActivityStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
