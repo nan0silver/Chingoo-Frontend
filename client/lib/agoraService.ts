@@ -625,11 +625,93 @@ export class AgoraService {
     try {
       const newSpeakerState = !this.callState.isSpeakerOn;
 
-      // 리모트 오디오 트랙이 있으면 음량 조절
+      // 리모트 오디오 트랙이 있으면 오디오 출력 장치 제어
       if (this.callState.remoteAudioTrack) {
-        await this.callState.remoteAudioTrack.setVolume(
-          newSpeakerState ? 100 : 0,
-        );
+        try {
+          // 방법 1: HTMLAudioElement의 setSinkId 사용 (브라우저 지원 필요)
+          // 리모트 오디오 트랙이 재생 중인 HTMLAudioElement 찾기
+          const audioElements = document.querySelectorAll("audio");
+          let audioElement: HTMLAudioElement | null = null;
+          
+          for (const element of audioElements) {
+            // Agora SDK가 생성한 오디오 엘리먼트 찾기 (src가 없거나 blob URL)
+            if (!element.src || element.src.startsWith("blob:")) {
+              audioElement = element;
+              break;
+            }
+          }
+
+          // setSinkId를 사용하여 오디오 출력 장치 변경 시도
+          if (audioElement && "setSinkId" in audioElement) {
+            try {
+              // 오디오 출력 장치 목록 가져오기
+              const devices = await (navigator.mediaDevices as any).enumerateDevices();
+              const audioOutputDevices = devices.filter(
+                (device: MediaDeviceInfo) => device.kind === "audiooutput"
+              );
+
+              if (audioOutputDevices.length > 0) {
+                let targetDeviceId: string | null = null;
+
+                if (newSpeakerState) {
+                  // 스피커폰 켜기: 스피커 장치 찾기
+                  const speakerDevice = audioOutputDevices.find(
+                    (device: MediaDeviceInfo) =>
+                      device.deviceId === "default" ||
+                      device.label.toLowerCase().includes("speaker") ||
+                      device.label.toLowerCase().includes("스피커")
+                  );
+                  targetDeviceId = speakerDevice?.deviceId || audioOutputDevices[0]?.deviceId || "default";
+                } else {
+                  // 스피커폰 끄기: 이어폰/헤드폰 장치 찾기
+                  const earpieceDevice = audioOutputDevices.find(
+                    (device: MediaDeviceInfo) =>
+                      device.label.toLowerCase().includes("earpiece") ||
+                      device.label.toLowerCase().includes("headphone") ||
+                      device.label.toLowerCase().includes("이어폰") ||
+                      device.label.toLowerCase().includes("헤드폰")
+                  );
+                  targetDeviceId = earpieceDevice?.deviceId || audioOutputDevices[0]?.deviceId || "default";
+                }
+
+                // setSinkId로 오디오 출력 장치 변경
+                await (audioElement as any).setSinkId(targetDeviceId);
+                if (import.meta.env.DEV) {
+                  console.log(`오디오 출력 장치 변경 (setSinkId): ${targetDeviceId}`);
+                }
+              } else {
+                // 오디오 출력 장치를 찾을 수 없으면 음량으로 대체
+                await this.callState.remoteAudioTrack.setVolume(
+                  newSpeakerState ? 100 : 30,
+                );
+              }
+            } catch (sinkError) {
+              // setSinkId가 지원되지 않거나 실패한 경우 음량으로 대체
+              if (import.meta.env.DEV) {
+                console.log("setSinkId 미지원 또는 실패, 음량으로 대체:", sinkError);
+              }
+              await this.callState.remoteAudioTrack.setVolume(
+                newSpeakerState ? 100 : 30,
+              );
+            }
+          } else {
+            // HTMLAudioElement를 찾을 수 없거나 setSinkId가 없는 경우 음량으로 대체
+            if (import.meta.env.DEV) {
+              console.log("HTMLAudioElement를 찾을 수 없음, 음량으로 대체");
+            }
+            await this.callState.remoteAudioTrack.setVolume(
+              newSpeakerState ? 100 : 30,
+            );
+          }
+        } catch (deviceError) {
+          // 오디오 장치 API가 지원되지 않는 경우 음량으로 대체
+          if (import.meta.env.DEV) {
+            console.log("오디오 장치 API 미지원, 음량으로 대체:", deviceError);
+          }
+          await this.callState.remoteAudioTrack.setVolume(
+            newSpeakerState ? 100 : 30,
+          );
+        }
       }
 
       this.callState.isSpeakerOn = newSpeakerState;
@@ -841,6 +923,18 @@ export class AgoraService {
       }
       this.callState.remoteAudioTrack = audioTrack;
       this.callbacks.onAudioTrackSubscribed?.(user.uid.toString(), audioTrack);
+
+      // 리모트 오디오 트랙 재생 시 HTMLAudioElement 참조 저장
+      try {
+        // Agora SDK는 내부적으로 HTMLAudioElement를 사용하므로
+        // play() 메서드를 호출한 후 DOM에서 audio 엘리먼트를 찾거나
+        // 내부 참조를 통해 접근할 수 있습니다
+        // 여기서는 나중에 toggleSpeaker에서 처리합니다
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.log("오디오 엘리먼트 참조 저장 실패 (무시):", error);
+        }
+      }
 
       // 활동 시간 갱신
       this.updateActivity();
