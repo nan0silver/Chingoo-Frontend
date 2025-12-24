@@ -302,6 +302,10 @@ export class AgoraService {
       this.callState.isConnected = true;
       this.callState.isConnecting = false;
 
+      // 통화 시작 시 스피커폰 상태를 OFF로 초기화 (귀에 대고 들을 수 있게)
+      this.callState.isSpeakerOn = false;
+      this.callState.volume = 40;
+
       if (import.meta.env.DEV) {
         console.log("🔔 onCallStarted 콜백 호출 중...");
       }
@@ -633,6 +637,12 @@ export class AgoraService {
       // 리모트 오디오 트랙 볼륨 조절 (상대방 목소리)
       if (this.callState.remoteAudioTrack) {
         try {
+          // 볼륨 설정 (가장 중요 - 먼저 설정)
+          await this.callState.remoteAudioTrack.setVolume(speakerVolume);
+          if (import.meta.env.DEV) {
+            console.log(`리모트 오디오 트랙 볼륨 설정: ${speakerVolume}%`);
+          }
+
           // 방법 1: HTMLAudioElement의 setSinkId 사용 (브라우저 지원 필요)
           // 리모트 오디오 트랙이 재생 중인 HTMLAudioElement 찾기
           const audioElements = document.querySelectorAll("audio");
@@ -695,35 +705,28 @@ export class AgoraService {
                   );
                 }
               }
-
-              // 볼륨도 함께 조절 (장치 변경과 함께)
-              await this.callState.remoteAudioTrack.setVolume(speakerVolume);
             } catch (sinkError) {
-              // setSinkId가 지원되지 않거나 실패한 경우 음량으로만 조절
+              // setSinkId가 지원되지 않거나 실패한 경우 무시 (볼륨은 이미 설정됨)
               if (import.meta.env.DEV) {
-                console.log(
-                  "setSinkId 미지원 또는 실패, 음량으로만 조절:",
-                  sinkError,
-                );
+                console.log("setSinkId 미지원 또는 실패 (무시):", sinkError);
               }
-              await this.callState.remoteAudioTrack.setVolume(speakerVolume);
             }
-          } else {
-            // HTMLAudioElement를 찾을 수 없거나 setSinkId가 없는 경우 음량으로만 조절
-            if (import.meta.env.DEV) {
-              console.log("HTMLAudioElement를 찾을 수 없음, 음량으로만 조절");
-            }
-            await this.callState.remoteAudioTrack.setVolume(speakerVolume);
           }
         } catch (deviceError) {
-          // 오디오 장치 API가 지원되지 않는 경우 음량으로만 조절
+          // 오디오 장치 API가 지원되지 않는 경우 볼륨만 조절
           if (import.meta.env.DEV) {
-            console.log(
-              "오디오 장치 API 미지원, 음량으로만 조절:",
-              deviceError,
-            );
+            console.log("오디오 장치 API 미지원, 볼륨만 조절:", deviceError);
           }
-          await this.callState.remoteAudioTrack.setVolume(speakerVolume);
+          // 볼륨 설정 재시도
+          try {
+            await this.callState.remoteAudioTrack.setVolume(speakerVolume);
+          } catch (volumeError) {
+            console.error("볼륨 설정 실패:", volumeError);
+          }
+        }
+      } else {
+        if (import.meta.env.DEV) {
+          console.log("리모트 오디오 트랙이 없어 볼륨을 설정할 수 없음");
         }
       }
 
@@ -1007,6 +1010,7 @@ export class AgoraService {
       this.callbacks.onAudioTrackSubscribed?.(user.uid.toString(), audioTrack);
 
       // 리모트 오디오 트랙 구독 시 현재 스피커폰 상태에 맞는 초기 볼륨 설정
+      // 통화 시작 시 스피커폰은 OFF 상태이므로 40%로 설정
       try {
         const initialVolume = this.callState.isSpeakerOn ? 100 : 40;
         audioTrack.setVolume(initialVolume);
@@ -1016,6 +1020,25 @@ export class AgoraService {
             `리모트 오디오 트랙 초기 볼륨 설정: ${initialVolume}% (스피커폰: ${this.callState.isSpeakerOn ? "ON" : "OFF"})`,
           );
         }
+
+        // 볼륨이 제대로 설정되었는지 확인하기 위해 약간의 지연 후 다시 설정
+        setTimeout(() => {
+          try {
+            audioTrack.setVolume(initialVolume);
+            if (import.meta.env.DEV) {
+              console.log(
+                `리모트 오디오 트랙 볼륨 재설정 (확인): ${initialVolume}%`,
+              );
+            }
+          } catch (retryError) {
+            if (import.meta.env.DEV) {
+              console.log(
+                "리모트 오디오 트랙 볼륨 재설정 실패 (무시):",
+                retryError,
+              );
+            }
+          }
+        }, 100);
       } catch (error) {
         if (import.meta.env.DEV) {
           console.log("리모트 오디오 트랙 초기 볼륨 설정 실패 (무시):", error);

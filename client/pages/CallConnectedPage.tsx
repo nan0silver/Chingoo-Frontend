@@ -273,8 +273,8 @@ export default function CallConnectedPage({
               onClick={toggleSpeaker}
               className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors ${
                 agoraState.isSpeakerOn
-                  ? "bg-white bg-opacity-20"
-                  : "bg-red-500 bg-opacity-50"
+                  ? "bg-red-500 bg-opacity-50"
+                  : "bg-white bg-opacity-20"
               }`}
             >
               <svg width="30" height="30" viewBox="0 0 30 30" fill="none">

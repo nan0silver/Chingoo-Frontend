@@ -119,6 +119,21 @@ export const useCallStore = create<CallStore>((set, get) => ({
       isInCall: true,
       callStartTime: new Date(),
       error: null,
+      // 통화 시작 시 스피커폰 상태를 OFF로 초기화
+      agoraState: {
+        isConnected: false,
+        isConnecting: true,
+        isMuted: false,
+        isSpeakerOn: false, // 스피커폰 OFF
+        localAudioTrack: null,
+        remoteAudioTrack: null,
+        volume: 40, // 작은 볼륨
+        connectionState: "CONNECTING",
+        networkQuality: {
+          uplinkNetworkQuality: 0,
+          downlinkNetworkQuality: 0,
+        },
+      },
     });
 
     if (import.meta.env.DEV) {
