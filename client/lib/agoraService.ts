@@ -111,10 +111,10 @@ export class AgoraService {
     isConnected: false,
     isConnecting: false,
     isMuted: false,
-    isSpeakerOn: true,
+    isSpeakerOn: false, // 초기값: 스피커폰 OFF (귀에 대고 들을 수 있게)
     localAudioTrack: null,
     remoteAudioTrack: null,
-    volume: 100,
+    volume: 40, // 초기값: 작은 볼륨 (스피커폰 OFF 상태)
     connectionState: "DISCONNECTED",
     networkQuality: {
       uplinkNetworkQuality: 0, // UNKNOWN
@@ -547,10 +547,10 @@ export class AgoraService {
         isConnected: false,
         isConnecting: false,
         isMuted: false,
-        isSpeakerOn: true,
+        isSpeakerOn: false, // 초기값: 스피커폰 OFF
         localAudioTrack: null,
         remoteAudioTrack: null,
-        volume: 100,
+        volume: 40, // 초기값: 작은 볼륨 (스피커폰 OFF 상태)
         connectionState: "DISCONNECTED",
         networkQuality: {
           uplinkNetworkQuality: 0,
@@ -1006,15 +1006,19 @@ export class AgoraService {
       this.callState.remoteAudioTrack = audioTrack;
       this.callbacks.onAudioTrackSubscribed?.(user.uid.toString(), audioTrack);
 
-      // 리모트 오디오 트랙 재생 시 HTMLAudioElement 참조 저장
+      // 리모트 오디오 트랙 구독 시 현재 스피커폰 상태에 맞는 초기 볼륨 설정
       try {
-        // Agora SDK는 내부적으로 HTMLAudioElement를 사용하므로
-        // play() 메서드를 호출한 후 DOM에서 audio 엘리먼트를 찾거나
-        // 내부 참조를 통해 접근할 수 있습니다
-        // 여기서는 나중에 toggleSpeaker에서 처리합니다
+        const initialVolume = this.callState.isSpeakerOn ? 100 : 40;
+        audioTrack.setVolume(initialVolume);
+        this.callState.volume = initialVolume;
+        if (import.meta.env.DEV) {
+          console.log(
+            `리모트 오디오 트랙 초기 볼륨 설정: ${initialVolume}% (스피커폰: ${this.callState.isSpeakerOn ? "ON" : "OFF"})`,
+          );
+        }
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.log("오디오 엘리먼트 참조 저장 실패 (무시):", error);
+          console.log("리모트 오디오 트랙 초기 볼륨 설정 실패 (무시):", error);
         }
       }
 
