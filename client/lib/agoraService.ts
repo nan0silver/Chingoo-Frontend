@@ -625,14 +625,19 @@ export class AgoraService {
     try {
       const newSpeakerState = !this.callState.isSpeakerOn;
 
-      // 리모트 오디오 트랙이 있으면 오디오 출력 장치 제어
+      // 스피커폰 상태에 따른 볼륨 설정
+      // OFF: 작은 볼륨 (40%) - 귀에 대고 들을 수 있게
+      // ON: 큰 볼륨 (100%) - 핸드폰을 떼고도 들을 수 있게
+      const speakerVolume = newSpeakerState ? 100 : 40;
+
+      // 리모트 오디오 트랙 볼륨 조절 (상대방 목소리)
       if (this.callState.remoteAudioTrack) {
         try {
           // 방법 1: HTMLAudioElement의 setSinkId 사용 (브라우저 지원 필요)
           // 리모트 오디오 트랙이 재생 중인 HTMLAudioElement 찾기
           const audioElements = document.querySelectorAll("audio");
           let audioElement: HTMLAudioElement | null = null;
-          
+
           for (const element of audioElements) {
             // Agora SDK가 생성한 오디오 엘리먼트 찾기 (src가 없거나 blob URL)
             if (!element.src || element.src.startsWith("blob:")) {
@@ -645,9 +650,11 @@ export class AgoraService {
           if (audioElement && "setSinkId" in audioElement) {
             try {
               // 오디오 출력 장치 목록 가져오기
-              const devices = await (navigator.mediaDevices as any).enumerateDevices();
+              const devices = await (
+                navigator.mediaDevices as any
+              ).enumerateDevices();
               const audioOutputDevices = devices.filter(
-                (device: MediaDeviceInfo) => device.kind === "audiooutput"
+                (device: MediaDeviceInfo) => device.kind === "audiooutput",
               );
 
               if (audioOutputDevices.length > 0) {
@@ -659,9 +666,12 @@ export class AgoraService {
                     (device: MediaDeviceInfo) =>
                       device.deviceId === "default" ||
                       device.label.toLowerCase().includes("speaker") ||
-                      device.label.toLowerCase().includes("스피커")
+                      device.label.toLowerCase().includes("스피커"),
                   );
-                  targetDeviceId = speakerDevice?.deviceId || audioOutputDevices[0]?.deviceId || "default";
+                  targetDeviceId =
+                    speakerDevice?.deviceId ||
+                    audioOutputDevices[0]?.deviceId ||
+                    "default";
                 } else {
                   // 스피커폰 끄기: 이어폰/헤드폰 장치 찾기
                   const earpieceDevice = audioOutputDevices.find(
@@ -669,54 +679,126 @@ export class AgoraService {
                       device.label.toLowerCase().includes("earpiece") ||
                       device.label.toLowerCase().includes("headphone") ||
                       device.label.toLowerCase().includes("이어폰") ||
-                      device.label.toLowerCase().includes("헤드폰")
+                      device.label.toLowerCase().includes("헤드폰"),
                   );
-                  targetDeviceId = earpieceDevice?.deviceId || audioOutputDevices[0]?.deviceId || "default";
+                  targetDeviceId =
+                    earpieceDevice?.deviceId ||
+                    audioOutputDevices[0]?.deviceId ||
+                    "default";
                 }
 
                 // setSinkId로 오디오 출력 장치 변경
                 await (audioElement as any).setSinkId(targetDeviceId);
                 if (import.meta.env.DEV) {
-                  console.log(`오디오 출력 장치 변경 (setSinkId): ${targetDeviceId}`);
+                  console.log(
+                    `오디오 출력 장치 변경 (setSinkId): ${targetDeviceId}`,
+                  );
                 }
-              } else {
-                // 오디오 출력 장치를 찾을 수 없으면 음량으로 대체
-                await this.callState.remoteAudioTrack.setVolume(
-                  newSpeakerState ? 100 : 30,
+              }
+
+              // 볼륨도 함께 조절 (장치 변경과 함께)
+              await this.callState.remoteAudioTrack.setVolume(speakerVolume);
+            } catch (sinkError) {
+              // setSinkId가 지원되지 않거나 실패한 경우 음량으로만 조절
+              if (import.meta.env.DEV) {
+                console.log(
+                  "setSinkId 미지원 또는 실패, 음량으로만 조절:",
+                  sinkError,
                 );
               }
-            } catch (sinkError) {
-              // setSinkId가 지원되지 않거나 실패한 경우 음량으로 대체
-              if (import.meta.env.DEV) {
-                console.log("setSinkId 미지원 또는 실패, 음량으로 대체:", sinkError);
-              }
-              await this.callState.remoteAudioTrack.setVolume(
-                newSpeakerState ? 100 : 30,
-              );
+              await this.callState.remoteAudioTrack.setVolume(speakerVolume);
             }
           } else {
-            // HTMLAudioElement를 찾을 수 없거나 setSinkId가 없는 경우 음량으로 대체
+            // HTMLAudioElement를 찾을 수 없거나 setSinkId가 없는 경우 음량으로만 조절
             if (import.meta.env.DEV) {
-              console.log("HTMLAudioElement를 찾을 수 없음, 음량으로 대체");
+              console.log("HTMLAudioElement를 찾을 수 없음, 음량으로만 조절");
             }
-            await this.callState.remoteAudioTrack.setVolume(
-              newSpeakerState ? 100 : 30,
-            );
+            await this.callState.remoteAudioTrack.setVolume(speakerVolume);
           }
         } catch (deviceError) {
-          // 오디오 장치 API가 지원되지 않는 경우 음량으로 대체
+          // 오디오 장치 API가 지원되지 않는 경우 음량으로만 조절
           if (import.meta.env.DEV) {
-            console.log("오디오 장치 API 미지원, 음량으로 대체:", deviceError);
+            console.log(
+              "오디오 장치 API 미지원, 음량으로만 조절:",
+              deviceError,
+            );
           }
-          await this.callState.remoteAudioTrack.setVolume(
-            newSpeakerState ? 100 : 30,
-          );
+          await this.callState.remoteAudioTrack.setVolume(speakerVolume);
+        }
+      }
+
+      // 로컬 마이크 게인 조절 (내 목소리)
+      if (this.callState.localAudioTrack) {
+        try {
+          // MediaStreamTrack의 setConstraints를 사용하여 마이크 게인 조절 시도
+          const track = this.callState.localAudioTrack.getMediaStreamTrack();
+
+          if (track && "getCapabilities" in track) {
+            const capabilities = (track as any).getCapabilities();
+
+            // 마이크 게인 조절 (스피커폰 ON일 때 더 크게)
+            // volume 속성이 있는지 확인 (일부 브라우저에서만 지원)
+            if (capabilities && "volume" in capabilities) {
+              try {
+                // 스피커폰 ON: 마이크 게인 증가 (1.0-2.0 범위)
+                // 스피커폰 OFF: 마이크 게인 정상 (1.0)
+                const volumeConstraint = newSpeakerState ? 1.5 : 1.0;
+
+                await track.applyConstraints({
+                  volume: volumeConstraint,
+                } as any);
+
+                if (import.meta.env.DEV) {
+                  console.log(`마이크 게인 조절: ${volumeConstraint}`);
+                }
+              } catch (constraintError) {
+                // applyConstraints 실패는 무시 (모든 브라우저에서 지원되지 않을 수 있음)
+                if (import.meta.env.DEV) {
+                  console.log("마이크 게인 조절 실패 (무시):", constraintError);
+                }
+              }
+            } else {
+              // volume 속성이 없는 경우, Agora SDK의 setVolume으로 대체 시도
+              // 주의: setVolume은 마이크 게인이 아니라 트랙 레벨을 조절합니다
+              // 하지만 어느 정도 효과가 있을 수 있습니다
+              const trackVolume = newSpeakerState ? 150 : 100;
+
+              try {
+                // IMicrophoneAudioTrack의 setVolume은 트랙 레벨을 조절
+                // 실제 마이크 게인은 브라우저/OS 레벨에서 제어되어 제한적입니다
+                await (this.callState.localAudioTrack as any).setVolume?.(
+                  trackVolume,
+                );
+
+                if (import.meta.env.DEV) {
+                  console.log(`마이크 트랙 레벨 조절: ${trackVolume}%`);
+                }
+              } catch (volumeError) {
+                // setVolume 실패는 무시
+                if (import.meta.env.DEV) {
+                  console.log(
+                    "마이크 트랙 레벨 조절 실패 (무시):",
+                    volumeError,
+                  );
+                }
+              }
+            }
+          }
+        } catch (micError) {
+          // 마이크 게인 조절 실패는 무시 (모든 브라우저에서 지원되지 않을 수 있음)
+          if (import.meta.env.DEV) {
+            console.log("마이크 게인 조절 실패 (무시):", micError);
+          }
         }
       }
 
       this.callState.isSpeakerOn = newSpeakerState;
+      this.callState.volume = speakerVolume;
+
       if (import.meta.env.DEV) {
-        console.log(`스피커폰 ${newSpeakerState ? "켜짐" : "꺼짐"}`);
+        console.log(
+          `스피커폰 ${newSpeakerState ? "켜짐" : "꺼짐"} - 볼륨: ${speakerVolume}%`,
+        );
       }
 
       return newSpeakerState;
