@@ -299,7 +299,7 @@ export default function FriendsPage({
           >
             <Inbox className="w-7 h-7 text-orange-accent" strokeWidth={2} />
             <span className="text-grey-600 font-crimson text-xs whitespace-pre-line text-center">
-              받은{"\n"}친구 요청
+              받은 요청
             </span>
             {receivedRequestCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
@@ -315,7 +315,7 @@ export default function FriendsPage({
           >
             <Send className="w-7 h-7 text-orange-accent" strokeWidth={2} />
             <span className="text-grey-600 font-crimson text-xs whitespace-pre-line text-center">
-              보낸{"\n"}친구 요청
+              보낸 요청
             </span>
             {sentRequestCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-orange-accent text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
