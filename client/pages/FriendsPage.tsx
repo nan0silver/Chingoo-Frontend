@@ -286,9 +286,7 @@ export default function FriendsPage({
               />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-grey-900 font-cafe24">
-            친구 목록
-          </h1>
+          <h1 className="text-2xl font-bold text-grey-900">친구 목록</h1>
         </div>
         <div className="flex items-center gap-3">
           {/* 받은 요청 버튼 */}

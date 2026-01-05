@@ -209,7 +209,7 @@ export default function FriendRequestsPage({
               />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-grey-900 font-cafe24">
+          <h1 className="text-2xl font-bold text-grey-900">
             {isSentRequests ? "보낸 친구 요청" : "받은 친구 요청"}
           </h1>
         </div>
