@@ -375,15 +375,15 @@ export default function HomePage({ onStartCall }: HomePageProps) {
         </div>
       </div> */}
 
-      {/* Start Call Button */}
-      <div className="px-8 pb-12">
-        <div className="h-24 relative">
+      {/* 플로팅 통화 시작 버튼 */}
+      <div className="fixed bottom-24 left-0 right-0 px-8 z-50 pointer-events-none">
+        <div className="max-w-md mx-auto">
           <button
             onClick={handleStartCall}
             disabled={!selectedCategory || isStartingMatching}
-            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all ${
+            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all shadow-lg pointer-events-auto ${
               selectedCategory && !isStartingMatching
-                ? "bg-gradient-to-r from-yellow-300 to-red-gradient shadow-lg"
+                ? "bg-gradient-to-r from-yellow-300 to-red-gradient hover:shadow-xl"
                 : "bg-gray-400 opacity-50 cursor-not-allowed"
             }`}
           >

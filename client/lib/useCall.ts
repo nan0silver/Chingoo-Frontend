@@ -327,7 +327,7 @@ export const useCall = () => {
               console.log("Agora 통화 시작");
             }
             updateConnectingState(false);
-            
+
             // 통화 시작 시 스피커폰 상태를 OFF로 초기화하고 상태 업데이트
             const currentState = agoraService.getCallState();
             currentState.isSpeakerOn = false;
