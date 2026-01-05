@@ -213,6 +213,21 @@ export default function FriendRequestsPage({
             {isSentRequests ? "보낸 친구 요청" : "받은 친구 요청"}
           </h1>
         </div>
+        <div className="flex items-center gap-3">
+          {/* 높이 맞추기 위한 더미 요소 */}
+          <div className="relative flex flex-col items-center gap-1 p-2 opacity-0 pointer-events-none">
+            <div className="w-7 h-7"></div>
+            <span className="text-grey-600 font-crimson text-xs whitespace-pre-line text-center">
+              받은 요청
+            </span>
+          </div>
+          <div className="relative flex flex-col items-center gap-1 p-2 opacity-0 pointer-events-none">
+            <div className="w-7 h-7"></div>
+            <span className="text-grey-600 font-crimson text-xs whitespace-pre-line text-center">
+              보낸 요청
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Content */}
