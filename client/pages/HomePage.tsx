@@ -240,7 +240,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-8 py-4">
+      <div className="flex items-center justify-between px-8 pt-6 pb-4">
         {/* Logo */}
         <div className="flex items-center">
           <h1 className="text-3xl font-bold text-black font-cafe24">
