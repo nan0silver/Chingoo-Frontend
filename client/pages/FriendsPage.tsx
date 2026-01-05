@@ -327,7 +327,7 @@ export default function FriendsPage({
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-8 py-6 overflow-y-auto pb-32">
+      <div className="flex-1 px-8 py-6 overflow-y-auto pb-40">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
