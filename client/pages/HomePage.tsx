@@ -361,6 +361,9 @@ export default function HomePage({ onStartCall }: HomePageProps) {
         </div>
       )}
 
+      {/* 하단 여백 - 플로팅 버튼이 보이도록 */}
+      <div className="h-32"></div>
+
       {/* Subscription Section */}
       {/* <div className="px-8 mb-8">
         <div className="relative bg-orange-subscription rounded-2xl p-8 flex items-center justify-between">
@@ -376,20 +379,18 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       </div> */}
 
       {/* 플로팅 통화 시작 버튼 */}
-      <div className="fixed bottom-24 left-0 right-0 px-8 z-50 pointer-events-none">
-        <div className="max-w-md mx-auto">
-          <button
-            onClick={handleStartCall}
-            disabled={!selectedCategory || isStartingMatching}
-            className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all shadow-lg pointer-events-auto ${
-              selectedCategory && !isStartingMatching
-                ? "bg-gradient-to-r from-yellow-300 to-red-gradient hover:shadow-xl"
-                : "bg-gray-400 opacity-50 cursor-not-allowed"
-            }`}
-          >
-            {isStartingMatching ? "매칭 중..." : "통화 시작"}
-          </button>
-        </div>
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-50">
+        <button
+          onClick={handleStartCall}
+          disabled={!selectedCategory || isStartingMatching}
+          className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all shadow-lg ${
+            selectedCategory && !isStartingMatching
+              ? "bg-gradient-to-r from-yellow-300 to-red-gradient hover:shadow-xl"
+              : "bg-gray-400 opacity-50 cursor-not-allowed"
+          }`}
+        >
+          {isStartingMatching ? "매칭 중..." : "통화 시작"}
+        </button>
       </div>
 
       {/* Bottom Navigation */}
