@@ -254,7 +254,7 @@ export default function ProfileSetupPage() {
 
   return (
     <div
-      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page font-noto pb-20"
+      className="min-h-screen bg-white flex flex-col items-center relative safe-area-page font-noto pb-20 overflow-y-auto"
       aria-busy={showSuccessMessage}
     >
       {/* Privacy Consent Modal */}
@@ -499,7 +499,7 @@ export default function ProfileSetupPage() {
         </div>
 
         {/* Save Button */}
-        <div className="pt-4">
+        <div className="pt-4 pb-20">
           <button
             onClick={handleSaveProfile}
             disabled={
