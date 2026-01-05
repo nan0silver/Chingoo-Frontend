@@ -386,7 +386,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
           className={`w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all shadow-lg ${
             selectedCategory && !isStartingMatching
               ? "bg-gradient-to-r from-yellow-300 to-red-gradient hover:shadow-xl"
-              : "bg-gray-400 opacity-50 cursor-not-allowed"
+              : "bg-gray-400 cursor-not-allowed"
           }`}
         >
           {isStartingMatching ? "매칭 중..." : "통화 시작"}
