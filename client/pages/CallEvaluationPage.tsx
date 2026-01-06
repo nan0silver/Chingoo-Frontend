@@ -125,12 +125,31 @@ export default function CallEvaluationPage({
       let isAlreadyFriend = false;
       let isAlreadyRequested = false;
       let receivedRequestFromPartner = false;
+      let blockedByPartner = false;
 
       if (error?.message) {
         const message = error.message.toLowerCase();
+        const originalMessage = error.message;
 
-        // 상대방이 이미 요청을 보낸 경우 (가장 구체적인 메시지부터 체크)
+        // 상대방이 나를 차단한 경우 (가장 먼저 체크)
         if (
+          message.includes("차단당함") ||
+          message.includes("blocked by") ||
+          message.includes("나를 차단") ||
+          message.includes("상대방이 차단") ||
+          message.includes("you are blocked") ||
+          message.includes("blocked you") ||
+          message.includes("차단되어") ||
+          (message.includes("차단") &&
+            (message.includes("당") ||
+              message.includes("by") ||
+              message.includes("you")))
+        ) {
+          errorMessage = "상대방이 나를 차단하여 친구 요청을 보낼 수 없습니다.";
+          blockedByPartner = true;
+        }
+        // 상대방이 이미 요청을 보낸 경우
+        else if (
           message.includes("해당 사용자로부터 이미 친구 요청을 받았습니다") ||
           message.includes("이미 친구 요청을 받았습니다") ||
           message.includes("받은 요청") ||
@@ -157,7 +176,7 @@ export default function CallEvaluationPage({
             "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
           receivedRequestFromPartner = true;
         }
-        // 이미 친구인 경우 (더 일반적인 메시지는 나중에 체크)
+        // 이미 친구인 경우
         else if (
           message.includes("이미 친구") ||
           message.includes("already friend") ||
@@ -166,7 +185,7 @@ export default function CallEvaluationPage({
           errorMessage = "이미 친구입니다.";
           isAlreadyFriend = true;
         }
-        // 차단된 사용자 (신고된 사용자)
+        // 내가 상대방을 차단한 경우 (신고된 사용자)
         else if (
           message.includes("차단") ||
           message.includes("blocked") ||
@@ -183,12 +202,15 @@ export default function CallEvaluationPage({
         }
         // 기타 에러는 서버 메시지 사용
         else {
-          errorMessage = error.message || errorMessage;
+          errorMessage = originalMessage || errorMessage;
         }
       }
 
       setFriendRequestStatus(
-        isAlreadyFriend || isAlreadyRequested || receivedRequestFromPartner
+        isAlreadyFriend ||
+          isAlreadyRequested ||
+          receivedRequestFromPartner ||
+          blockedByPartner
           ? "success"
           : "error",
       );
