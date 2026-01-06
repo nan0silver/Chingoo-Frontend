@@ -656,7 +656,7 @@ export default function CallEvaluationPage({
 
       {/* Report User Button */}
       {partner?.nickname && (
-        <div className="flex justify-center mt-3 px-5">
+        <div className="flex justify-center mt-3 px-5 mb-24">
           <button
             onClick={() => setShowReportModal(true)}
             className="w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50"
