@@ -19,6 +19,8 @@ export default function CallConnectedPage({
   const [audioWaveAnimation, setAudioWaveAnimation] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReportSuccessModal, setShowReportSuccessModal] = useState(false);
+  const [showReportErrorModal, setShowReportErrorModal] = useState(false);
+  const [reportErrorMessage, setReportErrorMessage] = useState<string>("");
   const {
     partner,
     callId,
@@ -172,35 +174,68 @@ export default function CallConnectedPage({
   // 사용자 신고 핸들러
   const handleReportUser = async (request: ReportUserRequest) => {
     if (!partner?.id) {
-      throw new Error("상대방 정보를 찾을 수 없습니다.");
+      setReportErrorMessage("상대방 정보를 찾을 수 없습니다.");
+      setShowReportErrorModal(true);
+      return;
     }
 
-    const token = getStoredToken();
-    if (!token) {
-      throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
-    }
-
-    matchingApiService.setToken(token);
-
-    // call_id 추가 (통화 중이므로 callId가 있으면 포함)
-    const reportRequest: ReportUserRequest = {
-      ...request,
-      call_id: callId ? parseInt(callId) : undefined,
-    };
-
-    await matchingApiService.reportUser(partner.id, reportRequest);
-    
-    // 신고한 사용자 ID를 localStorage에 저장
     try {
-      const stored = localStorage.getItem("reportedUserIds");
-      const currentIds = stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
-      currentIds.add(partner.id);
-      localStorage.setItem("reportedUserIds", JSON.stringify(Array.from(currentIds)));
-    } catch (error) {
-      console.error("신고한 사용자 목록 저장 실패:", error);
+      const token = getStoredToken();
+      if (!token) {
+        throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      }
+
+      matchingApiService.setToken(token);
+
+      // call_id 추가 (통화 중이므로 callId가 있으면 포함)
+      const reportRequest: ReportUserRequest = {
+        ...request,
+        call_id: callId ? parseInt(callId) : undefined,
+      };
+
+      await matchingApiService.reportUser(partner.id, reportRequest);
+
+      // 신고한 사용자 ID를 localStorage에 저장
+      try {
+        const stored = localStorage.getItem("reportedUserIds");
+        const currentIds = stored
+          ? new Set<string>(JSON.parse(stored))
+          : new Set<string>();
+        currentIds.add(partner.id);
+        localStorage.setItem(
+          "reportedUserIds",
+          JSON.stringify(Array.from(currentIds)),
+        );
+      } catch (error) {
+        console.error("신고한 사용자 목록 저장 실패:", error);
+      }
+
+      setShowReportSuccessModal(true);
+    } catch (error: any) {
+      console.error("사용자 신고 실패:", error);
+
+      let errorMessage = "신고에 실패했습니다. 다시 시도해주세요.";
+
+      if (error?.message) {
+        const message = error.message.toLowerCase();
+
+        // 중복 신고 에러 처리
+        if (
+          message.includes("이미 해당 사용자를 신고했습니다") ||
+          message.includes("이미 신고") ||
+          message.includes("already reported") ||
+          message.includes("duplicate") ||
+          message.includes("중복")
+        ) {
+          errorMessage = "이미 해당 사용자를 신고했습니다.";
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      setReportErrorMessage(errorMessage);
+      setShowReportErrorModal(true);
     }
-    
-    setShowReportSuccessModal(true);
   };
 
   return (
@@ -408,6 +443,42 @@ export default function CallConnectedPage({
             <button
               onClick={() => {
                 setShowReportSuccessModal(false);
+                setShowReportModal(false);
+              }}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report Error Modal */}
+      {showReportErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="text-red-600"
+              >
+                <path
+                  d="M24 8L8 24M8 8L24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">신고 실패</h3>
+            <p className="text-gray-600 mb-6">{reportErrorMessage}</p>
+            <button
+              onClick={() => {
+                setShowReportErrorModal(false);
                 setShowReportModal(false);
               }}
               className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
