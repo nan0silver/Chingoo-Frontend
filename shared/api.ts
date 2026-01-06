@@ -521,3 +521,34 @@ export interface DeleteFriendResponse {
   message: string;
   timestamp: string;
 }
+
+/**
+ * 신고 사유 타입
+ */
+export type ReportReason =
+  | "INAPPROPRIATE_LANGUAGE"
+  | "HARASSMENT"
+  | "SPAM"
+  | "INAPPROPRIATE_CONTENT"
+  | "OFFENSIVE_BEHAVIOR"
+  | "PRIVACY_VIOLATION"
+  | "OTHER";
+
+/**
+ * 사용자 신고 요청
+ */
+export interface ReportUserRequest {
+  call_id?: number; // 선택: 신고가 발생한 통화 ID
+  reason: ReportReason; // 필수: 신고 사유
+  details?: string; // 선택: 상세 내용 (최대 500자)
+}
+
+/**
+ * 사용자 신고 응답
+ */
+export interface ReportUserResponse {
+  success: boolean;
+  message: string;
+  data?: null;
+  timestamp: string;
+}

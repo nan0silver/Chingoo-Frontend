@@ -14,6 +14,8 @@ import {
   FriendRequestsResponse,
   FriendRequestActionResponse,
   DeleteFriendResponse,
+  ReportUserRequest,
+  ReportUserResponse,
 } from "@shared/api";
 import { refreshToken, getApiUrl } from "./auth";
 import { logger } from "./logger";
@@ -1464,6 +1466,66 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("친구를 삭제할 수 없습니다.");
+    }
+  }
+
+  /**
+   * 사용자 신고
+   * POST /api/v1/reports/users/{reportedUserId}
+   */
+  async reportUser(
+    reportedUserId: number | string,
+    request: ReportUserRequest,
+  ): Promise<ReportUserResponse> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const reportedUserIdStr = String(reportedUserId);
+      const url = `${this.baseUrl}/v1/reports/users/${reportedUserIdStr}`;
+      logger.apiRequest(
+        "POST",
+        `/v1/reports/users/${reportedUserIdStr}`,
+        request,
+      );
+
+      let response = await fetch(url, {
+        method: "POST",
+        headers: createHeaders(this.token),
+        credentials: "include",
+        body: JSON.stringify(request),
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "POST",
+            headers: createHeaders(newToken),
+            credentials: "include",
+            body: JSON.stringify(request),
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: ReportUserResponse =
+        await handleApiResponse<ReportUserResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 사용자 신고 성공:", result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error("사용자 신고 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("사용자 신고에 실패했습니다.");
     }
   }
 }

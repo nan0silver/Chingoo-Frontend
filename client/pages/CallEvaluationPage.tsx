@@ -5,6 +5,8 @@ import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { UserPlus } from "lucide-react";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { ReportUserRequest } from "@shared/api";
+import ReportUserModal from "@/components/ReportUserModal";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -34,10 +36,48 @@ export default function CallEvaluationPage({
     useState(false);
   const [evaluationErrorMessage, setEvaluationErrorMessage] =
     useState<string>("");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportSuccessModal, setShowReportSuccessModal] = useState(false);
+  const [showReportErrorModal, setShowReportErrorModal] = useState(false);
+  const [reportErrorMessage, setReportErrorMessage] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
+
+  // 신고한 사용자 목록을 localStorage에서 가져오기
+  const getReportedUserIds = (): Set<string> => {
+    try {
+      const stored = localStorage.getItem("reportedUserIds");
+      if (stored) {
+        const ids = JSON.parse(stored) as string[];
+        return new Set(ids);
+      }
+    } catch (error) {
+      console.error("신고한 사용자 목록 불러오기 실패:", error);
+    }
+    return new Set<string>();
+  };
+
+  // 신고한 사용자 ID를 localStorage에 저장
+  const addReportedUserId = (userId: string) => {
+    try {
+      const currentIds = getReportedUserIds();
+      currentIds.add(userId);
+      localStorage.setItem(
+        "reportedUserIds",
+        JSON.stringify(Array.from(currentIds)),
+      );
+    } catch (error) {
+      console.error("신고한 사용자 목록 저장 실패:", error);
+    }
+  };
+
+  // 신고된 사용자인지 확인
+  const isReportedUser = (userId: string | undefined): boolean => {
+    if (!userId) return false;
+    return getReportedUserIds().has(userId);
+  };
 
   // 디버깅: partner 정보 및 callId 확인 (개발 환경만)
   useEffect(() => {
@@ -85,12 +125,31 @@ export default function CallEvaluationPage({
       let isAlreadyFriend = false;
       let isAlreadyRequested = false;
       let receivedRequestFromPartner = false;
+      let blockedByPartner = false;
 
       if (error?.message) {
         const message = error.message.toLowerCase();
+        const originalMessage = error.message;
 
-        // 상대방이 이미 요청을 보낸 경우 (가장 구체적인 메시지부터 체크)
+        // 상대방이 나를 차단한 경우 (가장 먼저 체크)
         if (
+          message.includes("차단당함") ||
+          message.includes("blocked by") ||
+          message.includes("나를 차단") ||
+          message.includes("상대방이 차단") ||
+          message.includes("you are blocked") ||
+          message.includes("blocked you") ||
+          message.includes("차단되어") ||
+          (message.includes("차단") &&
+            (message.includes("당") ||
+              message.includes("by") ||
+              message.includes("you")))
+        ) {
+          errorMessage = "상대방이 나를 차단하여 친구 요청을 보낼 수 없습니다.";
+          blockedByPartner = true;
+        }
+        // 상대방이 이미 요청을 보낸 경우
+        else if (
           message.includes("해당 사용자로부터 이미 친구 요청을 받았습니다") ||
           message.includes("이미 친구 요청을 받았습니다") ||
           message.includes("받은 요청") ||
@@ -117,7 +176,7 @@ export default function CallEvaluationPage({
             "상대방이 동시에 친구 요청을 보냈습니다. 받은 친구 요청에서 확인해주세요.";
           receivedRequestFromPartner = true;
         }
-        // 이미 친구인 경우 (더 일반적인 메시지는 나중에 체크)
+        // 이미 친구인 경우
         else if (
           message.includes("이미 친구") ||
           message.includes("already friend") ||
@@ -126,14 +185,32 @@ export default function CallEvaluationPage({
           errorMessage = "이미 친구입니다.";
           isAlreadyFriend = true;
         }
+        // 내가 상대방을 차단한 경우 (신고된 사용자)
+        else if (
+          message.includes("차단") ||
+          message.includes("blocked") ||
+          message.includes("신고") ||
+          message.includes("report") ||
+          message.includes("매칭되지 않") ||
+          message.includes("cannot match")
+        ) {
+          errorMessage = "차단된 사용자에게는 친구 요청을 보낼 수 없습니다.";
+          // 신고된 사용자로 표시하여 버튼 숨김
+          if (partner?.id) {
+            addReportedUserId(partner.id);
+          }
+        }
         // 기타 에러는 서버 메시지 사용
         else {
-          errorMessage = error.message || errorMessage;
+          errorMessage = originalMessage || errorMessage;
         }
       }
 
       setFriendRequestStatus(
-        isAlreadyFriend || isAlreadyRequested || receivedRequestFromPartner
+        isAlreadyFriend ||
+          isAlreadyRequested ||
+          receivedRequestFromPartner ||
+          blockedByPartner
           ? "success"
           : "error",
       );
@@ -211,6 +288,61 @@ export default function CallEvaluationPage({
       setShowEvaluationErrorModal(true);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // 사용자 신고 핸들러
+  const handleReportUser = async (request: ReportUserRequest) => {
+    if (!partner?.id) {
+      setReportErrorMessage("상대방 정보를 찾을 수 없습니다.");
+      setShowReportErrorModal(true);
+      return;
+    }
+
+    try {
+      const token = getStoredToken();
+      if (!token) {
+        throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+      }
+
+      matchingApiService.setToken(token);
+
+      // call_id 추가 (통화 종료 후이므로 callId가 있으면 포함)
+      const reportRequest: ReportUserRequest = {
+        ...request,
+        call_id: callId ? parseInt(callId) : undefined,
+      };
+
+      await matchingApiService.reportUser(partner.id, reportRequest);
+
+      // 신고한 사용자 ID를 localStorage에 저장
+      addReportedUserId(partner.id);
+
+      setShowReportSuccessModal(true);
+    } catch (error: any) {
+      console.error("사용자 신고 실패:", error);
+
+      let errorMessage = "신고에 실패했습니다. 다시 시도해주세요.";
+
+      if (error?.message) {
+        const message = error.message.toLowerCase();
+
+        // 중복 신고 에러 처리
+        if (
+          message.includes("이미 해당 사용자를 신고했습니다") ||
+          message.includes("이미 신고") ||
+          message.includes("already reported") ||
+          message.includes("duplicate") ||
+          message.includes("중복")
+        ) {
+          errorMessage = "이미 해당 사용자를 신고했습니다.";
+        } else {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+
+      setReportErrorMessage(errorMessage);
+      setShowReportErrorModal(true);
     }
   };
 
@@ -582,7 +714,7 @@ export default function CallEvaluationPage({
       </div>
 
       {/* Add Friend Button */}
-      {partner?.nickname && (
+      {partner?.nickname && !isReportedUser(partner.id) && (
         <div className="flex justify-center mt-4 px-5">
           <button
             onClick={handleAddFriend}
@@ -624,6 +756,114 @@ export default function CallEvaluationPage({
               </>
             )}
           </button>
+        </div>
+      )}
+
+      {/* Report User Button */}
+      {partner?.nickname && (
+        <div className="flex justify-center mt-3 px-5 mb-24">
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="w-5 h-5"
+            >
+              <path
+                d="M10 1.25C5.17 1.25 1.25 5.17 1.25 10C1.25 14.83 5.17 18.75 10 18.75C14.83 18.75 18.75 14.83 18.75 10C18.75 5.17 14.83 1.25 10 1.25ZM10 15C9.3 15 8.75 14.45 8.75 13.75C8.75 13.05 9.3 12.5 10 12.5C10.7 12.5 11.25 13.05 11.25 13.75C11.25 14.45 10.7 15 10 15ZM11.25 10.75H8.75V5.75H11.25V10.75Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>신고하기</span>
+          </button>
+        </div>
+      )}
+
+      {/* Report User Modal */}
+      <ReportUserModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportUser}
+        reportedUserNickname={partner?.nickname}
+      />
+
+      {/* Report Success Modal */}
+      {showReportSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="text-green-600"
+              >
+                <path
+                  d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              신고가 접수되었습니다
+            </h3>
+            <p className="text-gray-600 mb-6">
+              신고해주셔서 감사합니다. 검토 후 조치하겠습니다.
+            </p>
+            <button
+              onClick={() => {
+                setShowReportSuccessModal(false);
+                setShowReportModal(false);
+              }}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report Error Modal */}
+      {showReportErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="text-red-600"
+              >
+                <path
+                  d="M24 8L8 24M8 8L24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">신고 실패</h3>
+            <p className="text-gray-600 mb-6">{reportErrorMessage}</p>
+            <button
+              onClick={() => {
+                setShowReportErrorModal(false);
+                setShowReportModal(false);
+              }}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
+          </div>
         </div>
       )}
 
