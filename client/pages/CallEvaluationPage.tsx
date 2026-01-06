@@ -5,6 +5,8 @@ import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { UserPlus } from "lucide-react";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { ReportUserRequest } from "@shared/api";
+import ReportUserModal from "@/components/ReportUserModal";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -34,6 +36,8 @@ export default function CallEvaluationPage({
     useState(false);
   const [evaluationErrorMessage, setEvaluationErrorMessage] =
     useState<string>("");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportSuccessModal, setShowReportSuccessModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { partner, clearPartner, callId } = useCall();
@@ -212,6 +216,29 @@ export default function CallEvaluationPage({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // 사용자 신고 핸들러
+  const handleReportUser = async (request: ReportUserRequest) => {
+    if (!partner?.id) {
+      throw new Error("상대방 정보를 찾을 수 없습니다.");
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+    }
+
+    matchingApiService.setToken(token);
+
+    // call_id 추가 (통화 종료 후이므로 callId가 있으면 포함)
+    const reportRequest: ReportUserRequest = {
+      ...request,
+      call_id: callId ? parseInt(callId) : undefined,
+    };
+
+    await matchingApiService.reportUser(partner.id, reportRequest);
+    setShowReportSuccessModal(true);
   };
 
   // 하단 네비게이션 핸들러
@@ -624,6 +651,78 @@ export default function CallEvaluationPage({
               </>
             )}
           </button>
+        </div>
+      )}
+
+      {/* Report User Button */}
+      {partner?.nickname && (
+        <div className="flex justify-center mt-3 px-5">
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              className="w-5 h-5"
+            >
+              <path
+                d="M10 1.25C5.17 1.25 1.25 5.17 1.25 10C1.25 14.83 5.17 18.75 10 18.75C14.83 18.75 18.75 14.83 18.75 10C18.75 5.17 14.83 1.25 10 1.25ZM10 15C9.3 15 8.75 14.45 8.75 13.75C8.75 13.05 9.3 12.5 10 12.5C10.7 12.5 11.25 13.05 11.25 13.75C11.25 14.45 10.7 15 10 15ZM11.25 10.75H8.75V5.75H11.25V10.75Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>신고하기</span>
+          </button>
+        </div>
+      )}
+
+      {/* Report User Modal */}
+      <ReportUserModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportUser}
+        reportedUserNickname={partner?.nickname}
+      />
+
+      {/* Report Success Modal */}
+      {showReportSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="text-green-600"
+              >
+                <path
+                  d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              신고가 접수되었습니다
+            </h3>
+            <p className="text-gray-600 mb-6">
+              신고해주셔서 감사합니다. 검토 후 조치하겠습니다.
+            </p>
+            <button
+              onClick={() => {
+                setShowReportSuccessModal(false);
+                setShowReportModal(false);
+              }}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
+          </div>
         </div>
       )}
 

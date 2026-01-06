@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
 import { NetworkQuality } from "@/lib/agoraService";
-import { getCategoryDisplayName } from "@shared/api";
+import { getCategoryDisplayName, ReportUserRequest } from "@shared/api";
+import { getMatchingApiService } from "@/lib/matchingApi";
+import { getStoredToken } from "@/lib/auth";
+import ReportUserModal from "@/components/ReportUserModal";
 
 interface CallConnectedPageProps {
   selectedCategory: string | null;
@@ -14,8 +17,11 @@ export default function CallConnectedPage({
   onEndCall,
 }: CallConnectedPageProps) {
   const [audioWaveAnimation, setAudioWaveAnimation] = useState(0);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReportSuccessModal, setShowReportSuccessModal] = useState(false);
   const {
     partner,
+    callId,
     agoraState,
     callDuration,
     isInCall,
@@ -25,6 +31,7 @@ export default function CallConnectedPage({
     setError,
     error,
   } = useCall();
+  const matchingApiService = getMatchingApiService();
 
   // 디버깅: partner 정보 확인 (개발 환경만)
   useEffect(() => {
@@ -162,6 +169,29 @@ export default function CallConnectedPage({
     agoraState.networkQuality?.downlinkNetworkQuality || 0,
   );
 
+  // 사용자 신고 핸들러
+  const handleReportUser = async (request: ReportUserRequest) => {
+    if (!partner?.id) {
+      throw new Error("상대방 정보를 찾을 수 없습니다.");
+    }
+
+    const token = getStoredToken();
+    if (!token) {
+      throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+    }
+
+    matchingApiService.setToken(token);
+
+    // call_id 추가 (통화 중이므로 callId가 있으면 포함)
+    const reportRequest: ReportUserRequest = {
+      ...request,
+      call_id: callId ? parseInt(callId) : undefined,
+    };
+
+    await matchingApiService.reportUser(partner.id, reportRequest);
+    setShowReportSuccessModal(true);
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col relative safe-area-page pt-6 font-noto"
@@ -289,6 +319,24 @@ export default function CallConnectedPage({
             </span>
           </div>
 
+          {/* Report Button */}
+          <div className="flex flex-col items-center gap-4">
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="w-20 h-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center hover:bg-opacity-30 transition-colors"
+            >
+              <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+                <path
+                  d="M15 2.5C8.1 2.5 2.5 8.1 2.5 15C2.5 21.9 8.1 27.5 15 27.5C21.9 27.5 27.5 21.9 27.5 15C27.5 8.1 21.9 2.5 15 2.5ZM15 22.5C14.3 22.5 13.75 21.95 13.75 21.25C13.75 20.55 14.3 20 15 20C15.7 20 16.25 20.55 16.25 21.25C16.25 21.95 15.7 22.5 15 22.5ZM16.25 16.25H13.75V8.75H16.25V16.25Z"
+                  fill="white"
+                />
+              </svg>
+            </button>
+            <span className="text-white font-crimson text-lg font-bold">
+              신고하기
+            </span>
+          </div>
+
           {/* End Call Button */}
           <div className="flex flex-col items-center gap-4">
             <button
@@ -310,6 +358,54 @@ export default function CallConnectedPage({
           </div>
         </div>
       </div>
+
+      {/* Report User Modal */}
+      <ReportUserModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleReportUser}
+        reportedUserNickname={partner?.nickname}
+      />
+
+      {/* Report Success Modal */}
+      {showReportSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 mx-4 max-w-sm w-full text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                className="text-green-600"
+              >
+                <path
+                  d="M26.6667 8L11.3333 23.3333L5.33334 17.3333"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              신고가 접수되었습니다
+            </h3>
+            <p className="text-gray-600 mb-6">
+              신고해주셔서 감사합니다. 검토 후 조치하겠습니다.
+            </p>
+            <button
+              onClick={() => {
+                setShowReportSuccessModal(false);
+                setShowReportModal(false);
+              }}
+              className="w-full h-12 rounded-lg font-crimson text-lg font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
