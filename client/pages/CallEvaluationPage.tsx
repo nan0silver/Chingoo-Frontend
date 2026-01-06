@@ -43,6 +43,40 @@ export default function CallEvaluationPage({
   const { partner, clearPartner, callId } = useCall();
   const matchingApiService = getMatchingApiService();
 
+  // 신고한 사용자 목록을 localStorage에서 가져오기
+  const getReportedUserIds = (): Set<string> => {
+    try {
+      const stored = localStorage.getItem("reportedUserIds");
+      if (stored) {
+        const ids = JSON.parse(stored) as string[];
+        return new Set(ids);
+      }
+    } catch (error) {
+      console.error("신고한 사용자 목록 불러오기 실패:", error);
+    }
+    return new Set<string>();
+  };
+
+  // 신고한 사용자 ID를 localStorage에 저장
+  const addReportedUserId = (userId: string) => {
+    try {
+      const currentIds = getReportedUserIds();
+      currentIds.add(userId);
+      localStorage.setItem(
+        "reportedUserIds",
+        JSON.stringify(Array.from(currentIds)),
+      );
+    } catch (error) {
+      console.error("신고한 사용자 목록 저장 실패:", error);
+    }
+  };
+
+  // 신고된 사용자인지 확인
+  const isReportedUser = (userId: string | undefined): boolean => {
+    if (!userId) return false;
+    return getReportedUserIds().has(userId);
+  };
+
   // 디버깅: partner 정보 및 callId 확인 (개발 환경만)
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -129,6 +163,21 @@ export default function CallEvaluationPage({
         ) {
           errorMessage = "이미 친구입니다.";
           isAlreadyFriend = true;
+        }
+        // 차단된 사용자 (신고된 사용자)
+        else if (
+          message.includes("차단") ||
+          message.includes("blocked") ||
+          message.includes("신고") ||
+          message.includes("report") ||
+          message.includes("매칭되지 않") ||
+          message.includes("cannot match")
+        ) {
+          errorMessage = "차단된 사용자에게는 친구 요청을 보낼 수 없습니다.";
+          // 신고된 사용자로 표시하여 버튼 숨김
+          if (partner?.id) {
+            addReportedUserId(partner.id);
+          }
         }
         // 기타 에러는 서버 메시지 사용
         else {
@@ -238,6 +287,10 @@ export default function CallEvaluationPage({
     };
 
     await matchingApiService.reportUser(partner.id, reportRequest);
+    
+    // 신고한 사용자 ID를 localStorage에 저장
+    addReportedUserId(partner.id);
+    
     setShowReportSuccessModal(true);
   };
 
@@ -609,7 +662,7 @@ export default function CallEvaluationPage({
       </div>
 
       {/* Add Friend Button */}
-      {partner?.nickname && (
+      {partner?.nickname && !isReportedUser(partner.id) && (
         <div className="flex justify-center mt-4 px-5">
           <button
             onClick={handleAddFriend}

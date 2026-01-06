@@ -189,6 +189,17 @@ export default function CallConnectedPage({
     };
 
     await matchingApiService.reportUser(partner.id, reportRequest);
+    
+    // 신고한 사용자 ID를 localStorage에 저장
+    try {
+      const stored = localStorage.getItem("reportedUserIds");
+      const currentIds = stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
+      currentIds.add(partner.id);
+      localStorage.setItem("reportedUserIds", JSON.stringify(Array.from(currentIds)));
+    } catch (error) {
+      console.error("신고한 사용자 목록 저장 실패:", error);
+    }
+    
     setShowReportSuccessModal(true);
   };
 
