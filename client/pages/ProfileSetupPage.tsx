@@ -196,7 +196,8 @@ export default function ProfileSetupPage() {
     const hasNicknameChanged = userProfile && nickname !== userProfile.nickname;
     const hasGenderChanged = userProfile && gender !== userProfile.gender;
     const hasBirthChanged = userProfile && birth !== userProfile.birth;
-    const hasPhoneNumberChanged = userProfile && phoneNumber !== userProfile.phone_number;
+    const hasPhoneNumberChanged =
+      userProfile && phoneNumber !== userProfile.phone_number;
 
     // 변경된 필드만 포함하는 요청 바디 구성
     const requestBody: {
