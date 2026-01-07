@@ -31,6 +31,31 @@ const extractPhoneNumber = (value: string): string => {
   return value.replace(/\D/g, "");
 };
 
+// 전화번호 유효성 검사 함수
+const validatePhoneNumber = (phoneNumber: string): string => {
+  if (!phoneNumber) {
+    return ""; // 전화번호는 선택사항이므로 빈 값은 에러 없음
+  }
+
+  const numbersOnly = extractPhoneNumber(phoneNumber);
+
+  // 10자리 또는 11자리만 유효
+  if (numbersOnly.length < 10) {
+    return "전화번호는 최소 10자리 이상 입력해주세요.";
+  }
+
+  if (numbersOnly.length > 11) {
+    return "전화번호는 최대 11자리까지 입력 가능합니다.";
+  }
+
+  // 010으로 시작하는지 확인 (일반적인 휴대폰 번호)
+  if (numbersOnly.length === 11 && !numbersOnly.startsWith("010")) {
+    return "올바른 전화번호 형식이 아닙니다.";
+  }
+
+  return ""; // 유효한 경우 에러 없음
+};
+
 export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
@@ -39,6 +64,7 @@ export default function ProfileSetupPage() {
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // 숫자만 저장 (API 요청용)
+  const [phoneNumberError, setPhoneNumberError] = useState(""); // 전화번호 에러 메시지
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -214,6 +240,14 @@ export default function ProfileSetupPage() {
 
     // YYYY-MM-DD 형식으로 변환
     const birth = `${birthYear}-${birthMonth.padStart(2, "0")}-${birthDay.padStart(2, "0")}`;
+
+    // 전화번호 유효성 검증
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (phoneError) {
+      setPhoneNumberError(phoneError);
+      return;
+    }
+    setPhoneNumberError(""); // 유효한 경우 에러 메시지 제거
 
     // 변경 사항 확인
     const hasNicknameChanged = userProfile && nickname !== userProfile.nickname;
@@ -550,12 +584,23 @@ export default function ProfileSetupPage() {
               // 최대 11자리까지만 허용
               if (numbersOnly.length <= 11) {
                 setPhoneNumber(numbersOnly);
+                // 입력 중에는 에러 메시지 초기화 (저장 시에만 검증)
+                if (phoneNumberError) {
+                  setPhoneNumberError("");
+                }
               }
             }}
             placeholder="010-1234-5678"
             disabled={userProfile?.is_new_user && !hasConsented}
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className={`w-full h-12 md:h-14 px-4 border rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+              phoneNumberError
+                ? "border-red-500 focus:ring-red-500"
+                : "border-border-gray"
+            }`}
           />
+          {phoneNumberError && (
+            <p className="mt-2 text-sm text-red-500">{phoneNumberError}</p>
+          )}
         </div>
 
         {/* Save Button */}
