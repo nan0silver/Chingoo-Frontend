@@ -8,6 +8,29 @@ import {
 import { UserInfo, UserProfile } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 
+// 전화번호 포맷팅 함수 (숫자만 받아서 하이픈 추가)
+const formatPhoneNumber = (value: string): string => {
+  // 숫자만 추출
+  const numbers = value.replace(/\D/g, "");
+
+  // 길이에 따라 포맷팅
+  if (numbers.length <= 3) {
+    return numbers;
+  } else if (numbers.length <= 7) {
+    return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+  } else if (numbers.length <= 11) {
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+  } else {
+    // 11자리 초과는 11자리까지만
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  }
+};
+
+// 전화번호에서 숫자만 추출하는 함수
+const extractPhoneNumber = (value: string): string => {
+  return value.replace(/\D/g, "");
+};
+
 export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
@@ -15,7 +38,7 @@ export default function ProfileSetupPage() {
   const [birthYear, setBirthYear] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // 숫자만 저장 (API 요청용)
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -95,9 +118,9 @@ export default function ProfileSetupPage() {
             setBirthDay(day);
           }
 
-          // 기존 전화번호 정보가 있으면 설정
+          // 기존 전화번호 정보가 있으면 설정 (숫자만 추출하여 저장)
           if (latestUserProfile.phone_number) {
-            setPhoneNumber(latestUserProfile.phone_number);
+            setPhoneNumber(extractPhoneNumber(latestUserProfile.phone_number));
           }
         }
 
@@ -196,8 +219,10 @@ export default function ProfileSetupPage() {
     const hasNicknameChanged = userProfile && nickname !== userProfile.nickname;
     const hasGenderChanged = userProfile && gender !== userProfile.gender;
     const hasBirthChanged = userProfile && birth !== userProfile.birth;
+    // 전화번호 비교 시 숫자만 추출하여 비교 (하이픈 제거)
     const hasPhoneNumberChanged =
-      userProfile && phoneNumber !== userProfile.phone_number;
+      userProfile &&
+      phoneNumber !== extractPhoneNumber(userProfile.phone_number || "");
 
     // 변경된 필드만 포함하는 요청 바디 구성
     const requestBody: {
@@ -518,9 +543,16 @@ export default function ProfileSetupPage() {
           </label>
           <input
             type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="전화번호를 입력해주세요"
+            value={formatPhoneNumber(phoneNumber)}
+            onChange={(e) => {
+              // 입력값에서 숫자만 추출하여 저장 (API 요청용)
+              const numbersOnly = extractPhoneNumber(e.target.value);
+              // 최대 11자리까지만 허용
+              if (numbersOnly.length <= 11) {
+                setPhoneNumber(numbersOnly);
+              }
+            }}
+            placeholder="010-1234-5678"
             disabled={userProfile?.is_new_user && !hasConsented}
             className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
