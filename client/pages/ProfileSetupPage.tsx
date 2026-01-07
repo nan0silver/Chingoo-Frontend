@@ -15,6 +15,7 @@ export default function ProfileSetupPage() {
   const [birthYear, setBirthYear] = useState("");
   const [birthMonth, setBirthMonth] = useState("");
   const [birthDay, setBirthDay] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -79,7 +80,7 @@ export default function ProfileSetupPage() {
         const isNewUser =
           latestUserProfile.is_new_user ?? storedUserInfo?.is_new_user ?? false;
 
-        // 기존 유저인 경우에만 성별, 생년월일 정보 설정
+        // 기존 유저인 경우에만 성별, 생년월일, 전화번호 정보 설정
         if (!isNewUser) {
           // 기존 성별 정보가 있으면 설정
           if (latestUserProfile.gender) {
@@ -92,6 +93,11 @@ export default function ProfileSetupPage() {
             setBirthYear(year);
             setBirthMonth(month);
             setBirthDay(day);
+          }
+
+          // 기존 전화번호 정보가 있으면 설정
+          if (latestUserProfile.phone_number) {
+            setPhoneNumber(latestUserProfile.phone_number);
           }
         }
 
@@ -190,12 +196,14 @@ export default function ProfileSetupPage() {
     const hasNicknameChanged = userProfile && nickname !== userProfile.nickname;
     const hasGenderChanged = userProfile && gender !== userProfile.gender;
     const hasBirthChanged = userProfile && birth !== userProfile.birth;
+    const hasPhoneNumberChanged = userProfile && phoneNumber !== userProfile.phone_number;
 
     // 변경된 필드만 포함하는 요청 바디 구성
     const requestBody: {
       nickname?: string;
       gender?: string;
       birth?: string;
+      phone_number?: string;
     } = {};
 
     if (hasNicknameChanged) {
@@ -208,6 +216,10 @@ export default function ProfileSetupPage() {
 
     if (hasBirthChanged) {
       requestBody.birth = birth;
+    }
+
+    if (hasPhoneNumberChanged) {
+      requestBody.phone_number = phoneNumber;
     }
 
     // 변경 사항이 없는 경우
@@ -496,6 +508,21 @@ export default function ProfileSetupPage() {
               className="h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent text-center disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
+        </div>
+
+        {/* Phone Number Input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            전화번호
+          </label>
+          <input
+            type="tel"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="전화번호를 입력해주세요"
+            disabled={userProfile?.is_new_user && !hasConsented}
+            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+          />
         </div>
 
         {/* Save Button */}

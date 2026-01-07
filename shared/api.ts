@@ -44,6 +44,7 @@ export interface UserProfile {
   nickname: string;
   gender?: string; // 성별 (MALE, FEMALE)
   birth?: string; // 생년월일 (YYYY-MM-DD)
+  phone_number?: string; // 전화번호
   is_new_user?: boolean; // API에서 제공하지 않을 수 있음
   is_profile_complete?: boolean; // API에서 제공하지 않을 수 있음
 }
@@ -103,6 +104,7 @@ export interface UpdateProfileRequest {
   nickname?: string;
   gender?: string;
   birth?: string; // YYYY-MM-DD 형식
+  phone_number?: string; // 전화번호
 }
 
 /**
