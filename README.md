@@ -77,6 +77,90 @@ pnpm build
 pnpm start
 ```
 
+## 📱 iOS 빌드
+
+### 필수 요구사항
+
+- macOS (Xcode는 macOS에서만 실행 가능)
+- Xcode 15.0 이상
+- CocoaPods (`sudo gem install cocoapods`)
+- Apple Developer 계정 (실제 기기에 배포하려면)
+
+### iOS 빌드 단계
+
+1. **의존성 설치 및 빌드**
+
+   ```bash
+   # 프로젝트 의존성 설치
+   pnpm install
+
+   # 웹 앱 빌드
+   pnpm build
+   ```
+
+2. **Capacitor 동기화**
+
+   ```bash
+   # iOS 프로젝트에 웹 빌드 결과 동기화
+   pnpm ios:sync
+   ```
+
+3. **Xcode에서 열기**
+
+   ```bash
+   # Xcode에서 iOS 프로젝트 열기
+   pnpm ios:open
+   ```
+
+   또는 직접 열기:
+   ```bash
+   open ios/App/App.xcworkspace
+   ```
+
+4. **Xcode에서 설정 및 빌드**
+
+   - Xcode에서 프로젝트를 열면 `App.xcworkspace` 파일을 열어야 합니다 (`.xcodeproj`가 아님)
+   - **Signing & Capabilities** 탭에서:
+     - Team: Apple Developer 계정 선택
+     - Bundle Identifier: `com.chingoohaja.app` (필요시 변경)
+   - 시뮬레이터 또는 실제 기기 선택
+   - **Product > Run** (⌘R) 또는 빌드 버튼 클릭
+
+### iOS 빌드 스크립트
+
+```bash
+# 개발 모드 (라이브 리로드)
+pnpm ios:dev
+
+# 프로덕션 빌드 후 실행
+pnpm ios:build
+
+# Capacitor 동기화만 (빌드 후 변경사항 반영)
+pnpm ios:sync
+
+# Xcode에서 열기
+pnpm ios:open
+```
+
+### 주의사항
+
+- **CocoaPods 설치**: iOS 의존성 관리를 위해 CocoaPods가 필요합니다
+  ```bash
+  sudo gem install cocoapods
+  cd ios/App
+  pod install
+  ```
+
+- **Info.plist 설정**: 필요한 권한(카메라, 마이크 등)이 있다면 `ios/App/App/Info.plist`에서 설정
+
+- **Capacitor 플러그인**: 새 플러그인을 추가한 후에는 `pnpm ios:sync`를 실행해야 합니다
+
+### 문제 해결
+
+- **Pod 설치 오류**: `ios/App` 디렉토리에서 `pod install` 실행
+- **빌드 오류**: Xcode에서 Clean Build Folder (⌘⇧K) 후 다시 빌드
+- **동기화 문제**: `rm -rf ios/App/App/public` 후 `pnpm ios:sync` 재실행
+
 ## 🔧 환경 설정
 
 ### 환경 변수

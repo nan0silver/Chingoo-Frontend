@@ -23,6 +23,10 @@
     "android:build": "pnpm build && npx cap sync && npx cap run android",
     "android:clean-build": "rm -rf android/capacitor-cordova-android-plugins/build android/app/build android/build && pnpm build && npx cap sync android && npx cap run android",
     "android:sync": "npx cap sync android",
+    "ios:dev": "npx cap run ios --livereload --external",
+    "ios:build": "pnpm build && npx cap sync ios && npx cap run ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios",
     "generate:assets": "npx capacitor-assets generate",
     "resources": "capacitor-resources -p android,ios"
   },
