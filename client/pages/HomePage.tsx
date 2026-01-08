@@ -21,6 +21,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
   const [isStartingMatching, setIsStartingMatching] = useState<boolean>(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
@@ -93,13 +94,19 @@ export default function HomePage({ onStartCall }: HomePageProps) {
 
     try {
       setIsStartingMatching(true);
+      setErrorMessage(null); // 이전 에러 메시지 초기화
 
       // 실제 매칭 API 호출
       await startMatching({ category_id: parseInt(selectedCategory) });
       navigate("/connecting-call");
     } catch (error) {
       console.error("🏠 매칭 시작 실패:", error);
-      // 에러는 matchingStore에서 관리됨
+      // 에러 메시지를 모달에 표시
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "매칭 시작 중 오류가 발생했습니다.";
+      setErrorMessage(errorMsg);
     } finally {
       setIsStartingMatching(false);
     }
@@ -235,6 +242,58 @@ export default function HomePage({ onStartCall }: HomePageProps) {
             <p id="category-request-success-desc" className="text-gray-600">
               소중한 의견 감사합니다.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message Modal */}
+      {errorMessage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="matching-error-title"
+          aria-describedby="matching-error-desc"
+          onClick={() => setErrorMessage(null)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 mx-4 text-center max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            <h3
+              id="matching-error-title"
+              className="text-lg font-semibold text-gray-900 mb-2"
+            >
+              매칭 실패
+            </h3>
+            <p
+              id="matching-error-desc"
+              className="text-gray-600 mb-4 whitespace-pre-line"
+            >
+              {errorMessage}
+            </p>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="w-full px-4 py-2 bg-orange-accent text-white rounded-lg font-crimson font-semibold hover:bg-orange-600 transition-colors"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
