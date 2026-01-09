@@ -6,6 +6,7 @@ import { getCategoryDisplayName, ReportUserRequest } from "@shared/api";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import ReportUserModal from "@/components/ReportUserModal";
+import { getTTSService } from "@/lib/ttsService";
 
 interface CallConnectedPageProps {
   selectedCategory: string | null;
@@ -153,9 +154,9 @@ export default function CallConnectedPage({
     return () => clearInterval(interval);
   }, []);
 
-  // 통화 프롬프트 가져오기
+  // 통화 프롬프트 가져오기 및 TTS 읽기
   useEffect(() => {
-    const fetchPrompt = async () => {
+    const fetchPromptAndSpeak = async () => {
       if (!callId || !isInCall) {
         return;
       }
@@ -170,7 +171,31 @@ export default function CallConnectedPage({
 
         matchingApiService.setToken(token);
         const promptData = await matchingApiService.getCallPrompt(callId);
-        setPrompt(promptData.question);
+        const questionText = promptData.question;
+        setPrompt(questionText);
+
+        // 프롬프트를 TTS로 읽기
+        const ttsService = getTTSService();
+        if (ttsService.getSupported() && questionText) {
+          // 약간의 지연 후 TTS 시작 (통화 연결이 안정화된 후)
+          setTimeout(() => {
+            ttsService.speak(questionText, {
+              lang: "ko-KR",
+              rate: 0.9, // 약간 느리게 읽기
+              pitch: 1,
+              volume: 0.8, // 통화 중이므로 볼륨을 약간 낮춤
+              onEnd: () => {
+                if (import.meta.env.DEV) {
+                  console.log("🔊 프롬프트 TTS 읽기 완료");
+                }
+              },
+              onError: (error) => {
+                console.error("TTS 읽기 오류:", error);
+                // TTS 실패는 치명적이지 않으므로 에러를 표시하지 않음
+              },
+            });
+          }, 1000); // 1초 후 TTS 시작
+        }
       } catch (error) {
         console.error("프롬프트 가져오기 실패:", error);
         // 프롬프트 가져오기 실패는 치명적이지 않으므로 에러를 표시하지 않음
@@ -179,8 +204,16 @@ export default function CallConnectedPage({
       }
     };
 
-    fetchPrompt();
+    fetchPromptAndSpeak();
   }, [callId, isInCall, matchingApiService]);
+
+  // 통화 종료 시 TTS 중지
+  useEffect(() => {
+    if (!isInCall) {
+      const ttsService = getTTSService();
+      ttsService.stop();
+    }
+  }, [isInCall]);
 
   // 네트워크 품질을 아이콘과 색상으로 변환
   const getNetworkQualityDisplay = (quality: NetworkQuality) => {
