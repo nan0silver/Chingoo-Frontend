@@ -21,6 +21,8 @@ export default function CallConnectedPage({
   const [showReportSuccessModal, setShowReportSuccessModal] = useState(false);
   const [showReportErrorModal, setShowReportErrorModal] = useState(false);
   const [reportErrorMessage, setReportErrorMessage] = useState<string>("");
+  const [prompt, setPrompt] = useState<string | null>(null);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
   const {
     partner,
     callId,
@@ -150,6 +152,35 @@ export default function CallConnectedPage({
 
     return () => clearInterval(interval);
   }, []);
+
+  // 통화 프롬프트 가져오기
+  useEffect(() => {
+    const fetchPrompt = async () => {
+      if (!callId || !isInCall) {
+        return;
+      }
+
+      try {
+        setIsLoadingPrompt(true);
+        const token = getStoredToken();
+        if (!token) {
+          console.warn("인증 토큰이 없어 프롬프트를 가져올 수 없습니다.");
+          return;
+        }
+
+        matchingApiService.setToken(token);
+        const promptData = await matchingApiService.getCallPrompt(callId);
+        setPrompt(promptData.question);
+      } catch (error) {
+        console.error("프롬프트 가져오기 실패:", error);
+        // 프롬프트 가져오기 실패는 치명적이지 않으므로 에러를 표시하지 않음
+      } finally {
+        setIsLoadingPrompt(false);
+      }
+    };
+
+    fetchPrompt();
+  }, [callId, isInCall, matchingApiService]);
 
   // 네트워크 품질을 아이콘과 색상으로 변환
   const getNetworkQualityDisplay = (quality: NetworkQuality) => {
@@ -293,6 +324,26 @@ export default function CallConnectedPage({
           통화중
         </span>
       </div>
+
+      {/* Prompt Display */}
+      {prompt && (
+        <div className="flex justify-center mt-6 px-8">
+          <div className="bg-white bg-opacity-90 px-6 py-4 rounded-2xl max-w-md shadow-lg">
+            <p className="text-gray-800 font-pretendard text-lg text-center leading-relaxed">
+              {prompt}
+            </p>
+          </div>
+        </div>
+      )}
+      {isLoadingPrompt && (
+        <div className="flex justify-center mt-6 px-8">
+          <div className="bg-white bg-opacity-90 px-6 py-4 rounded-2xl max-w-md shadow-lg">
+            <p className="text-gray-500 font-pretendard text-lg text-center">
+              프롬프트를 불러오는 중...
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Profile Image */}
       <div className="flex justify-center mt-8">

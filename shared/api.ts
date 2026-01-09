@@ -554,3 +554,23 @@ export interface ReportUserResponse {
   data?: null;
   timestamp: string;
 }
+
+/**
+ * 통화 프롬프트 정보
+ */
+export interface CallPrompt {
+  prompt_id: number;
+  question: string;
+  category_id: number;
+  category_name: string;
+  difficulty: number;
+}
+
+/**
+ * 통화 프롬프트 응답
+ */
+export interface CallPromptResponse {
+  data: CallPrompt;
+  message: string;
+  timestamp: string;
+}

@@ -16,6 +16,8 @@ import {
   DeleteFriendResponse,
   ReportUserRequest,
   ReportUserResponse,
+  CallPrompt,
+  CallPromptResponse,
 } from "@shared/api";
 import { refreshToken, getApiUrl } from "./auth";
 import { logger } from "./logger";
@@ -1526,6 +1528,61 @@ export class MatchingApiService {
       throw error instanceof Error
         ? error
         : new Error("사용자 신고에 실패했습니다.");
+    }
+  }
+
+  /**
+   * 통화 프롬프트 조회
+   * GET /api/v1/calls/{callId}/prompts
+   */
+  async getCallPrompt(callId: string | number): Promise<CallPrompt> {
+    if (!this.token) {
+      throw new Error("인증 토큰이 필요합니다.");
+    }
+
+    try {
+      const callIdStr = String(callId);
+      const url = `${this.baseUrl}/v1/calls/${callIdStr}/prompts`;
+      logger.apiRequest("GET", `/v1/calls/${callIdStr}/prompts`, {});
+
+      let response = await fetch(url, {
+        method: "GET",
+        headers: createHeaders(this.token),
+        credentials: "include",
+      });
+
+      // 401 에러 시 토큰 갱신 후 재시도
+      if (response.status === 401) {
+        const newToken = await refreshToken();
+        if (newToken) {
+          this.token = newToken;
+          response = await fetch(url, {
+            method: "GET",
+            headers: createHeaders(newToken),
+            credentials: "include",
+          });
+        } else {
+          throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+        }
+      }
+
+      const result: CallPromptResponse =
+        await handleApiResponse<CallPromptResponse>(response);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 통화 프롬프트 조회 성공:", result);
+      }
+
+      if (!result.data) {
+        throw new Error(result.message || "프롬프트 조회에 실패했습니다.");
+      }
+
+      return result.data;
+    } catch (error) {
+      logger.error("통화 프롬프트 조회 실패:", error);
+      throw error instanceof Error
+        ? error
+        : new Error("통화 프롬프트를 불러올 수 없습니다.");
     }
   }
 }
