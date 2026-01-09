@@ -181,9 +181,9 @@ export default function CallConnectedPage({
           setTimeout(() => {
             ttsService.speak(questionText, {
               lang: "ko-KR",
-              rate: 0.9, // 약간 느리게 읽기
-              pitch: 1,
-              volume: 0.8, // 통화 중이므로 볼륨을 약간 낮춤
+              rate: 1.2, // 약간 느리게 읽기
+              pitch: 1.2,
+              volume: 1.0, // 통화 중이므로 볼륨을 약간 낮춤
               onEnd: () => {
                 if (import.meta.env.DEV) {
                   console.log("🔊 프롬프트 TTS 읽기 완료");
