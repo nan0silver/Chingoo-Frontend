@@ -52,7 +52,11 @@ export class TTSService {
       this.voices = window.speechSynthesis.getVoices();
       if (import.meta.env.DEV) {
         console.log("🔊 사용 가능한 음성 목록:", this.voices.length);
-        console.log("🔊 한국어 음성:", this.getKoreanVoices());
+        // 무한 재귀 방지: 직접 필터링하여 로그 출력
+        const koreanVoices = this.voices.filter(
+          (voice) => voice.lang.startsWith("ko") || voice.lang === "ko-KR",
+        );
+        console.log("🔊 한국어 음성:", koreanVoices.map((v) => v.name));
       }
     }
   }
@@ -215,8 +219,12 @@ export class TTSService {
    * 사용 가능한 모든 음성 목록 가져오기
    */
   getVoices(): VoiceInfo[] {
-    if (!this.isSupported || this.voices.length === 0) {
-      this.loadVoices();
+    if (!this.isSupported) {
+      return [];
+    }
+    // 음성 목록이 비어있으면 한 번만 로드 (재귀 방지)
+    if (this.voices.length === 0) {
+      this.voices = window.speechSynthesis.getVoices();
     }
     return this.voices.map((voice) => ({
       name: voice.name,
@@ -231,8 +239,12 @@ export class TTSService {
    * 한국어 음성 목록 가져오기
    */
   getKoreanVoices(): VoiceInfo[] {
-    if (!this.isSupported || this.voices.length === 0) {
-      this.loadVoices();
+    if (!this.isSupported) {
+      return [];
+    }
+    // 음성 목록이 비어있으면 한 번만 로드 (재귀 방지)
+    if (this.voices.length === 0) {
+      this.voices = window.speechSynthesis.getVoices();
     }
     return this.voices
       .filter((voice) => voice.lang.startsWith("ko") || voice.lang === "ko-KR")
@@ -249,8 +261,12 @@ export class TTSService {
    * 기본 한국어 음성 가져오기
    */
   getDefaultKoreanVoice(): SpeechSynthesisVoice | null {
-    if (!this.isSupported || this.voices.length === 0) {
-      this.loadVoices();
+    if (!this.isSupported) {
+      return null;
+    }
+    // 음성 목록이 비어있으면 한 번만 로드 (재귀 방지)
+    if (this.voices.length === 0) {
+      this.voices = window.speechSynthesis.getVoices();
     }
 
     const koreanVoices = this.voices.filter(
