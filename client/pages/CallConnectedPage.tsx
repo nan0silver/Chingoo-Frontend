@@ -181,9 +181,10 @@ export default function CallConnectedPage({
           setTimeout(() => {
             ttsService.speak(questionText, {
               lang: "ko-KR",
-              rate: 1.2, // 약간 느리게 읽기
-              pitch: 1.2,
-              volume: 1.0, // 통화 중이므로 볼륨을 약간 낮춤
+              voice: "Yuna", // Yuna 음성 사용
+              rate: 1.0,
+              pitch: 0.8,
+              volume: 1.0,
               onEnd: () => {
                 if (import.meta.env.DEV) {
                   console.log("🔊 프롬프트 TTS 읽기 완료");

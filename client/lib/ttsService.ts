@@ -5,20 +5,55 @@
  */
 
 /**
+ * 음성 정보 타입
+ */
+export interface VoiceInfo {
+  name: string;
+  lang: string;
+  default?: boolean;
+  localService?: boolean;
+  voiceURI: string;
+}
+
+/**
  * TTS 서비스 클래스
  */
 export class TTSService {
   private isSupported: boolean;
   private isSpeaking: boolean = false;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
+  private voices: SpeechSynthesisVoice[] = [];
 
   constructor() {
     // 브라우저 Web Speech API 지원 여부 확인
     this.isSupported =
       typeof window !== "undefined" && "speechSynthesis" in window;
 
+    if (this.isSupported) {
+      // 음성 목록 로드 (비동기로 로드되므로 이벤트 리스너 등록)
+      this.loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          this.loadVoices();
+        };
+      }
+    }
+
     if (import.meta.env.DEV) {
       console.log("🔊 TTS 지원 여부:", this.isSupported);
+    }
+  }
+
+  /**
+   * 사용 가능한 음성 목록 로드
+   */
+  private loadVoices(): void {
+    if (this.isSupported) {
+      this.voices = window.speechSynthesis.getVoices();
+      if (import.meta.env.DEV) {
+        console.log("🔊 사용 가능한 음성 목록:", this.voices.length);
+        console.log("🔊 한국어 음성:", this.getKoreanVoices());
+      }
     }
   }
 
@@ -31,6 +66,7 @@ export class TTSService {
     text: string,
     options?: {
       lang?: string; // 언어 코드 (예: 'ko-KR', 'en-US')
+      voice?: string | SpeechSynthesisVoice; // 음성 이름 또는 SpeechSynthesisVoice 객체
       pitch?: number; // 음성 높이 (0-2, 기본값: 1)
       rate?: number; // 읽기 속도 (0.1-10, 기본값: 1)
       volume?: number; // 볼륨 (0-1, 기본값: 1)
@@ -51,6 +87,11 @@ export class TTSService {
       this.stop();
     }
 
+    // 음성 목록이 비어있으면 다시 로드
+    if (this.voices.length === 0) {
+      this.loadVoices();
+    }
+
     return new Promise((resolve, reject) => {
       try {
         const utterance = new SpeechSynthesisUtterance(text);
@@ -58,6 +99,41 @@ export class TTSService {
         utterance.pitch = options?.pitch ?? 1;
         utterance.rate = options?.rate ?? 1;
         utterance.volume = options?.volume ?? 1;
+
+        // 음성 선택
+        if (options?.voice) {
+          if (typeof options.voice === "string") {
+            // 음성 이름으로 찾기
+            const selectedVoice = this.voices.find(
+              (v) =>
+                v.name === options.voice ||
+                v.voiceURI === options.voice ||
+                v.name.toLowerCase().includes(options.voice.toLowerCase()),
+            );
+            if (selectedVoice) {
+              utterance.voice = selectedVoice;
+              if (import.meta.env.DEV) {
+                console.log("🔊 선택된 음성:", selectedVoice.name);
+              }
+            } else {
+              console.warn(
+                `⚠️ 음성을 찾을 수 없습니다: ${options.voice}. 기본 음성 사용.`,
+              );
+            }
+          } else {
+            // SpeechSynthesisVoice 객체 직접 사용
+            utterance.voice = options.voice;
+          }
+        } else {
+          // 음성이 지정되지 않았으면 한국어 기본 음성 사용
+          const koreanVoice = this.getDefaultKoreanVoice();
+          if (koreanVoice) {
+            utterance.voice = koreanVoice;
+            if (import.meta.env.DEV) {
+              console.log("🔊 기본 한국어 음성 사용:", koreanVoice.name);
+            }
+          }
+        }
 
         // 읽기 완료 콜백
         utterance.onend = () => {
@@ -133,6 +209,66 @@ export class TTSService {
    */
   getIsSpeaking(): boolean {
     return this.isSpeaking;
+  }
+
+  /**
+   * 사용 가능한 모든 음성 목록 가져오기
+   */
+  getVoices(): VoiceInfo[] {
+    if (!this.isSupported || this.voices.length === 0) {
+      this.loadVoices();
+    }
+    return this.voices.map((voice) => ({
+      name: voice.name,
+      lang: voice.lang,
+      default: voice.default,
+      localService: voice.localService,
+      voiceURI: voice.voiceURI,
+    }));
+  }
+
+  /**
+   * 한국어 음성 목록 가져오기
+   */
+  getKoreanVoices(): VoiceInfo[] {
+    if (!this.isSupported || this.voices.length === 0) {
+      this.loadVoices();
+    }
+    return this.voices
+      .filter((voice) => voice.lang.startsWith("ko") || voice.lang === "ko-KR")
+      .map((voice) => ({
+        name: voice.name,
+        lang: voice.lang,
+        default: voice.default,
+        localService: voice.localService,
+        voiceURI: voice.voiceURI,
+      }));
+  }
+
+  /**
+   * 기본 한국어 음성 가져오기
+   */
+  getDefaultKoreanVoice(): SpeechSynthesisVoice | null {
+    if (!this.isSupported || this.voices.length === 0) {
+      this.loadVoices();
+    }
+
+    const koreanVoices = this.voices.filter(
+      (voice) => voice.lang.startsWith("ko") || voice.lang === "ko-KR",
+    );
+
+    if (koreanVoices.length === 0) {
+      return null;
+    }
+
+    // 기본 음성이 있으면 사용
+    const defaultVoice = koreanVoices.find((voice) => voice.default);
+    if (defaultVoice) {
+      return defaultVoice;
+    }
+
+    // 기본 음성이 없으면 첫 번째 한국어 음성 사용
+    return koreanVoices[0];
   }
 }
 
