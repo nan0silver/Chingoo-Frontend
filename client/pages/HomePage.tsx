@@ -5,6 +5,7 @@ import { useMatchingStore } from "@/lib/matchingStore";
 import { CATEGORIES, CategoryRequest } from "@shared/api";
 import CategoryRequestModal from "@/components/CategoryRequestModal";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { useToast } from "@/hooks/use-toast";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
@@ -14,6 +15,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { startMatching, status, error } = useMatchingStore();
+  const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [userNickname, setUserNickname] = useState<string>("따뜻한 햇살"); // 기본값
@@ -22,6 +24,9 @@ export default function HomePage({ onStartCall }: HomePageProps) {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // 활성화된 카테고리 ID (취미만 활성화)
+  const ACTIVE_CATEGORY_ID = "1"; // 취미 카테고리 ID
 
   // 사용자 프로필 정보 가져오기
   useEffect(() => {
@@ -118,6 +123,18 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       setIsRequestModalOpen(true);
       return;
     }
+
+    // 비활성화된 카테고리 클릭 시 안내 메시지 표시
+    if (categoryId !== ACTIVE_CATEGORY_ID) {
+      toast({
+        title: "준비 중인 카테고리입니다",
+        description:
+          "현재는 취미 카테고리만 이용 가능합니다. 취미 카테고리를 선택해주세요.",
+        variant: "default",
+      });
+      return;
+    }
+
     setSelectedCategory(categoryId);
   };
 
@@ -371,43 +388,62 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       {/* Categories Grid */}
       <div className="px-8">
         <div className="grid grid-cols-2 gap-6 mb-8">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => handleCategorySelect(category.id)}
-              disabled={isStartingMatching}
-              className={`relative h-32 border border-grey-100 rounded-2xl flex items-center justify-center px-4 xs:px-2 overflow-hidden transition-colors hover:shadow-md ${
-                category.id === "0" ? "bg-orange-50" : "bg-white"
-              } ${
-                selectedCategory === category.id
-                  ? "border-orange-accent bg-orange-accent/5"
-                  : ""
-              } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div
-                className={`flex items-center justify-center ${
-                  category.id === "0" || category.id === "5"
-                    ? "gap-1"
-                    : "gap-3 xs:justify-between xs:w-full"
-                }`}
+          {categories.map((category) => {
+            // 요청하기 버튼(id: "0")은 항상 활성화
+            // 취미 카테고리(id: "1")만 활성화, 나머지는 비활성화
+            const isDisabled =
+              category.id !== "0" && category.id !== ACTIVE_CATEGORY_ID;
+            const isActive = category.id === ACTIVE_CATEGORY_ID;
+            const isRequestButton = category.id === "0";
+
+            return (
+              <button
+                key={category.id}
+                onClick={() => handleCategorySelect(category.id)}
+                disabled={isStartingMatching || isDisabled}
+                className={`relative h-32 border rounded-2xl flex items-center justify-center px-4 xs:px-2 overflow-hidden transition-colors ${
+                  isRequestButton
+                    ? "bg-orange-50 border-grey-100 hover:shadow-md"
+                    : isDisabled
+                      ? "bg-gray-200 border-gray-300 cursor-not-allowed opacity-60"
+                      : "bg-white border-grey-100 hover:shadow-md"
+                } ${
+                  selectedCategory === category.id && !isDisabled
+                    ? "border-orange-accent bg-orange-accent/5"
+                    : ""
+                } ${isStartingMatching ? "opacity-50 cursor-not-allowed" : ""}`}
               >
-                <span
-                  className={`text-grey-900 font-crimson text-2xl xs:text-1.5xl font-bold whitespace-nowrap text-center ${
-                    category.id === "0" || category.id === "5" ? "pl-1" : "pl-4"
-                  }`}
-                >
-                  {category.name}
-                </span>
                 <div
-                  className={`w-20 xs:w-16 flex items-center justify-center flex-shrink-0 ${
-                    category.id === "0" || category.id === "5" ? "pr-1" : "pr-4"
+                  className={`flex items-center justify-center ${
+                    category.id === "0" || category.id === "5"
+                      ? "gap-1"
+                      : "gap-3 xs:justify-between xs:w-full"
                   }`}
                 >
-                  {category.icon}
+                  <span
+                    className={`font-crimson text-2xl xs:text-1.5xl font-bold whitespace-nowrap text-center ${
+                      isDisabled ? "text-gray-500" : "text-grey-900"
+                    } ${
+                      category.id === "0" || category.id === "5"
+                        ? "pl-1"
+                        : "pl-4"
+                    }`}
+                  >
+                    {category.name}
+                  </span>
+                  <div
+                    className={`w-20 xs:w-16 flex items-center justify-center flex-shrink-0 ${
+                      category.id === "0" || category.id === "5"
+                        ? "pr-1"
+                        : "pr-4"
+                    } ${isDisabled ? "opacity-50" : ""}`}
+                  >
+                    {category.icon}
+                  </div>
                 </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       </div>
 
