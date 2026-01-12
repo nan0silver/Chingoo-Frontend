@@ -92,8 +92,8 @@ export default function Index() {
             });
           }
 
-          const shouldRedirectToProfile =
-            userInfo.is_new_user || !userInfo.is_profile_complete;
+          // is_new_user가 false인 경우 (기존 유저)는 프로필 완성 여부와 관계없이 메인 페이지에 머물기
+          const shouldRedirectToProfile = userInfo.is_new_user;
 
           if (import.meta.env.DEV) {
             console.log("🔍 프로필 리다이렉트 결정:", {

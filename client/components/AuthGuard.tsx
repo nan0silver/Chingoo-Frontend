@@ -31,9 +31,11 @@ export default function AuthGuard({
         setUserInfo(storedUserInfo);
 
         // 프로필 완성이 필요한 경우 체크
+        // is_new_user가 false인 경우 (기존 유저)는 프로필 완성 여부와 관계없이 통과
         if (
           requireProfileComplete &&
-          (!storedUserInfo.is_profile_complete || storedUserInfo.is_new_user)
+          storedUserInfo.is_new_user &&
+          !storedUserInfo.is_profile_complete
         ) {
           navigate("/profile-setup");
           return;

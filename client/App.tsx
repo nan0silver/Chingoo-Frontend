@@ -83,7 +83,8 @@ const AppRoutes = () => {
       }
 
       // 사용자 정보에 따른 페이지 이동
-      if (userInfo.is_new_user || !userInfo.is_profile_complete) {
+      // is_new_user가 false인 경우 (기존 유저)는 프로필 완성 여부와 관계없이 메인 페이지로 이동
+      if (userInfo.is_new_user) {
         navigate("/profile-setup", { replace: true });
       } else {
         navigate("/", { replace: true });

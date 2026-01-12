@@ -45,9 +45,8 @@ export default function OAuthCallbackPage() {
           // processSocialLogin에서 이미 localStorage에 저장했지만,
           // 확실하게 하기 위해 여기서도 확인하고 플래그 설정
           // 사용자 정보에 따른 페이지 이동
-          const shouldGoToProfileSetup =
-            result.data.user_info.is_new_user ||
-            !result.data.user_info.is_profile_complete;
+          // is_new_user가 false인 경우 (기존 유저)는 프로필 완성 여부와 관계없이 메인 페이지로 이동
+          const shouldGoToProfileSetup = result.data.user_info.is_new_user;
 
           if (import.meta.env.DEV) {
             console.log("🔍 페이지 이동 결정:", {
@@ -211,7 +210,7 @@ export default function OAuthCallbackPage() {
             안녕하세요! 로그인이 완료되었습니다.
           </p>
           <p className="text-sm text-gray-500">
-            {userInfo?.is_new_user || !userInfo?.is_profile_complete
+            {userInfo?.is_new_user
               ? "프로필 설정 페이지로 이동합니다..."
               : "메인 페이지로 이동합니다..."}
           </p>
