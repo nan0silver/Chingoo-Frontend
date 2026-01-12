@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
-import { NetworkQuality } from "@/lib/agoraService";
+import { NetworkQuality, getAgoraService } from "@/lib/agoraService";
 import { getCategoryDisplayName, ReportUserRequest } from "@shared/api";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
@@ -69,41 +69,127 @@ export default function CallConnectedPage({
     }
   }, [isInCall, partner, onEndCall]);
 
-  // 페이지 언로드 감지 (브라우저 닫기, 새로고침 등) - 비용 방어
+  // 페이지 언로드 감지 및 새로고침 방지 (브라우저 닫기, 새로고침 등)
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isInCall) {
-        // 통화 중일 때만 경고 메시지 표시
+    if (!isInCall) {
+      return;
+    }
+
+    // 새로고침 키보드 단축키 막기 (F5, Ctrl+R, Ctrl+Shift+R 등)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // F5 키
+      if (e.key === "F5") {
         e.preventDefault();
-        e.returnValue = "통화가 진행 중입니다. 정말 페이지를 나가시겠습니까?";
-        return e.returnValue;
+        e.stopPropagation();
+        alert("⚠️ 통화 중에는 새로고침할 수 없습니다. 통화를 종료한 후 다시 시도해주세요.");
+        return false;
+      }
+
+      // Ctrl+R 또는 Ctrl+Shift+R (새로고침)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "r" || e.key === "R")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert("⚠️ 통화 중에는 새로고침할 수 없습니다. 통화를 종료한 후 다시 시도해주세요.");
+        return false;
+      }
+
+      // Ctrl+Shift+R (강제 새로고침)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        (e.key === "r" || e.key === "R")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        alert("⚠️ 통화 중에는 새로고침할 수 없습니다. 통화를 종료한 후 다시 시도해주세요.");
+        return false;
       }
     };
 
+    // beforeunload 이벤트 - 페이지 나가기/새로고침 시 경고
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // 통화 중일 때만 경고 메시지 표시
+      e.preventDefault();
+      // 최신 브라우저에서는 returnValue만 설정하면 됨
+      e.returnValue = "통화가 진행 중입니다. 페이지를 나가면 통화가 종료됩니다. 정말 나가시겠습니까?";
+      return e.returnValue;
+    };
+
+    // unload 이벤트 - 실제로 페이지가 언로드될 때 통화 종료
     const handleUnload = () => {
-      if (isInCall) {
-        // 페이지 언로드 시 통화 종료 (비동기 처리 불가, navigator.sendBeacon 사용)
-        if (import.meta.env.DEV) {
-          console.log(
-            "⚠️ 페이지 언로드 감지 - 통화 자동 종료 시도 (비용 방어)",
-          );
-        }
+      // 페이지 언로드 시 통화 종료 시도
+      if (import.meta.env.DEV) {
+        console.log(
+          "⚠️ 페이지 언로드 감지 - 통화 자동 종료 시도",
+        );
+      }
 
-        // 동기적으로 통화 종료 처리 (navigator.sendBeacon을 사용한 백엔드 알림)
-        handleEndCall().catch((error) => {
-          console.error("페이지 언로드 시 통화 종료 실패:", error);
+      // navigator.sendBeacon을 사용하여 백엔드에 통화 종료 알림 (비동기 처리 불가)
+      // 주의: unload 이벤트에서는 비동기 작업이 제대로 실행되지 않을 수 있음
+      try {
+        const token = getStoredToken();
+        if (token && callId) {
+          // sendBeacon으로 통화 종료 API 호출 시도
+          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+          const url = `${apiBaseUrl}/v1/calls/${callId}/end`;
+          
+          // FormData를 사용하여 sendBeacon 전송
+          const formData = new FormData();
+          const blob = new Blob([JSON.stringify({})], {
+            type: "application/json",
+          });
+          
+          // 헤더에 토큰을 포함할 수 없으므로, 쿼리 파라미터나 다른 방법 사용 필요
+          // 하지만 보안상 권장되지 않으므로, 여기서는 시도만 함
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(url, blob);
+          }
+        }
+      } catch (error) {
+        console.error("페이지 언로드 시 통화 종료 알림 실패:", error);
+      }
+
+      // 동기적으로 통화 종료 처리 시도 (완전히 보장되지는 않음)
+      // unload 이벤트에서는 비동기 작업이 제대로 실행되지 않을 수 있음
+      try {
+        // 동기적으로 Agora 채널에서 퇴장 시도
+        const agoraService = getAgoraService();
+        agoraService.leaveChannel().catch(() => {
+          // 에러는 무시 (이미 언로드 중)
         });
+      } catch (error) {
+        // 에러 무시
       }
     };
 
+    // popstate 이벤트 - 브라우저 뒤로가기/앞으로가기 막기
+    const handlePopState = (e: PopStateEvent) => {
+      if (isInCall) {
+        // 히스토리에 현재 상태를 다시 추가하여 뒤로가기 방지
+        window.history.pushState(null, "", window.location.href);
+        alert("⚠️ 통화 중에는 뒤로가기를 할 수 없습니다. 통화를 종료한 후 다시 시도해주세요.");
+      }
+    };
+
+    // 히스토리 상태 추가 (뒤로가기 방지)
+    window.history.pushState(null, "", window.location.href);
+
+    // 이벤트 리스너 등록
+    window.addEventListener("keydown", handleKeyDown, true); // capture phase에서 처리
     window.addEventListener("beforeunload", handleBeforeUnload);
     window.addEventListener("unload", handleUnload);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("unload", handleUnload);
+      window.removeEventListener("popstate", handlePopState);
     };
-  }, [isInCall, handleEndCall]);
+  }, [isInCall, handleEndCall, callId]);
 
   // Format seconds to MM:SS
   const formatDuration = (seconds: number) => {

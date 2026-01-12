@@ -30,6 +30,7 @@ import { CustomSplashScreen } from "./components/CustomSplashScreen";
 import { useMatchingStore } from "./lib/matchingStore";
 import { CATEGORIES } from "@shared/api";
 import { initializeAuth } from "./lib/auth";
+import { useCall } from "./lib/useCall";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,9 @@ const AppRoutes = () => {
   // 웹 환경에서는 스플래시 스크린을 표시하지 않음
   const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
 
+  // 통화 복원을 위한 useCall 훅
+  const { restoreCallState } = useCall();
+
   // 스플래시 스크린에 표시할 아이콘들
   // public 폴더의 파일은 /로 시작하는 절대 경로로 접근합니다
   const splashIcons = [
@@ -52,7 +56,7 @@ const AppRoutes = () => {
     "/splash-icons/icon5.png",
   ];
 
-  // 앱 초기화: refresh token으로 access token 발급
+  // 앱 초기화: refresh token으로 access token 발급 및 통화 상태 복원
   useEffect(() => {
     const initialize = async () => {
       if (import.meta.env.DEV) {
@@ -64,10 +68,21 @@ const AppRoutes = () => {
       if (import.meta.env.DEV) {
         console.log("✅ 인증 초기화 완료");
       }
+
+      // 인증 완료 후 통화 상태 복원 시도 (페이지 새로고침 대응)
+      try {
+        if (import.meta.env.DEV) {
+          console.log("🔄 통화 상태 복원 시도 중...");
+        }
+        await restoreCallState();
+      } catch (error) {
+        console.error("통화 상태 복원 실패:", error);
+        // 복원 실패는 치명적이지 않으므로 계속 진행
+      }
     };
 
     initialize();
-  }, []);
+  }, [restoreCallState]);
 
   // 스플래시 스크린 완료 핸들러
   const handleSplashComplete = () => {

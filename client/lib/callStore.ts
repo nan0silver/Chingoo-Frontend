@@ -36,6 +36,26 @@ export interface CallState {
 }
 
 /**
+ * localStorage에 저장할 통화 정보 (직렬화 가능한 데이터만)
+ */
+interface StoredCallInfo {
+  callId: string;
+  matchingId: string | null;
+  partner: {
+    id: string;
+    nickname: string;
+    profileImageUrl?: string;
+  };
+  agoraChannelInfo: {
+    appId: string;
+    channelName: string;
+    token: string;
+    uid: string;
+  };
+  callStartTime: string; // ISO string
+}
+
+/**
  * 통화 액션
  */
 interface CallActions {
@@ -59,6 +79,15 @@ interface CallActions {
 
   // partner 정보 삭제 (평가 완료 후)
   clearPartner: () => void;
+
+  // localStorage에 통화 정보 저장
+  saveCallToStorage: () => void;
+
+  // localStorage에서 통화 정보 복원
+  restoreCallFromStorage: () => StoredCallInfo | null;
+
+  // localStorage에서 통화 정보 삭제
+  clearCallFromStorage: () => void;
 }
 
 /**
@@ -95,6 +124,11 @@ const initialState: CallState = {
 };
 
 /**
+ * localStorage 키
+ */
+const STORAGE_KEY = "active_call_info";
+
+/**
  * 통화 스토어 생성
  */
 export const useCallStore = create<CallStore>((set, get) => ({
@@ -111,13 +145,22 @@ export const useCallStore = create<CallStore>((set, get) => ({
       nickname: notification.partnerNickname,
     };
 
+    const agoraChannelInfo = {
+      appId: import.meta.env.VITE_AGORA_APP_ID || "your-agora-app-id",
+      channelName: notification.channelName,
+      token: notification.rtcToken,
+      uid: String(notification.agoraUid),
+    };
+
+    const callStartTime = new Date();
+
     set({
       callId: String(notification.callId), // number를 string으로 변환
       matchingId: notification.matchingId || null,
       partner: partner,
-      agoraChannelInfo: null, // useCall에서 직접 생성하므로 null
+      agoraChannelInfo: agoraChannelInfo, // useCall에서 사용할 수 있도록 저장
       isInCall: true,
-      callStartTime: new Date(),
+      callStartTime: callStartTime,
       error: null,
       // 통화 시작 시 스피커폰 상태를 OFF로 초기화
       agoraState: {
@@ -136,6 +179,9 @@ export const useCallStore = create<CallStore>((set, get) => ({
       },
     });
 
+    // localStorage에 통화 정보 저장
+    get().saveCallToStorage();
+
     if (import.meta.env.DEV) {
       console.log("🏪 callStore 상태 업데이트 완료");
     }
@@ -146,6 +192,9 @@ export const useCallStore = create<CallStore>((set, get) => ({
       console.log("통화 종료");
     }
     const currentState = get();
+
+    // localStorage에서 통화 정보 삭제
+    get().clearCallFromStorage();
 
     set({
       callId: currentState.callId, // 평가 페이지에서 사용하기 위해 일시적으로 보존
@@ -194,5 +243,79 @@ export const useCallStore = create<CallStore>((set, get) => ({
       console.log("partner 정보 및 callId 삭제");
     }
     set({ partner: null, callId: null });
+    // localStorage에서도 삭제
+    get().clearCallFromStorage();
+  },
+
+  saveCallToStorage: () => {
+    try {
+      const state = get();
+      if (!state.isInCall || !state.callId || !state.partner || !state.agoraChannelInfo) {
+        // 저장할 정보가 없으면 삭제
+        get().clearCallFromStorage();
+        return;
+      }
+
+      const storedInfo: StoredCallInfo = {
+        callId: state.callId,
+        matchingId: state.matchingId,
+        partner: state.partner,
+        agoraChannelInfo: state.agoraChannelInfo,
+        callStartTime: state.callStartTime?.toISOString() || new Date().toISOString(),
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(storedInfo));
+      if (import.meta.env.DEV) {
+        console.log("💾 통화 정보 localStorage에 저장 완료");
+      }
+    } catch (error) {
+      console.error("통화 정보 저장 실패:", error);
+    }
+  },
+
+  restoreCallFromStorage: (): StoredCallInfo | null => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) {
+        return null;
+      }
+
+      const storedInfo: StoredCallInfo = JSON.parse(stored);
+
+      // 저장된 정보가 유효한지 확인 (최대 1시간 이내 통화만 복원)
+      const callStartTime = new Date(storedInfo.callStartTime);
+      const now = new Date();
+      const hoursSinceStart = (now.getTime() - callStartTime.getTime()) / (1000 * 60 * 60);
+
+      if (hoursSinceStart > 1) {
+        // 1시간 이상 지난 통화는 복원하지 않음
+        if (import.meta.env.DEV) {
+          console.log("⏰ 저장된 통화 정보가 너무 오래됨 - 복원하지 않음");
+        }
+        get().clearCallFromStorage();
+        return null;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("💾 localStorage에서 통화 정보 복원:", storedInfo);
+      }
+
+      return storedInfo;
+    } catch (error) {
+      console.error("통화 정보 복원 실패:", error);
+      get().clearCallFromStorage();
+      return null;
+    }
+  },
+
+  clearCallFromStorage: () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      if (import.meta.env.DEV) {
+        console.log("🗑️ localStorage에서 통화 정보 삭제 완료");
+      }
+    } catch (error) {
+      console.error("통화 정보 삭제 실패:", error);
+    }
   },
 }));

@@ -80,6 +80,15 @@ export const useCall = () => {
       // Agora SDK에 새 토큰 적용
       await agoraService.renewToken(result.rtcToken);
 
+      // callStore의 agoraChannelInfo 토큰도 업데이트
+      const currentState = useCallStore.getState();
+      if (currentState.agoraChannelInfo) {
+        currentState.agoraChannelInfo.token = result.rtcToken;
+        useCallStore.setState({ agoraChannelInfo: currentState.agoraChannelInfo });
+        // localStorage에도 업데이트
+        useCallStore.getState().saveCallToStorage();
+      }
+
       if (import.meta.env.DEV) {
         console.log("✅ RTC 토큰 갱신 완료");
       }
@@ -360,6 +369,10 @@ export const useCall = () => {
           token: notification.rtcToken,
           uid: String(notification.agoraUid),
         };
+
+        // callStore에 agoraChannelInfo 저장 (localStorage 저장을 위해)
+        useCallStore.setState({ agoraChannelInfo });
+        useCallStore.getState().saveCallToStorage();
 
         if (import.meta.env.DEV) {
           console.log("🔄 Agora 채널 입장 시작");
@@ -779,6 +792,59 @@ export const useCall = () => {
   }, [webSocketService, handleCallEndNotification]);
 
   /**
+   * 앱 초기화 시 통화 상태 복원 (페이지 새로고침 대응)
+   */
+  const restoreCallState = useCallback(async () => {
+    try {
+      // 이미 통화 중이면 복원하지 않음
+      if (isInCall || isConnecting) {
+        if (import.meta.env.DEV) {
+          console.log("⚠️ 이미 통화 중 - 복원 건너뜀");
+        }
+        return;
+      }
+
+      // localStorage에서 통화 정보 복원
+      const storedInfo = useCallStore.getState().restoreCallFromStorage();
+      if (!storedInfo) {
+        if (import.meta.env.DEV) {
+          console.log("💾 저장된 통화 정보 없음");
+        }
+        return;
+      }
+
+      if (import.meta.env.DEV) {
+        console.log("🔄 통화 상태 복원 시작:", storedInfo);
+      }
+
+      // 통화 상태 복원
+      const restoredNotification: CallStartNotification = {
+        type: "call_start",
+        callId: Number(storedInfo.callId),
+        matchingId: storedInfo.matchingId || undefined,
+        partnerId: Number(storedInfo.partner.id),
+        partnerNickname: storedInfo.partner.nickname,
+        channelName: storedInfo.agoraChannelInfo.channelName,
+        agoraUid: Number(storedInfo.agoraChannelInfo.uid),
+        rtcToken: storedInfo.agoraChannelInfo.token,
+        timestamp: storedInfo.callStartTime,
+      };
+
+      // 통화 시작 처리 (재연결)
+      await handleCallStart(restoredNotification);
+
+      if (import.meta.env.DEV) {
+        console.log("✅ 통화 상태 복원 완료");
+      }
+    } catch (error) {
+      console.error("❌ 통화 상태 복원 실패:", error);
+      // 복원 실패 시 저장된 정보 삭제
+      useCallStore.getState().clearCallFromStorage();
+      setError("통화 상태 복원에 실패했습니다. 통화가 종료되었을 수 있습니다.");
+    }
+  }, [isInCall, isConnecting, handleCallStart, setError]);
+
+  /**
    * 컴포넌트 언마운트 시 타이머 정리
    */
   useEffect(() => {
@@ -808,5 +874,6 @@ export const useCall = () => {
     setVolume,
     setError,
     clearPartner,
+    restoreCallState,
   };
 };
