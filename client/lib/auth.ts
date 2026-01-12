@@ -280,6 +280,23 @@ export const login = async (
       clearTimeout(timeoutId);
     }
 
+    // 응답 헤더에서 Set-Cookie 확인 (디버깅용)
+    const setCookieHeaders = response.headers.get("set-cookie");
+    console.log(
+      "🍪 [로그인] Set-Cookie 헤더:",
+      setCookieHeaders ? "있음" : "없음",
+    );
+    if (setCookieHeaders) {
+      console.log(
+        "🍪 [로그인] Set-Cookie 값:",
+        setCookieHeaders.substring(0, 300),
+      );
+    } else {
+      console.error(
+        "❌ [로그인] Set-Cookie 헤더가 없습니다! 백엔드에서 쿠키를 설정하지 않았습니다.",
+      );
+    }
+
     // 응답 본문을 텍스트로 먼저 읽기
     const responseText = await response.text();
 
@@ -344,6 +361,13 @@ export const login = async (
       OAUTH_STORAGE_KEYS.USER_INFO,
       JSON.stringify(minimalUserInfo),
     );
+
+    // 쿠키가 설정되었는지 확인 (디버깅용 - 사파리에서 쿠키 확인은 불가능하지만 로그만 출력)
+    console.log("✅ [로그인] 로그인 성공");
+    console.log(
+      "🍪 [로그인] 쿠키 확인: 브라우저 개발자 도구에서 Cookies 탭 확인 필요",
+    );
+    console.log("🍪 [로그인] 로그인 API 응답 상태:", response.status);
 
     logger.log("✅ 로그인 성공");
     return result;
@@ -965,6 +989,23 @@ export const processSocialLogin = async (
       clearTimeout(timeoutId);
     }
 
+    // 응답 헤더에서 Set-Cookie 확인 (디버깅용)
+    const setCookieHeaders = response.headers.get("set-cookie");
+    console.log(
+      "🍪 [OAuth로그인] Set-Cookie 헤더:",
+      setCookieHeaders ? "있음" : "없음",
+    );
+    if (setCookieHeaders) {
+      console.log(
+        "🍪 [OAuth로그인] Set-Cookie 값:",
+        setCookieHeaders.substring(0, 300),
+      );
+    } else {
+      console.error(
+        "❌ [OAuth로그인] Set-Cookie 헤더가 없습니다! 백엔드에서 쿠키를 설정하지 않았습니다.",
+      );
+    }
+
     if (!response.ok) {
       logger.error("OAuth 로그인 응답 에러:", {
         status: response.status,
@@ -1020,6 +1061,17 @@ export const processSocialLogin = async (
         console.warn("localStorage 저장 실패:", storageError);
       }
       // 에러를 throw하지 않고 계속 진행 (메모리 기반으로 동작 가능)
+    }
+
+    console.log("✅ [OAuth로그인] 로그인 성공");
+    console.log(
+      "🍪 [OAuth로그인] 쿠키 확인: 브라우저 개발자 도구 → Storage → Cookies에서 refresh token 쿠키 확인",
+    );
+    console.log("🍪 [OAuth로그인] 로그인 API 응답 상태:", response.status);
+    if (!setCookieHeaders) {
+      console.error(
+        "⚠️ [OAuth로그인] 주의: Set-Cookie 헤더가 없습니다. 백엔드에서 쿠키를 설정하지 않았을 수 있습니다.",
+      );
     }
 
     // sessionStorage 정리
@@ -1201,47 +1253,43 @@ export const isAuthenticated = (): boolean => {
 export const checkAuthentication = async (): Promise<boolean> => {
   // 메모리에 토큰이 있으면 인증됨
   if (getInMemoryToken()) {
-    if (import.meta.env.DEV) {
-      logger.log("✅ 인증 상태: 메모리에 토큰 존재");
-    }
+    console.log("✅ [인증] 메모리에 토큰 존재");
     return true;
   }
 
   // 메모리에 토큰이 없으면 localStorage에 user_info가 있는지 확인
   const userInfo = getStoredUserInfo();
+  console.log(
+    "🔍 [인증] localStorage user_info 확인:",
+    userInfo ? "있음" : "없음",
+  );
+
   if (!userInfo) {
-    if (import.meta.env.DEV) {
-      logger.log("❌ 인증 상태: 토큰 및 user_info 없음");
-    }
+    console.log("❌ [인증] 토큰 및 user_info 없음");
     return false;
   }
 
   // localStorage에 user_info가 있으면 refresh token으로 토큰 갱신 시도
-  if (import.meta.env.DEV) {
-    logger.log("🔄 메모리 토큰 없음, refresh token으로 갱신 시도...");
-  }
+  console.log("🔄 [인증] 메모리 토큰 없음, refresh token으로 갱신 시도...");
 
   try {
     const token = await refreshToken();
     if (token) {
-      if (import.meta.env.DEV) {
-        logger.log("✅ 토큰 갱신 성공 - 인증됨");
-      }
+      console.log("✅ [인증] 토큰 갱신 성공 - 인증됨");
       return true;
     } else {
-      if (import.meta.env.DEV) {
-        logger.log("❌ 토큰 갱신 실패 - 인증되지 않음");
-      }
+      console.log("❌ [인증] 토큰 갱신 실패 - refresh token API가 null 반환");
       // 토큰 갱신 실패 시 localStorage 정리
       try {
         localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
+        console.log("🗑️ [인증] localStorage user_info 삭제 완료");
       } catch (error) {
-        // localStorage 접근 실패는 무시
+        console.error("⚠️ [인증] localStorage 삭제 실패:", error);
       }
       return false;
     }
   } catch (error) {
-    logger.error("인증 확인 중 오류:", error);
+    console.error("❌ [인증] 인증 확인 중 오류:", error);
     return false;
   }
 };
@@ -1465,18 +1513,20 @@ export const refreshToken = async (): Promise<string | null> => {
 
   try {
     isRefreshingToken = true;
-    if (import.meta.env.DEV) {
-      logger.log("🔄 토큰 갱신 시작...");
-    }
+    console.log("🔄 [토큰갱신] 시작...");
 
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
+    const apiUrl = `${getApiUrl()}/v1/auth/refresh`;
+    console.log("📡 [토큰갱신] API URL:", apiUrl);
+    console.log("📡 [토큰갱신] credentials: include (쿠키 포함)");
+
     let response: Response;
     try {
       logger.apiRequest("POST", "/v1/auth/refresh");
-      response = await fetch(`${getApiUrl()}/v1/auth/refresh`, {
+      response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1485,40 +1535,44 @@ export const refreshToken = async (): Promise<string | null> => {
         credentials: "include", // 쿠키를 포함하여 요청
         signal: controller.signal,
       });
-      if (import.meta.env.DEV) {
-        logger.log(`📡 토큰 갱신 API 응답 상태: ${response.status}`);
-      }
+      console.log(
+        `📡 [토큰갱신] 응답 상태: ${response.status} ${response.statusText}`,
+      );
+    } catch (fetchError) {
+      console.error("❌ [토큰갱신] fetch 오류:", fetchError);
+      throw fetchError;
     } finally {
       clearTimeout(timeoutId);
     }
 
     if (!response.ok) {
       if (response.status === 401) {
-        if (import.meta.env.DEV) {
-          logger.warn("❌ 리프레시 토큰이 만료되었습니다.");
-        }
+        console.warn(
+          "❌ [토큰갱신] 리프레시 토큰이 만료되었거나 유효하지 않음 (401)",
+        );
         clearInMemoryToken(); // 메모리 토큰 삭제
         isRefreshingToken = false;
         onTokenRefreshed(""); // 대기 중인 요청들에게 알림
         return null;
       }
-      logger.error(
-        `❌ 토큰 갱신 실패: ${response.status} ${response.statusText}`,
+      const errorText = await response.text().catch(() => "");
+      console.error(
+        `❌ [토큰갱신] 실패: ${response.status} ${response.statusText}`,
+        errorText ? `응답: ${errorText.substring(0, 200)}` : "",
       );
       throw new Error(`토큰 갱신 실패: ${response.status}`);
     }
 
     const result = await response.json();
-    if (import.meta.env.DEV) {
-      logger.log("📦 토큰 갱신 응답 데이터:", result);
-    }
+    console.log(
+      "📦 [토큰갱신] 응답 데이터 수신:",
+      result.data ? "성공" : "데이터 없음",
+    );
 
     // 새로운 access_token을 메모리에 저장
     setInMemoryToken(result.data.access_token, result.data.expires_in);
-    if (import.meta.env.DEV) {
-      logger.log("💾 새로운 access_token 메모리 저장 완료");
-      logger.log("✅ 토큰 갱신 성공");
-    }
+    console.log("💾 [토큰갱신] 새로운 access_token 메모리 저장 완료");
+    console.log("✅ [토큰갱신] 성공");
 
     // 대기 중인 다른 요청들에게 새 토큰 전달
     isRefreshingToken = false;
@@ -1530,9 +1584,13 @@ export const refreshToken = async (): Promise<string | null> => {
     onTokenRefreshed(""); // 실패를 알림
 
     if (error instanceof Error && error.name === "AbortError") {
-      logger.error("⏰ 토큰 갱신 타임아웃:", error);
+      console.error("⏰ [토큰갱신] 타임아웃 (10초 초과):", error);
     } else {
-      logger.error("❌ 토큰 갱신 실패:", error);
+      console.error("❌ [토큰갱신] 실패:", error);
+      if (error instanceof Error) {
+        console.error("   에러 메시지:", error.message);
+        console.error("   에러 스택:", error.stack);
+      }
     }
 
     // 실패 시 메모리 토큰 삭제
