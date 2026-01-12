@@ -6,7 +6,8 @@
         </trust-anchors>
     </base-config>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">silverld.site</domain>
+        <domain includeSubdomains="true">api.chingoohaja.app</domain>
+        <domain includeSubdomains="true">chingoohaja.app</domain>
         <domain includeSubdomains="true">43.202.193.103</domain>
     </domain-config>
 </network-security-config>

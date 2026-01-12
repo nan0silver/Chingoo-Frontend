@@ -44,7 +44,7 @@ export const getApiUrl = (): string => {
     if (import.meta.env.DEV) {
       console.log("✅ 네이티브 앱 - 운영 서버 사용");
     }
-    return "https://silverld.site/api";
+    return "https://api.chingoohaja.app/api";
   }
 
   // 웹에서는 환경변수 사용
@@ -68,8 +68,9 @@ export const getApiUrl = (): string => {
  * 1. access_token: 메모리(in-memory)에만 저장 (XSS 공격 방어)
  *    - 페이지 새로고침 시 refresh token으로 자동 재발급
  *    - localStorage/sessionStorage에 저장하지 않음
- * 2. refresh_token: HttpOnly Secure SameSite=Strict 쿠키로 서버에서 설정 필요
+ * 2. refresh_token: HttpOnly Secure SameSite=None 쿠키로 서버에서 설정 필요
  *    - XSS, CSRF 공격 방어
+ *    - 프론트엔드와 백엔드가 다른 도메인(api.chingoohaja.app)이므로 SameSite=None 사용
  *
  */
 
@@ -280,22 +281,12 @@ export const login = async (
       clearTimeout(timeoutId);
     }
 
-    // 응답 헤더에서 Set-Cookie 확인 (디버깅용)
-    const setCookieHeaders = response.headers.get("set-cookie");
+    // 주의: JavaScript에서는 HttpOnly 쿠키의 Set-Cookie 헤더를 읽을 수 없습니다 (브라우저 보안 정책)
+    // Set-Cookie 헤더는 네트워크 탭에서 직접 확인해야 합니다
     console.log(
-      "🍪 [로그인] Set-Cookie 헤더:",
-      setCookieHeaders ? "있음" : "없음",
+      "🍪 [로그인] 쿠키 확인: 브라우저 개발자 도구 → 네트워크 탭 → 로그인 API → Response Headers에서 Set-Cookie 확인",
     );
-    if (setCookieHeaders) {
-      console.log(
-        "🍪 [로그인] Set-Cookie 값:",
-        setCookieHeaders.substring(0, 300),
-      );
-    } else {
-      console.error(
-        "❌ [로그인] Set-Cookie 헤더가 없습니다! 백엔드에서 쿠키를 설정하지 않았습니다.",
-      );
-    }
+    console.log("🍪 [로그인] 로그인 API 응답 상태:", response.status);
 
     // 응답 본문을 텍스트로 먼저 읽기
     const responseText = await response.text();
@@ -362,12 +353,7 @@ export const login = async (
       JSON.stringify(minimalUserInfo),
     );
 
-    // 쿠키가 설정되었는지 확인 (디버깅용 - 사파리에서 쿠키 확인은 불가능하지만 로그만 출력)
     console.log("✅ [로그인] 로그인 성공");
-    console.log(
-      "🍪 [로그인] 쿠키 확인: 브라우저 개발자 도구에서 Cookies 탭 확인 필요",
-    );
-    console.log("🍪 [로그인] 로그인 API 응답 상태:", response.status);
 
     logger.log("✅ 로그인 성공");
     return result;
@@ -989,22 +975,12 @@ export const processSocialLogin = async (
       clearTimeout(timeoutId);
     }
 
-    // 응답 헤더에서 Set-Cookie 확인 (디버깅용)
-    const setCookieHeaders = response.headers.get("set-cookie");
+    // 주의: JavaScript에서는 HttpOnly 쿠키의 Set-Cookie 헤더를 읽을 수 없습니다 (브라우저 보안 정책)
+    // Set-Cookie 헤더는 네트워크 탭에서 직접 확인해야 합니다
     console.log(
-      "🍪 [OAuth로그인] Set-Cookie 헤더:",
-      setCookieHeaders ? "있음" : "없음",
+      "🍪 [OAuth로그인] 쿠키 확인: 브라우저 개발자 도구 → 네트워크 탭 → OAuth API → Response Headers에서 Set-Cookie 확인",
     );
-    if (setCookieHeaders) {
-      console.log(
-        "🍪 [OAuth로그인] Set-Cookie 값:",
-        setCookieHeaders.substring(0, 300),
-      );
-    } else {
-      console.error(
-        "❌ [OAuth로그인] Set-Cookie 헤더가 없습니다! 백엔드에서 쿠키를 설정하지 않았습니다.",
-      );
-    }
+    console.log("🍪 [OAuth로그인] 로그인 API 응답 상태:", response.status);
 
     if (!response.ok) {
       logger.error("OAuth 로그인 응답 에러:", {
@@ -1064,15 +1040,6 @@ export const processSocialLogin = async (
     }
 
     console.log("✅ [OAuth로그인] 로그인 성공");
-    console.log(
-      "🍪 [OAuth로그인] 쿠키 확인: 브라우저 개발자 도구 → Storage → Cookies에서 refresh token 쿠키 확인",
-    );
-    console.log("🍪 [OAuth로그인] 로그인 API 응답 상태:", response.status);
-    if (!setCookieHeaders) {
-      console.error(
-        "⚠️ [OAuth로그인] 주의: Set-Cookie 헤더가 없습니다. 백엔드에서 쿠키를 설정하지 않았을 수 있습니다.",
-      );
-    }
 
     // sessionStorage 정리
     try {

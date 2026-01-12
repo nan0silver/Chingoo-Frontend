@@ -8,8 +8,13 @@ const config: CapacitorConfig = {
   webDir: "dist/spa",
   server: {
     androidScheme: "https",
-    hostname: "localhost", // 필요 시 silverld.site로 변경
-    allowNavigation: ["silverld.site", "*.silverld.site"],
+    hostname: "localhost",
+    allowNavigation: [
+      "api.chingoohaja.app",
+      "*.api.chingoohaja.app",
+      "chingoohaja.app",
+      "*.chingoohaja.app",
+    ],
     cleartext: false,
   },
   plugins: {

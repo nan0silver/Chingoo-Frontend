@@ -17,8 +17,9 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       // API 요청을 백엔드 서버로 프록시
+      // 주의: 로컬 개발 환경용 설정입니다. 프로덕션에서는 api.chingoohaja.app을 직접 사용합니다.
       "/api": {
-        target: "http://43.202.193.103:8080",
+        target: "http://43.202.193.103:8080", // 로컬 개발용 백엔드 서버 주소
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
@@ -27,7 +28,7 @@ export default defineConfig(({ mode }) => ({
       },
       // WebSocket 요청을 백엔드 서버로 프록시
       "/ws": {
-        target: "http://43.202.193.103:8080",
+        target: "http://43.202.193.103:8080", // 로컬 개발용 백엔드 서버 주소
         changeOrigin: true,
         secure: false,
         ws: true,

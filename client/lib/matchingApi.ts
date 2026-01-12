@@ -24,7 +24,7 @@ import { logger } from "./logger";
 
 /**
  * API 기본 설정
- * 네이티브 앱에서는 운영 서버(silverld.site)를 사용하고,
+ * 네이티브 앱에서는 운영 서버(api.chingoohaja.app)를 사용하고,
  * 웹에서는 환경변수 또는 프록시를 사용합니다.
  */
 const API_BASE_URL = getApiUrl();

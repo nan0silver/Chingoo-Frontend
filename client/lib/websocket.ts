@@ -44,7 +44,7 @@ export class WebSocketService {
 
     if (Capacitor.isNativePlatform()) {
       // 네이티브 앱: HTTPS이므로 wss:// 사용
-      wsUrl = "https://silverld.site/ws";
+      wsUrl = "https://api.chingoohaja.app/ws";
       console.log("✅ 네이티브 앱 - WebSocket 운영 서버 사용");
     } else {
       // 웹: 환경변수 또는 프록시 사용

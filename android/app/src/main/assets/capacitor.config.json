@@ -6,8 +6,10 @@
 		"androidScheme": "https",
 		"hostname": "localhost",
 		"allowNavigation": [
-			"silverld.site",
-			"*.silverld.site"
+			"api.chingoohaja.app",
+			"*.api.chingoohaja.app",
+			"chingoohaja.app",
+			"*.chingoohaja.app"
 		],
 		"cleartext": false
 	},
