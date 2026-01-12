@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated, getStoredUserInfo } from "@/lib/auth";
+import { checkAuthentication, getStoredUserInfo } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
 
 interface AuthGuardProps {
@@ -17,9 +17,10 @@ export default function AuthGuard({
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       try {
-        const authenticated = isAuthenticated();
+        // 비동기로 인증 확인 (refresh token으로 토큰 갱신 시도)
+        const authenticated = await checkAuthentication();
         const storedUserInfo = getStoredUserInfo();
 
         if (!authenticated || !storedUserInfo) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAuthenticated, getStoredUserInfo, logout } from "@/lib/auth";
+import { checkAuthentication, getStoredUserInfo, logout } from "@/lib/auth";
 import HomePage from "./HomePage";
 import ConnectingCallPage from "./ConnectingCallPage";
 import CallConnectedPage from "./CallConnectedPage";
@@ -28,9 +28,10 @@ export default function Index() {
 
   // Check authentication status on component mount
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       try {
-        const authenticated = isAuthenticated();
+        // 비동기로 인증 확인 (refresh token으로 토큰 갱신 시도)
+        const authenticated = await checkAuthentication();
         const userInfo = getStoredUserInfo();
 
         if (import.meta.env.DEV) {

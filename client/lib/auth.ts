@@ -1178,7 +1178,7 @@ export const logout = async (): Promise<void> => {
 };
 
 /**
- * 인증 상태를 확인하는 함수
+ * 인증 상태를 확인하는 함수 (동기)
  * 메모리에 토큰이 있으면 인증된 것으로 간주
  * (토큰 만료 시 API 호출 시점에 자동으로 갱신됨)
  */
@@ -1192,6 +1192,58 @@ export const isAuthenticated = (): boolean => {
 
   logger.log("인증 상태: 토큰 존재");
   return true;
+};
+
+/**
+ * 인증 상태를 확인하고 필요한 경우 refresh token으로 토큰을 갱신하는 함수 (비동기)
+ * 새로고침 시 메모리 토큰이 없어도 localStorage에 user_info가 있으면 자동으로 토큰 갱신 시도
+ */
+export const checkAuthentication = async (): Promise<boolean> => {
+  // 메모리에 토큰이 있으면 인증됨
+  if (getInMemoryToken()) {
+    if (import.meta.env.DEV) {
+      logger.log("✅ 인증 상태: 메모리에 토큰 존재");
+    }
+    return true;
+  }
+
+  // 메모리에 토큰이 없으면 localStorage에 user_info가 있는지 확인
+  const userInfo = getStoredUserInfo();
+  if (!userInfo) {
+    if (import.meta.env.DEV) {
+      logger.log("❌ 인증 상태: 토큰 및 user_info 없음");
+    }
+    return false;
+  }
+
+  // localStorage에 user_info가 있으면 refresh token으로 토큰 갱신 시도
+  if (import.meta.env.DEV) {
+    logger.log("🔄 메모리 토큰 없음, refresh token으로 갱신 시도...");
+  }
+
+  try {
+    const token = await refreshToken();
+    if (token) {
+      if (import.meta.env.DEV) {
+        logger.log("✅ 토큰 갱신 성공 - 인증됨");
+      }
+      return true;
+    } else {
+      if (import.meta.env.DEV) {
+        logger.log("❌ 토큰 갱신 실패 - 인증되지 않음");
+      }
+      // 토큰 갱신 실패 시 localStorage 정리
+      try {
+        localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
+      } catch (error) {
+        // localStorage 접근 실패는 무시
+      }
+      return false;
+    }
+  } catch (error) {
+    logger.error("인증 확인 중 오류:", error);
+    return false;
+  }
 };
 
 /**
