@@ -69,6 +69,7 @@ export default function ProfileSetupPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
+  const [showFullConsent, setShowFullConsent] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -198,6 +199,7 @@ export default function ProfileSetupPage() {
   const handleConsent = () => {
     setHasConsented(true);
     setShowConsentModal(false);
+    setShowFullConsent(false); // 모달 닫을 때 더보기 상태 초기화
   };
 
   const handleSaveProfile = async () => {
@@ -346,36 +348,166 @@ export default function ProfileSetupPage() {
             </h2>
 
             <div className="space-y-4 mb-6 text-gray-700">
+              {/* 1. 수집하는 개인정보 항목 */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   1. 수집하는 개인정보 항목
                 </h3>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>필수 항목: 이메일, 닉네임, 성별, 생년월일</li>
-                  <li>자동 수집: 서비스 이용 기록, 접속 로그</li>
-                </ul>
+                <p className="text-sm mb-2">
+                  본 서비스는 서비스 제공을 위해 다음과 같은 개인정보를
+                  수집합니다.
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">필수 항목</p>
+                    <p className="text-gray-700">
+                      이메일, 닉네임, 성별, 생년월일
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">
+                      서비스 이용 과정에서 자동 수집되는 정보
+                    </p>
+                    <p className="text-gray-700">
+                      서비스 이용 기록, 접속 로그, 통화 일시 및 이용 이력
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">
+                      서비스 제공을 위해 생성·수집되는 정보
+                    </p>
+                    <p className="text-gray-700">음성 통화 데이터(통화 내용)</p>
+                  </div>
+                </div>
               </div>
 
+              {/* 2. 개인정보의 수집 및 이용 목적 */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2">
                   2. 개인정보의 수집 및 이용 목적
                 </h3>
+                <p className="text-sm mb-2">
+                  수집된 개인정보는 다음의 목적을 위해 이용됩니다.
+                </p>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>회원 관리 및 본인 확인</li>
-                  <li>음성 통화 매칭 서비스 제공</li>
-                  <li>서비스 이용 통계 분석</li>
-                  <li>고객 문의 대응</li>
+                  <li>회원 가입 및 본인 확인, 회원 관리</li>
+                  <li>음성 기반 통화 매칭 서비스 제공</li>
+                  <li>서비스 이용 통계 분석 및 품질 개선</li>
+                  <li>고객 문의 및 민원 대응</li>
+                  <li>
+                    음성 데이터 분석을 통한 서비스 기능 개선 및 내부 연구 목적의
+                    AI 모델 성능 향상
+                  </li>
                 </ul>
+                <p className="text-sm mt-2 text-gray-600 italic">
+                  ※ 음성 데이터는 서비스 제공 및 분석 목적에 한하여 이용되며,
+                  개인을 식별할 수 없도록 처리된 후 내부 연구 및 기술 고도화
+                  목적으로만 활용됩니다.
+                </p>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  3. 개인정보의 보유 및 이용 기간
-                </h3>
-                <p className="text-sm">
-                  회원 탈퇴 시까지 보유하며, 탈퇴 후 즉시 파기합니다. 단, 관련
-                  법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.
-                </p>
+              {/* 3. [선택] 비식별화된 분석 데이터 및 연구 결과 활용 동의 */}
+              {showFullConsent && (
+                <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">
+                    3. [선택] 비식별화된 분석 데이터 및 연구 결과 활용 동의
+                  </h3>
+                  <p className="text-sm">
+                    본 서비스는 서비스 개선, 연구 및 산업 발전을 목적으로
+                    이용자의 서비스 이용 과정에서 생성된 정보를 개인을 식별할 수
+                    없도록 완전히 비식별화한 후, 분석 결과물 또는 통계적 지표의
+                    형태로 내부 활용하거나 제3자에게 제공할 수 있습니다.
+                  </p>
+
+                  {/* 3-1. 활용되는 데이터의 범위 */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">
+                      3-1. 활용되는 데이터의 범위
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>
+                        음성 통화 데이터로부터 추출된 음성 특징값 및 패턴 지표
+                      </li>
+                      <li>
+                        통화 빈도, 지속 시간, 반응 양상 등 개인 식별이 불가능한
+                        통계 정보
+                      </li>
+                      <li>감정 상태, 대화 특성 등에 대한 분석 결과 지표</li>
+                    </ul>
+                    <p className="text-sm mt-2 text-gray-600 italic">
+                      ※ 음성 원본, 이메일, 닉네임 등 개인을 직접 식별할 수 있는
+                      정보는 어떠한 경우에도 외부에 제공되지 않습니다.
+                    </p>
+                  </div>
+
+                  {/* 3-2. 활용 목적 */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">
+                      3-2. 활용 목적
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>음성 및 대화 분석 기술 연구</li>
+                      <li>AI 모델의 성능 향상, 검증 및 고도화</li>
+                      <li>고령자 커뮤니케이션 및 정서 분석 관련 연구</li>
+                      <li>관련 산업 분야의 기술 개발 및 서비스 고도화</li>
+                    </ul>
+                  </div>
+
+                  {/* 3-3. 제공 방식 및 대상 */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">
+                      3-3. 제공 방식 및 대상
+                    </h4>
+                    <p className="text-sm mb-2">
+                      비식별화된 분석 결과물 또는 통계 자료의 형태로 제공
+                    </p>
+                    <p className="font-medium text-gray-900 mb-1 text-sm">
+                      제공 대상:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>AI, 헬스케어, 고령자 복지 관련 기업</li>
+                      <li>연구기관, 학술기관, 공공기관 등</li>
+                    </ul>
+                  </div>
+
+                  {/* 3-4. 보유 및 이용 기간 */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">
+                      3-4. 보유 및 이용 기간
+                    </h4>
+                    <p className="text-sm">
+                      비식별화된 분석 데이터는 활용 목적 달성 시까지
+                      보관·이용됩니다.
+                    </p>
+                  </div>
+
+                  {/* 3-5. 동의 거부 및 철회 권리 */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2 text-sm">
+                      3-5. 동의 거부 및 철회 권리
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>
+                        본 동의는 선택 사항이며, 동의하지 않아도 서비스 이용에
+                        제한이 없습니다.
+                      </li>
+                      <li>
+                        이용자는 언제든지 동의를 철회할 수 있으며, 철회 이후
+                        생성되는 데이터는 본 목적에 활용되지 않습니다.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* 더보기/접기 버튼 */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowFullConsent(!showFullConsent)}
+                  className="text-sm text-login-button font-medium hover:underline"
+                >
+                  {showFullConsent ? "접기" : "더보기"}
+                </button>
               </div>
             </div>
 
