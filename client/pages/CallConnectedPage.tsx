@@ -14,7 +14,7 @@ interface CallConnectedPageProps {
 }
 
 export default function CallConnectedPage({
-  selectedCategory,
+  selectedCategory: propSelectedCategory,
   onEndCall,
 }: CallConnectedPageProps) {
   const [audioWaveAnimation, setAudioWaveAnimation] = useState(0);
@@ -24,6 +24,9 @@ export default function CallConnectedPage({
   const [reportErrorMessage, setReportErrorMessage] = useState<string>("");
   const [prompt, setPrompt] = useState<string | null>(null);
   const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
+  
+  // 복원된 카테고리 정보 사용 (props가 없으면 localStorage에서 복원)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(propSelectedCategory);
   const {
     partner,
     callId,
@@ -51,6 +54,33 @@ export default function CallConnectedPage({
       );
     }
   }, [partner]);
+
+  // 컴포넌트 마운트 시 localStorage에서 카테고리 정보 복원
+  useEffect(() => {
+    if (!selectedCategory && isInCall) {
+      import("@/lib/callStore").then(({ useCallStore }) => {
+        const storedInfo = useCallStore.getState().restoreCallFromStorage();
+        if (storedInfo?.categoryName) {
+          setSelectedCategory(storedInfo.categoryName);
+          if (import.meta.env.DEV) {
+            console.log("💾 카테고리 정보 복원:", storedInfo.categoryName);
+          }
+        }
+      });
+    }
+  }, [isInCall]);
+
+  // 통화 중일 때 카테고리 정보를 localStorage에 저장
+  useEffect(() => {
+    if (isInCall && selectedCategory) {
+      import("@/lib/callStore").then(({ useCallStore }) => {
+        useCallStore.getState().saveCallToStorage(selectedCategory);
+        if (import.meta.env.DEV) {
+          console.log("💾 카테고리 정보 저장:", selectedCategory);
+        }
+      });
+    }
+  }, [isInCall, selectedCategory]);
 
   // 통화 종료 감지 - isInCall이 false가 되면 평가 화면으로 이동
   useEffect(() => {

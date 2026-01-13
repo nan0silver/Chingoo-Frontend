@@ -74,7 +74,18 @@ const AppRoutes = () => {
         if (import.meta.env.DEV) {
           console.log("🔄 통화 상태 복원 시도 중...");
         }
-        await restoreCallState();
+        const restoredCategory = await restoreCallState();
+
+        // 통화 상태가 복원되었으면 통화 중 페이지로 이동
+        if (restoredCategory !== null) {
+          if (import.meta.env.DEV) {
+            console.log("✅ 통화 상태 복원됨 - 통화 중 페이지로 이동");
+          }
+          // 약간의 지연 후 페이지 이동 (상태 안정화 대기)
+          setTimeout(() => {
+            navigate("/call-connected", { replace: true });
+          }, 500);
+        }
       } catch (error) {
         console.error("통화 상태 복원 실패:", error);
         // 복원 실패는 치명적이지 않으므로 계속 진행

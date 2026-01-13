@@ -53,6 +53,7 @@ interface StoredCallInfo {
     uid: string;
   };
   callStartTime: string; // ISO string
+  categoryName: string | null; // 카테고리 이름
 }
 
 /**
@@ -81,7 +82,7 @@ interface CallActions {
   clearPartner: () => void;
 
   // localStorage에 통화 정보 저장
-  saveCallToStorage: () => void;
+  saveCallToStorage: (categoryName?: string | null) => void;
 
   // localStorage에서 통화 정보 복원
   restoreCallFromStorage: () => StoredCallInfo | null;
@@ -179,7 +180,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       },
     });
 
-    // localStorage에 통화 정보 저장
+    // localStorage에 통화 정보 저장 (카테고리는 나중에 CallConnectedPage에서 저장)
     get().saveCallToStorage();
 
     if (import.meta.env.DEV) {
@@ -247,7 +248,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
     get().clearCallFromStorage();
   },
 
-  saveCallToStorage: () => {
+  saveCallToStorage: (categoryName?: string | null) => {
     try {
       const state = get();
       if (!state.isInCall || !state.callId || !state.partner || !state.agoraChannelInfo) {
@@ -256,17 +257,22 @@ export const useCallStore = create<CallStore>((set, get) => ({
         return;
       }
 
+      // 카테고리 정보는 별도로 저장 (이미 저장된 경우 유지)
+      const existing = get().restoreCallFromStorage();
+      const categoryToSave = categoryName !== undefined ? categoryName : (existing?.categoryName || null);
+
       const storedInfo: StoredCallInfo = {
         callId: state.callId,
         matchingId: state.matchingId,
         partner: state.partner,
         agoraChannelInfo: state.agoraChannelInfo,
         callStartTime: state.callStartTime?.toISOString() || new Date().toISOString(),
+        categoryName: categoryToSave,
       };
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(storedInfo));
       if (import.meta.env.DEV) {
-        console.log("💾 통화 정보 localStorage에 저장 완료");
+        console.log("💾 통화 정보 localStorage에 저장 완료", { categoryName: categoryToSave });
       }
     } catch (error) {
       console.error("통화 정보 저장 실패:", error);

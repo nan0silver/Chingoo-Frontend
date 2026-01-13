@@ -793,6 +793,12 @@ export const useCall = () => {
 
   /**
    * 앱 초기화 시 통화 상태 복원 (페이지 새로고침 대응)
+   * 
+   * 복원 전략:
+   * 1. localStorage에서 통화 정보 확인
+   * 2. 백엔드에서 RTC 토큰 갱신 시도 (통화가 종료되었으면 실패)
+   * 3. 토큰 갱신 성공 시에만 Agora 채널에 재연결
+   * 4. 재연결 후 상대방이 없으면 통화 종료 처리
    */
   const restoreCallState = useCallback(async () => {
     try {
@@ -801,7 +807,7 @@ export const useCall = () => {
         if (import.meta.env.DEV) {
           console.log("⚠️ 이미 통화 중 - 복원 건너뜀");
         }
-        return;
+        return null;
       }
 
       // localStorage에서 통화 정보 복원
@@ -810,11 +816,57 @@ export const useCall = () => {
         if (import.meta.env.DEV) {
           console.log("💾 저장된 통화 정보 없음");
         }
-        return;
+        return null;
       }
 
       if (import.meta.env.DEV) {
         console.log("🔄 통화 상태 복원 시작:", storedInfo);
+      }
+
+      // 백엔드에서 RTC 토큰 갱신 시도 (통화가 종료되었으면 실패)
+      // 이는 통화가 실제로 진행 중인지 확인하는 방법입니다
+      let rtcToken: string | null = null;
+      try {
+        const { getStoredToken } = await import("./auth");
+        const token = getStoredToken();
+        if (!token) {
+          throw new Error("인증 토큰이 없습니다");
+        }
+
+        matchingApiService.setToken(token);
+        const tokenResult = await matchingApiService.renewRtcToken(storedInfo.callId);
+        rtcToken = tokenResult.rtcToken;
+        
+        if (import.meta.env.DEV) {
+          console.log("✅ RTC 토큰 갱신 성공 - 통화가 진행 중임을 확인");
+        }
+      } catch (tokenError: any) {
+        // 토큰 갱신 실패 = 통화가 이미 종료되었거나 존재하지 않음
+        console.warn("⚠️ RTC 토큰 갱신 실패 - 통화가 종료되었을 수 있음:", tokenError);
+        
+        // 404 또는 400 에러는 통화가 종료되었음을 의미
+        if (
+          tokenError?.message?.includes("종료") ||
+          tokenError?.message?.includes("존재하지 않") ||
+          tokenError?.message?.includes("not found") ||
+          tokenError?.message?.includes("ended")
+        ) {
+          if (import.meta.env.DEV) {
+            console.log("❌ 통화가 이미 종료됨 - 복원 취소");
+          }
+          useCallStore.getState().clearCallFromStorage();
+          return null;
+        }
+        
+        // 다른 에러는 저장된 토큰으로 시도 (네트워크 문제 등)
+        rtcToken = storedInfo.agoraChannelInfo.token;
+        if (import.meta.env.DEV) {
+          console.log("⚠️ 저장된 토큰으로 재연결 시도");
+        }
+      }
+
+      if (!rtcToken) {
+        throw new Error("RTC 토큰을 가져올 수 없습니다");
       }
 
       // 통화 상태 복원
@@ -826,23 +878,43 @@ export const useCall = () => {
         partnerNickname: storedInfo.partner.nickname,
         channelName: storedInfo.agoraChannelInfo.channelName,
         agoraUid: Number(storedInfo.agoraChannelInfo.uid),
-        rtcToken: storedInfo.agoraChannelInfo.token,
+        rtcToken: rtcToken,
         timestamp: storedInfo.callStartTime,
       };
 
       // 통화 시작 처리 (재연결)
+      // handleCallStart 내부에서 Agora 연결 후 상대방이 없으면 자동으로 통화 종료 처리됨
       await handleCallStart(restoredNotification);
+
+      // 복원 후 일정 시간(10초) 내에 상대방이 연결되지 않으면 통화 종료
+      // 이는 상대방이 이미 통화를 종료했을 가능성을 처리합니다
+      setTimeout(async () => {
+        const currentState = useCallStore.getState();
+        if (currentState.isInCall && !currentState.agoraState.remoteAudioTrack) {
+          // 10초 후에도 상대방 오디오 트랙이 없으면 통화 종료
+          console.warn("⚠️ 복원 후 10초 경과 - 상대방이 연결되지 않음, 통화 종료");
+          try {
+            await handleEndCall();
+          } catch (error) {
+            console.error("복원 후 통화 종료 실패:", error);
+          }
+        }
+      }, 10000); // 10초 대기
 
       if (import.meta.env.DEV) {
         console.log("✅ 통화 상태 복원 완료");
       }
+
+      // 복원된 카테고리 정보 반환 (페이지 이동 시 사용)
+      return storedInfo.categoryName;
     } catch (error) {
       console.error("❌ 통화 상태 복원 실패:", error);
       // 복원 실패 시 저장된 정보 삭제
       useCallStore.getState().clearCallFromStorage();
       setError("통화 상태 복원에 실패했습니다. 통화가 종료되었을 수 있습니다.");
+      return null;
     }
-  }, [isInCall, isConnecting, handleCallStart, setError]);
+  }, [isInCall, isConnecting, handleCallStart, setError, matchingApiService]);
 
   /**
    * 컴포넌트 언마운트 시 타이머 정리
