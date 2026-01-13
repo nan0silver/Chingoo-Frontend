@@ -84,7 +84,9 @@ export const useCall = () => {
       const currentState = useCallStore.getState();
       if (currentState.agoraChannelInfo) {
         currentState.agoraChannelInfo.token = result.rtcToken;
-        useCallStore.setState({ agoraChannelInfo: currentState.agoraChannelInfo });
+        useCallStore.setState({
+          agoraChannelInfo: currentState.agoraChannelInfo,
+        });
         // localStorage에도 업데이트
         useCallStore.getState().saveCallToStorage();
       }
@@ -793,7 +795,7 @@ export const useCall = () => {
 
   /**
    * 앱 초기화 시 통화 상태 복원 (페이지 새로고침 대응)
-   * 
+   *
    * 복원 전략:
    * 1. localStorage에서 통화 정보 확인
    * 2. 백엔드에서 RTC 토큰 갱신 시도 (통화가 종료되었으면 실패)
@@ -826,6 +828,7 @@ export const useCall = () => {
       // 백엔드에서 RTC 토큰 갱신 시도 (통화가 종료되었으면 실패)
       // 이는 통화가 실제로 진행 중인지 확인하는 방법입니다
       let rtcToken: string | null = null;
+      let expiresAt: string | null = null;
       try {
         const { getStoredToken } = await import("./auth");
         const token = getStoredToken();
@@ -834,16 +837,22 @@ export const useCall = () => {
         }
 
         matchingApiService.setToken(token);
-        const tokenResult = await matchingApiService.renewRtcToken(storedInfo.callId);
+        const tokenResult = await matchingApiService.renewRtcToken(
+          storedInfo.callId,
+        );
         rtcToken = tokenResult.rtcToken;
-        
+        expiresAt = tokenResult.expiresAt;
+
         if (import.meta.env.DEV) {
           console.log("✅ RTC 토큰 갱신 성공 - 통화가 진행 중임을 확인");
         }
       } catch (tokenError: any) {
         // 토큰 갱신 실패 = 통화가 이미 종료되었거나 존재하지 않음
-        console.warn("⚠️ RTC 토큰 갱신 실패 - 통화가 종료되었을 수 있음:", tokenError);
-        
+        console.warn(
+          "⚠️ RTC 토큰 갱신 실패 - 통화가 종료되었을 수 있음:",
+          tokenError,
+        );
+
         // 404 또는 400 에러는 통화가 종료되었음을 의미
         if (
           tokenError?.message?.includes("종료") ||
@@ -857,15 +866,17 @@ export const useCall = () => {
           useCallStore.getState().clearCallFromStorage();
           return null;
         }
-        
+
         // 다른 에러는 저장된 토큰으로 시도 (네트워크 문제 등)
         rtcToken = storedInfo.agoraChannelInfo.token;
+        // expiresAt는 기본값 설정 (현재 시간 + 1시간)
+        expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
         if (import.meta.env.DEV) {
           console.log("⚠️ 저장된 토큰으로 재연결 시도");
         }
       }
 
-      if (!rtcToken) {
+      if (!rtcToken || !expiresAt) {
         throw new Error("RTC 토큰을 가져올 수 없습니다");
       }
 
@@ -879,6 +890,7 @@ export const useCall = () => {
         channelName: storedInfo.agoraChannelInfo.channelName,
         agoraUid: Number(storedInfo.agoraChannelInfo.uid),
         rtcToken: rtcToken,
+        expiresAt: expiresAt,
         timestamp: storedInfo.callStartTime,
       };
 
@@ -890,9 +902,14 @@ export const useCall = () => {
       // 이는 상대방이 이미 통화를 종료했을 가능성을 처리합니다
       setTimeout(async () => {
         const currentState = useCallStore.getState();
-        if (currentState.isInCall && !currentState.agoraState.remoteAudioTrack) {
+        if (
+          currentState.isInCall &&
+          !currentState.agoraState.remoteAudioTrack
+        ) {
           // 10초 후에도 상대방 오디오 트랙이 없으면 통화 종료
-          console.warn("⚠️ 복원 후 10초 경과 - 상대방이 연결되지 않음, 통화 종료");
+          console.warn(
+            "⚠️ 복원 후 10초 경과 - 상대방이 연결되지 않음, 통화 종료",
+          );
           try {
             await handleEndCall();
           } catch (error) {
