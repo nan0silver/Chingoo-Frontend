@@ -38,6 +38,10 @@ export const useCall = () => {
   const MAX_CALL_DURATION = 60 * 60 * 1000; // 60분
   const maxCallDurationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 상대방 퇴장 후 30초 대기 타이머
+  const PARTNER_LEAVE_WAIT_DURATION = 30 * 1000; // 30초
+  const partnerLeaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // 디버깅: partner 정보 변경 시에만 로그 출력 (개발 환경에서만)
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -154,6 +158,19 @@ export const useCall = () => {
   }, []);
 
   /**
+   * 상대방 퇴장 대기 타이머 정리
+   */
+  const clearPartnerLeaveTimer = useCallback(() => {
+    if (partnerLeaveTimerRef.current) {
+      clearTimeout(partnerLeaveTimerRef.current);
+      partnerLeaveTimerRef.current = null;
+      if (import.meta.env.DEV) {
+        console.log("⏰ 상대방 퇴장 대기 타이머 정리");
+      }
+    }
+  }, []);
+
+  /**
    * 통화 시작 (WebSocket 알림 수신 시)
    */
   const handleCallStart = useCallback(
@@ -216,6 +233,22 @@ export const useCall = () => {
             if (import.meta.env.DEV) {
               console.log("사용자 입장:", userId);
             }
+
+            // 현재 상태를 직접 가져와서 클로저 문제 해결
+            const currentState = useCallStore.getState();
+
+            // 상대방이 다시 입장한 경우 타이머 취소
+            if (
+              currentState.partner?.id &&
+              String(userId) === String(currentState.partner.id)
+            ) {
+              if (import.meta.env.DEV) {
+                console.log(
+                  "✅ 상대방이 다시 입장했습니다 - 퇴장 대기 타이머 취소",
+                );
+              }
+              clearPartnerLeaveTimer();
+            }
           },
           onTokenPrivilegeWillExpire: () => {
             // 토큰이 30초 후 만료 - 갱신 시도
@@ -275,45 +308,66 @@ export const useCall = () => {
               console.log("🔍 퇴장한 userId:", userId);
             }
 
-            // 상대방이 퇴장한 경우 통화 종료 처리
+            // 상대방이 퇴장한 경우 30초 대기 후 통화 종료 처리
             if (
               currentState.partner?.id &&
               String(userId) === String(currentState.partner.id)
             ) {
               if (import.meta.env.DEV) {
-                console.log("📞 상대방이 퇴장했습니다 - 통화 종료 처리 시작");
+                console.log("📞 상대방이 퇴장했습니다 - 30초 대기 시작");
               }
 
-              // 상대방 퇴장 시에도 WebSocket 알림 전송 (상대방이 예상치 못하게 퇴장한 경우)
-              if (currentState.callId && currentState.partner.id) {
+              // 기존 타이머가 있으면 정리
+              clearPartnerLeaveTimer();
+
+              // 30초 후 통화 종료 타이머 시작
+              partnerLeaveTimerRef.current = setTimeout(async () => {
+                const stateAtTimeout = useCallStore.getState();
                 if (import.meta.env.DEV) {
-                  console.log("📡 상대방 퇴장으로 인한 WebSocket 알림 전송");
-                }
-                try {
-                  webSocketService.sendCallEndNotification(
-                    currentState.callId,
-                    currentState.partner.id,
+                  console.log(
+                    "⏰ 30초 경과 - 상대방이 돌아오지 않아 통화 종료 처리 시작",
                   );
+                }
+
+                // 상대방 퇴장 시에도 WebSocket 알림 전송
+                if (stateAtTimeout.callId && stateAtTimeout.partner?.id) {
                   if (import.meta.env.DEV) {
-                    console.log("✅ 상대방 퇴장 WebSocket 알림 전송 성공");
+                    console.log("📡 상대방 퇴장으로 인한 WebSocket 알림 전송");
                   }
-                } catch (wsError) {
-                  console.error(
-                    "❌ 상대방 퇴장 WebSocket 알림 전송 실패:",
-                    wsError,
-                  );
+                  try {
+                    webSocketService.sendCallEndNotification(
+                      stateAtTimeout.callId,
+                      stateAtTimeout.partner.id,
+                    );
+                    if (import.meta.env.DEV) {
+                      console.log("✅ 상대방 퇴장 WebSocket 알림 전송 성공");
+                    }
+                  } catch (wsError) {
+                    console.error(
+                      "❌ 상대방 퇴장 WebSocket 알림 전송 실패:",
+                      wsError,
+                    );
+                  }
                 }
-              }
 
-              // Agora 채널에서 퇴장
-              agoraService.leaveChannel().catch((error) => {
-                console.error("Agora 채널 퇴장 실패:", error);
-              });
+                // Agora 채널에서 퇴장
+                agoraService.leaveChannel().catch((error) => {
+                  console.error("Agora 채널 퇴장 실패:", error);
+                });
 
-              // 통화 상태 초기화
-              endCall();
+                // 통화 상태 초기화
+                endCall();
+                if (import.meta.env.DEV) {
+                  console.log("📞 상대방 퇴장으로 인한 통화 종료 처리 완료");
+                }
+
+                partnerLeaveTimerRef.current = null;
+              }, PARTNER_LEAVE_WAIT_DURATION);
+
               if (import.meta.env.DEV) {
-                console.log("📞 상대방 퇴장으로 인한 통화 종료 처리 완료");
+                console.log(
+                  "⏰ 30초 대기 타이머 시작 - 상대방 재입장 시 취소됨",
+                );
               }
             } else {
               if (import.meta.env.DEV) {
@@ -413,6 +467,7 @@ export const useCall = () => {
       startMaxCallDurationTimer,
       handleTokenRenewal,
       handleTokenExpired,
+      clearPartnerLeaveTimer,
     ],
   );
 
@@ -631,6 +686,9 @@ export const useCall = () => {
       // 7. 최대 통화 시간 타이머 정리
       clearMaxCallDurationTimer();
 
+      // 7-1. 상대방 퇴장 대기 타이머 정리
+      clearPartnerLeaveTimer();
+
       // 8. Agora 콜백 정리 (다음 통화에서 잘못된 partner 정보로 비교하는 것을 방지)
       agoraService.setCallbacks({});
       if (import.meta.env.DEV) {
@@ -661,6 +719,7 @@ export const useCall = () => {
     partner,
     webSocketService,
     clearMaxCallDurationTimer,
+    clearPartnerLeaveTimer,
   ]);
 
   /**
@@ -959,8 +1018,9 @@ export const useCall = () => {
     return () => {
       // 타이머 정리
       clearMaxCallDurationTimer();
+      clearPartnerLeaveTimer();
     };
-  }, [clearMaxCallDurationTimer]);
+  }, [clearMaxCallDurationTimer, clearPartnerLeaveTimer]);
 
   return {
     // 상태
