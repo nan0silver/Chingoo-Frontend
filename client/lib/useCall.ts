@@ -345,6 +345,9 @@ export const useCall = () => {
             currentState.volume = 40;
             updateAgoraState(currentState);
 
+            // ✅ Agora 채널 입장 성공 후 localStorage에 통화 정보 저장 (백엔드 30초 유예 시간과 연동)
+            useCallStore.getState().saveCallToStorage();
+
             // 최대 통화 시간 타이머 시작
             startMaxCallDurationTimer();
           },
@@ -372,9 +375,8 @@ export const useCall = () => {
           uid: String(notification.agoraUid),
         };
 
-        // callStore에 agoraChannelInfo 저장 (localStorage 저장을 위해)
+        // callStore에 agoraChannelInfo 저장
         useCallStore.setState({ agoraChannelInfo });
-        useCallStore.getState().saveCallToStorage();
 
         if (import.meta.env.DEV) {
           console.log("🔄 Agora 채널 입장 시작");
@@ -386,6 +388,7 @@ export const useCall = () => {
           if (import.meta.env.DEV) {
             console.log("✅ Agora 채널 입장 완료");
           }
+          // localStorage 저장은 onCallStarted 콜백에서 수행 (채널 입장 성공 후)
         } catch (agoraError) {
           console.error("❌ Agora 채널 입장 실패:", agoraError);
           throw agoraError;
@@ -812,11 +815,11 @@ export const useCall = () => {
         return null;
       }
 
-      // localStorage에서 통화 정보 복원
+      // localStorage에서 통화 정보 복원 (30초 이내만)
       const storedInfo = useCallStore.getState().restoreCallFromStorage();
       if (!storedInfo) {
         if (import.meta.env.DEV) {
-          console.log("💾 저장된 통화 정보 없음");
+          console.log("💾 저장된 통화 정보 없음 또는 만료됨");
         }
         return null;
       }
@@ -838,7 +841,7 @@ export const useCall = () => {
 
         matchingApiService.setToken(token);
         const tokenResult = await matchingApiService.renewRtcToken(
-          storedInfo.callId,
+          String(storedInfo.callId),
         );
         rtcToken = tokenResult.rtcToken;
         expiresAt = tokenResult.expiresAt;
@@ -867,63 +870,72 @@ export const useCall = () => {
           return null;
         }
 
-        // 다른 에러는 저장된 토큰으로 시도 (네트워크 문제 등)
-        rtcToken = storedInfo.agoraChannelInfo.token;
-        // expiresAt는 기본값 설정 (현재 시간 + 1시간)
-        expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-        if (import.meta.env.DEV) {
-          console.log("⚠️ 저장된 토큰으로 재연결 시도");
-        }
+        // 다른 에러는 복원 실패로 처리
+        throw new Error("RTC 토큰 갱신에 실패했습니다");
       }
 
       if (!rtcToken || !expiresAt) {
         throw new Error("RTC 토큰을 가져올 수 없습니다");
       }
 
-      // 통화 상태 복원
-      const restoredNotification: CallStartNotification = {
-        type: "call_start",
-        callId: Number(storedInfo.callId),
-        matchingId: storedInfo.matchingId || undefined,
-        partnerId: Number(storedInfo.partner.id),
-        partnerNickname: storedInfo.partner.nickname,
+      // 저장된 정보를 사용하여 통화 상태 복원
+      const agoraChannelInfo = {
+        appId: storedInfo.agoraChannelInfo.appId,
         channelName: storedInfo.agoraChannelInfo.channelName,
-        agoraUid: Number(storedInfo.agoraChannelInfo.uid),
-        rtcToken: rtcToken,
-        expiresAt: expiresAt,
-        timestamp: storedInfo.callStartTime,
+        token: rtcToken, // 갱신된 토큰 사용
+        uid: storedInfo.agoraChannelInfo.uid,
       };
 
-      // 통화 시작 처리 (재연결)
-      // handleCallStart 내부에서 Agora 연결 후 상대방이 없으면 자동으로 통화 종료 처리됨
-      await handleCallStart(restoredNotification);
-
-      // 복원 후 일정 시간(10초) 내에 상대방이 연결되지 않으면 통화 종료
-      // 이는 상대방이 이미 통화를 종료했을 가능성을 처리합니다
-      setTimeout(async () => {
-        const currentState = useCallStore.getState();
-        if (
-          currentState.isInCall &&
-          !currentState.agoraState.remoteAudioTrack
-        ) {
-          // 10초 후에도 상대방 오디오 트랙이 없으면 통화 종료
-          console.warn(
-            "⚠️ 복원 후 10초 경과 - 상대방이 연결되지 않음, 통화 종료",
-          );
-          try {
-            await handleEndCall();
-          } catch (error) {
-            console.error("복원 후 통화 종료 실패:", error);
-          }
+      // Agora 채널에 재연결
+      try {
+        await agoraService.joinChannel(agoraChannelInfo);
+        if (import.meta.env.DEV) {
+          console.log("✅ Agora 채널 재연결 완료");
         }
-      }, 10000); // 10초 대기
 
-      if (import.meta.env.DEV) {
-        console.log("✅ 통화 상태 복원 완료");
+        // 통화 상태 복원 (저장된 partner 정보 포함)
+        useCallStore.setState({
+          callId: storedInfo.callId,
+          matchingId: storedInfo.matchingId,
+          partner: storedInfo.partner,
+          agoraChannelInfo,
+          isInCall: true,
+          isConnecting: false,
+          callStartTime: storedInfo.callStartTime
+            ? new Date(storedInfo.callStartTime)
+            : new Date(),
+        });
+
+        // 복원 후 일정 시간(10초) 내에 상대방이 연결되지 않으면 통화 종료
+        setTimeout(async () => {
+          const currentState = useCallStore.getState();
+          if (
+            currentState.isInCall &&
+            !currentState.agoraState.remoteAudioTrack
+          ) {
+            // 10초 후에도 상대방 오디오 트랙이 없으면 통화 종료
+            console.warn(
+              "⚠️ 복원 후 10초 경과 - 상대방이 연결되지 않음, 통화 종료",
+            );
+            try {
+              await handleEndCall();
+            } catch (error) {
+              console.error("복원 후 통화 종료 실패:", error);
+            }
+          }
+        }, 10000); // 10초 대기
+
+        if (import.meta.env.DEV) {
+          console.log("✅ 통화 상태 복원 완료 (partner 정보 포함)");
+        }
+
+        // 복원된 카테고리 정보 반환 (페이지 이동 시 사용)
+        return storedInfo.categoryName;
+      } catch (agoraError) {
+        console.error("❌ Agora 채널 재연결 실패:", agoraError);
+        useCallStore.getState().clearCallFromStorage();
+        throw agoraError;
       }
-
-      // 복원된 카테고리 정보 반환 (페이지 이동 시 사용)
-      return storedInfo.categoryName;
     } catch (error) {
       console.error("❌ 통화 상태 복원 실패:", error);
       // 복원 실패 시 저장된 정보 삭제
@@ -931,7 +943,14 @@ export const useCall = () => {
       setError("통화 상태 복원에 실패했습니다. 통화가 종료되었을 수 있습니다.");
       return null;
     }
-  }, [isInCall, isConnecting, handleCallStart, setError, matchingApiService]);
+  }, [
+    isInCall,
+    isConnecting,
+    agoraService,
+    handleEndCall,
+    setError,
+    matchingApiService,
+  ]);
 
   /**
    * 컴포넌트 언마운트 시 타이머 정리

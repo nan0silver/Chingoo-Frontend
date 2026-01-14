@@ -37,6 +37,7 @@ export interface CallState {
 
 /**
  * localStorage에 저장할 통화 정보 (직렬화 가능한 데이터만)
+ * 백엔드 30초 유예 시간과 연동 (timestamp로 30초 체크)
  */
 interface StoredCallInfo {
   callId: string;
@@ -54,6 +55,7 @@ interface StoredCallInfo {
   };
   callStartTime: string; // ISO string
   categoryName: string | null; // 카테고리 이름
+  timestamp: number; // Date.now() - 밀리초 단위 (30초 체크용)
 }
 
 /**
@@ -81,7 +83,7 @@ interface CallActions {
   // partner 정보 삭제 (평가 완료 후)
   clearPartner: () => void;
 
-  // localStorage에 통화 정보 저장
+  // localStorage에 통화 정보 저장 (Agora 채널 입장 성공 후 호출)
   saveCallToStorage: (categoryName?: string | null) => void;
 
   // localStorage에서 통화 정보 복원
@@ -125,9 +127,9 @@ const initialState: CallState = {
 };
 
 /**
- * localStorage 키
+ * localStorage 키 (백엔드 30초 유예 시간과 연동)
  */
-const STORAGE_KEY = "active_call_info";
+const STORAGE_KEY = "active_call";
 
 /**
  * 통화 스토어 생성
@@ -180,8 +182,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       },
     });
 
-    // localStorage에 통화 정보 저장 (카테고리는 나중에 CallConnectedPage에서 저장)
-    get().saveCallToStorage();
+    // localStorage 저장은 Agora 채널 입장 성공 후에 수행 (onCallStarted 콜백에서)
 
     if (import.meta.env.DEV) {
       console.log("🏪 callStore 상태 업데이트 완료");
@@ -251,7 +252,12 @@ export const useCallStore = create<CallStore>((set, get) => ({
   saveCallToStorage: (categoryName?: string | null) => {
     try {
       const state = get();
-      if (!state.isInCall || !state.callId || !state.partner || !state.agoraChannelInfo) {
+      if (
+        !state.isInCall ||
+        !state.callId ||
+        !state.partner ||
+        !state.agoraChannelInfo
+      ) {
         // 저장할 정보가 없으면 삭제
         get().clearCallFromStorage();
         return;
@@ -259,20 +265,27 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
       // 카테고리 정보는 별도로 저장 (이미 저장된 경우 유지)
       const existing = get().restoreCallFromStorage();
-      const categoryToSave = categoryName !== undefined ? categoryName : (existing?.categoryName || null);
+      const categoryToSave =
+        categoryName !== undefined
+          ? categoryName
+          : existing?.categoryName || null;
 
       const storedInfo: StoredCallInfo = {
         callId: state.callId,
         matchingId: state.matchingId,
         partner: state.partner,
         agoraChannelInfo: state.agoraChannelInfo,
-        callStartTime: state.callStartTime?.toISOString() || new Date().toISOString(),
+        callStartTime:
+          state.callStartTime?.toISOString() || new Date().toISOString(),
         categoryName: categoryToSave,
+        timestamp: Date.now(), // 밀리초 단위 (30초 체크용)
       };
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(storedInfo));
       if (import.meta.env.DEV) {
-        console.log("💾 통화 정보 localStorage에 저장 완료", { categoryName: categoryToSave });
+        console.log("💾 통화 정보 localStorage에 저장 완료", {
+          categoryName: categoryToSave,
+        });
       }
     } catch (error) {
       console.error("통화 정보 저장 실패:", error);
@@ -288,22 +301,25 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
       const storedInfo: StoredCallInfo = JSON.parse(stored);
 
-      // 저장된 정보가 유효한지 확인 (최대 1시간 이내 통화만 복원)
-      const callStartTime = new Date(storedInfo.callStartTime);
-      const now = new Date();
-      const hoursSinceStart = (now.getTime() - callStartTime.getTime()) / (1000 * 60 * 60);
+      // 저장된 정보가 유효한지 확인 (30초 이내만 복원 - 백엔드 유예 시간과 일치)
+      const elapsed = Date.now() - storedInfo.timestamp;
+      const THIRTY_SECONDS = 30 * 1000; // 30초 (밀리초)
 
-      if (hoursSinceStart > 1) {
-        // 1시간 이상 지난 통화는 복원하지 않음
+      if (elapsed >= THIRTY_SECONDS) {
+        // 30초 초과 - 만료됨, 삭제
         if (import.meta.env.DEV) {
-          console.log("⏰ 저장된 통화 정보가 너무 오래됨 - 복원하지 않음");
+          console.log("⏰ 저장된 통화 정보가 30초 초과 - 만료됨, 삭제");
         }
         get().clearCallFromStorage();
         return null;
       }
 
       if (import.meta.env.DEV) {
-        console.log("💾 localStorage에서 통화 정보 복원:", storedInfo);
+        console.log(
+          "💾 localStorage에서 통화 정보 복원:",
+          storedInfo,
+          `(경과 시간: ${Math.round(elapsed / 1000)}초)`,
+        );
       }
 
       return storedInfo;

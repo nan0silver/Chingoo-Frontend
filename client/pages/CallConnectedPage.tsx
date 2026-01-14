@@ -68,7 +68,7 @@ export default function CallConnectedPage({
         }
       });
     }
-  }, [isInCall]);
+  }, [isInCall, selectedCategory]);
 
   // 통화 중일 때 카테고리 정보를 localStorage에 저장
   useEffect(() => {
