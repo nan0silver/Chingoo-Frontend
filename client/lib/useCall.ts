@@ -797,6 +797,9 @@ export const useCall = () => {
           console.log("📞 상대방이 통화를 종료했습니다 - 처리 시작");
         }
 
+        // 상대방 퇴장 대기 타이머가 실행 중이면 즉시 취소 (WebSocket 알림이 우선)
+        clearPartnerLeaveTimer();
+
         // 최대 통화 시간 타이머 정리
         clearMaxCallDurationTimer();
 
@@ -821,7 +824,13 @@ export const useCall = () => {
         }
       }
     },
-    [callId, agoraService, endCall, clearMaxCallDurationTimer],
+    [
+      callId,
+      agoraService,
+      endCall,
+      clearMaxCallDurationTimer,
+      clearPartnerLeaveTimer,
+    ],
   );
 
   /**
@@ -964,25 +973,6 @@ export const useCall = () => {
             ? new Date(storedInfo.callStartTime)
             : new Date(),
         });
-
-        // 복원 후 일정 시간(10초) 내에 상대방이 연결되지 않으면 통화 종료
-        setTimeout(async () => {
-          const currentState = useCallStore.getState();
-          if (
-            currentState.isInCall &&
-            !currentState.agoraState.remoteAudioTrack
-          ) {
-            // 10초 후에도 상대방 오디오 트랙이 없으면 통화 종료
-            console.warn(
-              "⚠️ 복원 후 10초 경과 - 상대방이 연결되지 않음, 통화 종료",
-            );
-            try {
-              await handleEndCall();
-            } catch (error) {
-              console.error("복원 후 통화 종료 실패:", error);
-            }
-          }
-        }, 10000); // 10초 대기
 
         if (import.meta.env.DEV) {
           console.log("✅ 통화 상태 복원 완료 (partner 정보 포함)");
