@@ -255,10 +255,40 @@ export default function CallConnectedPage({
     return () => clearInterval(interval);
   }, []);
 
-  // 통화 프롬프트 가져오기 및 TTS 읽기
+  // 통화 프롬프트 가져오기 및 TTS 읽기 (통화 맨 처음에만)
   useEffect(() => {
     const fetchPromptAndSpeak = async () => {
       if (!callId || !isInCall) {
+        return;
+      }
+
+      // 이 callId에 대해 TTS가 이미 재생되었는지 확인
+      const ttsPlayedKey = `tts_played_${callId}`;
+      const ttsPlayed = localStorage.getItem(ttsPlayedKey);
+      
+      if (ttsPlayed === "true") {
+        // 이미 재생된 경우 프롬프트만 가져오고 TTS는 재생하지 않음
+        if (import.meta.env.DEV) {
+          console.log("🔊 이 통화의 TTS는 이미 재생되었습니다 - TTS 건너뜀");
+        }
+        
+        try {
+          setIsLoadingPrompt(true);
+          const token = getStoredToken();
+          if (!token) {
+            console.warn("인증 토큰이 없어 프롬프트를 가져올 수 없습니다.");
+            return;
+          }
+
+          matchingApiService.setToken(token);
+          const promptData = await matchingApiService.getCallPrompt(callId);
+          const questionText = promptData.question;
+          setPrompt(questionText);
+        } catch (error) {
+          console.error("프롬프트 가져오기 실패:", error);
+        } finally {
+          setIsLoadingPrompt(false);
+        }
         return;
       }
 
@@ -275,7 +305,7 @@ export default function CallConnectedPage({
         const questionText = promptData.question;
         setPrompt(questionText);
 
-        // 프롬프트를 TTS로 읽기
+        // 프롬프트를 TTS로 읽기 (통화 맨 처음에만)
         const ttsService = getTTSService();
         if (ttsService.getSupported() && questionText) {
           // 약간의 지연 후 TTS 시작 (통화 연결이 안정화된 후)
@@ -290,6 +320,8 @@ export default function CallConnectedPage({
                 if (import.meta.env.DEV) {
                   console.log("🔊 프롬프트 TTS 읽기 완료");
                 }
+                // TTS 재생 완료 후 localStorage에 저장
+                localStorage.setItem(ttsPlayedKey, "true");
               },
               onError: (error) => {
                 console.error("TTS 읽기 오류:", error);
@@ -309,13 +341,21 @@ export default function CallConnectedPage({
     fetchPromptAndSpeak();
   }, [callId, isInCall, matchingApiService]);
 
-  // 통화 종료 시 TTS 중지
+  // 통화 종료 시 TTS 중지 및 재생 플래그 삭제
   useEffect(() => {
-    if (!isInCall) {
+    if (!isInCall && callId) {
       const ttsService = getTTSService();
       ttsService.stop();
+      
+      // 통화 종료 시 해당 callId의 TTS 재생 플래그 삭제
+      const ttsPlayedKey = `tts_played_${callId}`;
+      localStorage.removeItem(ttsPlayedKey);
+      
+      if (import.meta.env.DEV) {
+        console.log("🔊 통화 종료 - TTS 재생 플래그 삭제");
+      }
     }
-  }, [isInCall]);
+  }, [isInCall, callId]);
 
   // 네트워크 품질을 아이콘과 색상으로 변환
   const getNetworkQualityDisplay = (quality: NetworkQuality) => {
