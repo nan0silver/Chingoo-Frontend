@@ -457,10 +457,6 @@ export default function ProfileSetupPage() {
 
               {/* 필수 항목 */}
               <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-700 mb-2">
-                  필수 항목
-                </div>
-
                 {/* 필수 항목 1: 이용 약관 동의 */}
                 <div className="border border-gray-200 rounded-lg p-4">
                   <label className="flex items-center justify-between cursor-pointer">
@@ -645,7 +641,7 @@ export default function ProfileSetupPage() {
                       {/* 1. 수집하는 개인정보 항목 */}
                       <div className="bg-gray-50 rounded-lg p-4">
                         <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                          1. 수집하는 개인정보 항목
+                          수집하는 개인정보 항목
                         </h3>
                         <p className="text-xs mb-2">
                           본 서비스는 서비스 제공을 위해 다음과 같은 개인정보를
@@ -683,7 +679,7 @@ export default function ProfileSetupPage() {
                       {/* 2. 개인정보의 수집 및 이용 목적 */}
                       <div className="bg-gray-50 rounded-lg p-4">
                         <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                          2. 개인정보의 수집 및 이용 목적
+                          개인정보의 수집 및 이용 목적
                         </h3>
                         <p className="text-xs mb-2">
                           수집된 개인정보는 다음의 목적을 위해 이용됩니다.
@@ -835,9 +831,6 @@ export default function ProfileSetupPage() {
 
               {/* 선택 항목 */}
               <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-700 mb-2">
-                  선택 항목
-                </div>
                 <div className="border border-gray-200 rounded-lg p-4">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center space-x-3 flex-1">
@@ -880,8 +873,7 @@ export default function ProfileSetupPage() {
                     <div className="mt-4 pt-4 border-t border-gray-200 space-y-4 text-gray-700">
                       <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                         <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                          3. [선택] 비식별화된 분석 데이터 및 연구 결과 활용
-                          동의
+                          비식별화된 분석 데이터 및 연구 결과 활용 동의
                         </h3>
                         <p className="text-xs">
                           본 서비스는 서비스 개선, 연구 및 산업 발전을 목적으로
@@ -894,7 +886,7 @@ export default function ProfileSetupPage() {
                         {/* 3-1. 활용되는 데이터의 범위 */}
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2 text-xs">
-                            3-1. 활용되는 데이터의 범위
+                            1. 활용되는 데이터의 범위
                           </h4>
                           <ul className="list-disc list-inside space-y-1 text-xs">
                             <li>
@@ -919,7 +911,7 @@ export default function ProfileSetupPage() {
                         {/* 3-2. 활용 목적 */}
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2 text-xs">
-                            3-2. 활용 목적
+                            2. 활용 목적
                           </h4>
                           <ul className="list-disc list-inside space-y-1 text-xs">
                             <li>음성 및 대화 분석 기술 연구</li>
@@ -932,7 +924,7 @@ export default function ProfileSetupPage() {
                         {/* 3-3. 제공 방식 및 대상 */}
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2 text-xs">
-                            3-3. 제공 방식 및 대상
+                            3. 제공 방식 및 대상
                           </h4>
                           <p className="text-xs mb-2">
                             비식별화된 분석 결과물 또는 통계 자료의 형태로 제공
@@ -949,7 +941,7 @@ export default function ProfileSetupPage() {
                         {/* 3-4. 보유 및 이용 기간 */}
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2 text-xs">
-                            3-4. 보유 및 이용 기간
+                            4. 보유 및 이용 기간
                           </h4>
                           <p className="text-xs">
                             비식별화된 분석 데이터는 활용 목적 달성 시까지
@@ -960,7 +952,7 @@ export default function ProfileSetupPage() {
                         {/* 3-5. 동의 거부 및 철회 권리 */}
                         <div>
                           <h4 className="font-medium text-gray-900 mb-2 text-xs">
-                            3-5. 동의 거부 및 철회 권리
+                            5. 동의 거부 및 철회 권리
                           </h4>
                           <ul className="list-disc list-inside space-y-1 text-xs">
                             <li>
