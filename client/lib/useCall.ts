@@ -732,8 +732,8 @@ export const useCall = () => {
           console.log("📡 상대방에게 통화 종료 알림 전송");
         }
 
-        // WebSocket 연결 상태 확인
-        const wsConnectionState = webSocketService.getConnectionState();
+        // WebSocket 연결 상태 확인 및 필요 시 재연결
+        let wsConnectionState = webSocketService.getConnectionState();
         if (import.meta.env.DEV) {
           console.log(
             "🔍 WebSocket 연결 상태:",
@@ -741,6 +741,32 @@ export const useCall = () => {
           );
         }
 
+        if (!wsConnectionState.isConnected) {
+          // WebSocket이 끊어져 있으면 재연결 시도
+          if (import.meta.env.DEV) {
+            console.log("🔄 WebSocket 연결 끊어짐 - 재연결 시도");
+          }
+          try {
+            const { getStoredToken } = await import("./auth");
+            const token = getStoredToken();
+            if (token) {
+              await webSocketService.connect(token);
+              wsConnectionState = webSocketService.getConnectionState();
+              if (import.meta.env.DEV) {
+                console.log(
+                  "✅ WebSocket 재연결 성공:",
+                  wsConnectionState.isConnected ? "연결됨" : "연결 안됨",
+                );
+              }
+            } else {
+              console.error("❌ 토큰이 없어 WebSocket 재연결 불가");
+            }
+          } catch (wsReconnectError) {
+            console.error("❌ WebSocket 재연결 실패:", wsReconnectError);
+          }
+        }
+
+        // 재연결 후에도 연결되지 않았으면 알림 전송 불가
         if (!wsConnectionState.isConnected) {
           console.error("❌ WebSocket이 연결되지 않음 - 알림 전송 불가");
         } else {
@@ -1059,6 +1085,33 @@ export const useCall = () => {
 
       if (import.meta.env.DEV) {
         console.log("🔄 통화 상태 복원 시작:", storedInfo);
+      }
+
+      // WebSocket 연결 상태 확인 및 재연결
+      const wsConnectionState = webSocketService.getConnectionState();
+      if (!wsConnectionState.isConnected) {
+        if (import.meta.env.DEV) {
+          console.log("🔄 WebSocket 연결 끊어짐 - 재연결 시도");
+        }
+        try {
+          const { getStoredToken } = await import("./auth");
+          const token = getStoredToken();
+          if (token) {
+            await webSocketService.connect(token);
+            if (import.meta.env.DEV) {
+              console.log("✅ WebSocket 재연결 성공");
+            }
+          } else {
+            console.warn("⚠️ 토큰이 없어 WebSocket 재연결 불가");
+          }
+        } catch (wsError) {
+          console.warn("⚠️ WebSocket 재연결 실패:", wsError);
+          // WebSocket 재연결 실패해도 통화 복원은 계속 진행
+        }
+      } else {
+        if (import.meta.env.DEV) {
+          console.log("✅ WebSocket 이미 연결됨");
+        }
       }
 
       // 백엔드에서 RTC 토큰 갱신 시도 (통화가 종료되었으면 실패)
