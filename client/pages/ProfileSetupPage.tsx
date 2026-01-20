@@ -71,9 +71,13 @@ export default function ProfileSetupPage() {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
   const [allConsent, setAllConsent] = useState(false);
-  const [requiredConsent, setRequiredConsent] = useState(false);
+  const [requiredConsent1, setRequiredConsent1] = useState(false); // 이용 약관 동의
+  const [requiredConsent2, setRequiredConsent2] = useState(false); // 개인정보 수집·이용 동의
+  const [requiredConsent3, setRequiredConsent3] = useState(false); // 메시지 발송 약관 동의
   const [optionalConsent, setOptionalConsent] = useState(false);
-  const [showRequiredDetail, setShowRequiredDetail] = useState(false);
+  const [showRequiredDetail1, setShowRequiredDetail1] = useState(false);
+  const [showRequiredDetail2, setShowRequiredDetail2] = useState(false);
+  const [showRequiredDetail3, setShowRequiredDetail3] = useState(false);
   const [showOptionalDetail, setShowOptionalDetail] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -160,9 +164,13 @@ export default function ProfileSetupPage() {
         if (isNewUser) {
           // 모달 열 때 상태 초기화
           setAllConsent(false);
-          setRequiredConsent(false);
+          setRequiredConsent1(false);
+          setRequiredConsent2(false);
+          setRequiredConsent3(false);
           setOptionalConsent(false);
-          setShowRequiredDetail(false);
+          setShowRequiredDetail1(false);
+          setShowRequiredDetail2(false);
+          setShowRequiredDetail3(false);
           setShowOptionalDetail(false);
           setShowConsentModal(true);
         }
@@ -201,9 +209,13 @@ export default function ProfileSetupPage() {
         if (fallbackProfile.is_new_user) {
           // 모달 열 때 상태 초기화
           setAllConsent(false);
-          setRequiredConsent(false);
+          setRequiredConsent1(false);
+          setRequiredConsent2(false);
+          setRequiredConsent3(false);
           setOptionalConsent(false);
-          setShowRequiredDetail(false);
+          setShowRequiredDetail1(false);
+          setShowRequiredDetail2(false);
+          setShowRequiredDetail3(false);
           setShowOptionalDetail(false);
           setShowConsentModal(true);
         }
@@ -217,39 +229,69 @@ export default function ProfileSetupPage() {
   const handleAllConsent = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
     setAllConsent(isChecked);
-    setRequiredConsent(isChecked);
+    setRequiredConsent1(isChecked);
+    setRequiredConsent2(isChecked);
+    setRequiredConsent3(isChecked);
     setOptionalConsent(isChecked);
   };
 
-  // 필수 항목 동의 핸들러
-  const handleRequiredConsent = (checked: boolean | "indeterminate") => {
+  // 필수 항목 1 동의 핸들러 (이용 약관)
+  const handleRequiredConsent1 = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
-    setRequiredConsent(isChecked);
-    // 필수와 선택이 모두 체크되어 있으면 전체 동의도 체크
-    setAllConsent(isChecked && optionalConsent);
+    setRequiredConsent1(isChecked);
+    // 모든 필수 항목과 선택이 모두 체크되어 있으면 전체 동의도 체크
+    setAllConsent(
+      isChecked && requiredConsent2 && requiredConsent3 && optionalConsent,
+    );
+  };
+
+  // 필수 항목 2 동의 핸들러 (개인정보 수집·이용)
+  const handleRequiredConsent2 = (checked: boolean | "indeterminate") => {
+    const isChecked = checked === true;
+    setRequiredConsent2(isChecked);
+    // 모든 필수 항목과 선택이 모두 체크되어 있으면 전체 동의도 체크
+    setAllConsent(
+      requiredConsent1 && isChecked && requiredConsent3 && optionalConsent,
+    );
+  };
+
+  // 필수 항목 3 동의 핸들러 (메시지 발송 약관)
+  const handleRequiredConsent3 = (checked: boolean | "indeterminate") => {
+    const isChecked = checked === true;
+    setRequiredConsent3(isChecked);
+    // 모든 필수 항목과 선택이 모두 체크되어 있으면 전체 동의도 체크
+    setAllConsent(
+      requiredConsent1 && requiredConsent2 && isChecked && optionalConsent,
+    );
   };
 
   // 선택 항목 동의 핸들러
   const handleOptionalConsent = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
     setOptionalConsent(isChecked);
-    // 필수와 선택이 모두 체크되어 있으면 전체 동의도 체크
-    setAllConsent(requiredConsent && isChecked);
+    // 모든 필수 항목과 선택이 모두 체크되어 있으면 전체 동의도 체크
+    setAllConsent(
+      requiredConsent1 && requiredConsent2 && requiredConsent3 && isChecked,
+    );
   };
 
   const handleConsent = () => {
-    // 필수 항목은 반드시 동의해야 함
-    if (!requiredConsent) {
-      alert("필수 항목에 동의해주세요.");
+    // 모든 필수 항목은 반드시 동의해야 함
+    if (!requiredConsent1 || !requiredConsent2 || !requiredConsent3) {
+      alert("필수 항목에 모두 동의해주세요.");
       return;
     }
     setHasConsented(true);
     setShowConsentModal(false);
     // 모달 닫을 때 상태 초기화
     setAllConsent(false);
-    setRequiredConsent(false);
+    setRequiredConsent1(false);
+    setRequiredConsent2(false);
+    setRequiredConsent3(false);
     setOptionalConsent(false);
-    setShowRequiredDetail(false);
+    setShowRequiredDetail1(false);
+    setShowRequiredDetail2(false);
+    setShowRequiredDetail3(false);
     setShowOptionalDetail(false);
   };
 
@@ -418,28 +460,30 @@ export default function ProfileSetupPage() {
                 <div className="text-sm font-medium text-gray-700 mb-2">
                   필수 항목
                 </div>
+
+                {/* 필수 항목 1: 이용 약관 동의 */}
                 <div className="border border-gray-200 rounded-lg p-4">
                   <label className="flex items-center justify-between cursor-pointer">
                     <div className="flex items-center space-x-3 flex-1">
                       <Checkbox
-                        checked={requiredConsent}
-                        onCheckedChange={handleRequiredConsent}
+                        checked={requiredConsent1}
+                        onCheckedChange={handleRequiredConsent1}
                         className="h-4 w-4"
                       />
                       <span className="text-sm text-gray-900">
-                        (필수) 개인정보 수집·이용 동의
+                        (필수) 이용 약관 동의
                       </span>
                     </div>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        setShowRequiredDetail(!showRequiredDetail);
+                        setShowRequiredDetail1(!showRequiredDetail1);
                       }}
                       className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       <svg
                         className={`w-5 h-5 transition-transform ${
-                          showRequiredDetail ? "rotate-90" : ""
+                          showRequiredDetail1 ? "rotate-90" : ""
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -455,8 +499,148 @@ export default function ProfileSetupPage() {
                     </button>
                   </label>
 
-                  {/* 필수 항목 상세보기 */}
-                  {showRequiredDetail && (
+                  {/* 필수 항목 1 상세보기 */}
+                  {showRequiredDetail1 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-4 text-gray-700">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3 text-sm">
+                          이용 약관 동의
+                        </h3>
+                        <p className="text-xs mb-3">
+                          본 약관은 "강낭콩콜"(이하 "서비스")이 제공하는 음성
+                          통화 매칭 및 관련 기능의 이용과 관련하여, 서비스와
+                          이용자 간의 권리·의무 및 책임사항, 이용 조건과 절차,
+                          기타 필요한 사항을 규정합니다.
+                        </p>
+
+                        <div className="space-y-3 text-xs">
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              1. 서비스 제공 내용
+                            </h4>
+                            <p className="text-gray-700">
+                              서비스는 이용자가 관심사 선택 등을 통해 다른
+                              이용자와 음성 통화로 연결될 수 있도록 매칭 기능을
+                              제공하며, 서비스 운영 및 품질 개선을 위해 일부
+                              기능(이용 이력 관리, 통계 분석, 고객 문의 대응
+                              등)을 포함할 수 있습니다.
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              2. 이용자의 의무 및 금지행위
+                            </h4>
+                            <p className="text-gray-700 mb-1">
+                              이용자는 서비스 이용 시 다음 행위를 해서는 안
+                              됩니다.
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
+                              <li>
+                                타인의 개인정보를 도용하거나 허위 정보를
+                                입력하는 행위
+                              </li>
+                              <li>
+                                욕설, 비방, 혐오 표현, 성희롱 등 타인에게
+                                불쾌감을 주는 행위
+                              </li>
+                              <li>
+                                광고/홍보/영업 등 서비스 목적과 무관한 상업적
+                                이용 행위
+                              </li>
+                              <li>
+                                불법 정보의 게시 또는 범죄 행위와 관련된 이용
+                              </li>
+                              <li>
+                                서비스 운영을 방해하거나 시스템에 부정한 접근을
+                                시도하는 행위
+                              </li>
+                              <li>기타 관련 법령 및 사회 통념에 반하는 행위</li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              3. 서비스 이용 제한 및 계정 관리
+                            </h4>
+                            <p className="text-gray-700">
+                              서비스는 이용자가 본 약관 또는 관련 법령을
+                              위반하거나 타 이용자에게 피해를 주는 경우, 사전
+                              통지 없이 서비스 이용을 제한하거나 계정 이용을
+                              중단할 수 있습니다. 또한 이용자는 본인의 계정 정보
+                              및 접근 수단을 안전하게 관리할 책임이 있습니다.
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              4. 서비스의 변경 및 중단
+                            </h4>
+                            <p className="text-gray-700">
+                              서비스는 운영상 또는 기술상의 필요에 따라 제공
+                              기능의 일부 또는 전부를 변경하거나 중단할 수
+                              있으며, 필요한 경우 사전 또는 사후에 공지할 수
+                              있습니다.
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              5. 책임의 제한
+                            </h4>
+                            <p className="text-gray-700">
+                              서비스는 통화 상대방의 발언·행동 등 이용자 간
+                              상호작용으로 인해 발생한 분쟁에 대해 원칙적으로
+                              개입하지 않으며, 관련 법령에 따라 필요한 조치를
+                              취할 수 있습니다.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 필수 항목 2: 개인정보 수집·이용 동의 */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Checkbox
+                        checked={requiredConsent2}
+                        onCheckedChange={handleRequiredConsent2}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-gray-900">
+                        (필수) 개인정보 수집·이용 동의
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowRequiredDetail2(!showRequiredDetail2);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg
+                        className={`w-5 h-5 transition-transform ${
+                          showRequiredDetail2 ? "rotate-90" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </label>
+
+                  {/* 필수 항목 2 상세보기 */}
+                  {showRequiredDetail2 && (
                     <div className="mt-4 pt-4 border-t border-gray-200 space-y-4 text-gray-700">
                       {/* 1. 수집하는 개인정보 항목 */}
                       <div className="bg-gray-50 rounded-lg p-4">
@@ -481,7 +665,8 @@ export default function ProfileSetupPage() {
                               서비스 이용 과정에서 자동 수집되는 정보
                             </p>
                             <p className="text-gray-700">
-                              서비스 이용 기록, 접속 로그, 통화 일시 및 이용 이력
+                              서비스 이용 기록, 접속 로그, 통화 일시 및 이용
+                              이력
                             </p>
                           </div>
                           <div>
@@ -509,8 +694,8 @@ export default function ProfileSetupPage() {
                           <li>서비스 이용 통계 분석 및 품질 개선</li>
                           <li>고객 문의 및 민원 대응</li>
                           <li>
-                            음성 데이터 분석을 통한 서비스 기능 개선 및 내부 연구
-                            목적의 AI 모델 성능 향상
+                            음성 데이터 분석을 통한 서비스 기능 개선 및 내부
+                            연구 목적의 AI 모델 성능 향상
                           </li>
                         </ul>
                         <p className="text-xs mt-2 text-gray-600 italic">
@@ -518,6 +703,130 @@ export default function ProfileSetupPage() {
                           이용되며, 개인을 식별할 수 없도록 처리된 후 내부 연구
                           및 기술 고도화 목적으로만 활용됩니다.
                         </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 필수 항목 3: 메시지 발송 약관 동의 */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <Checkbox
+                        checked={requiredConsent3}
+                        onCheckedChange={handleRequiredConsent3}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-gray-900">
+                        (필수) 메시지 발송 약관 동의
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowRequiredDetail3(!showRequiredDetail3);
+                      }}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg
+                        className={`w-5 h-5 transition-transform ${
+                          showRequiredDetail3 ? "rotate-90" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </label>
+
+                  {/* 필수 항목 3 상세보기 */}
+                  {showRequiredDetail3 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-4 text-gray-700">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3 text-sm">
+                          메시지 발송 약관 동의
+                        </h3>
+                        <p className="text-xs mb-3">
+                          서비스는 원활한 서비스 제공 및 이용자 안내를 위해
+                          이용자에게 메시지를 발송할 수 있습니다. 본 약관은
+                          서비스가 발송하는 메시지의 종류, 목적 및 수신 방식에
+                          대해 규정합니다.
+                        </p>
+
+                        <div className="space-y-3 text-xs">
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              1. 발송되는 메시지의 종류
+                            </h4>
+                            <p className="text-gray-700 mb-1">
+                              서비스는 다음과 같은 목적의 메시지를 발송할 수
+                              있습니다.
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
+                              <li>
+                                회원 가입 및 계정 관련 안내(가입/인증/본인확인
+                                등)
+                              </li>
+                              <li>
+                                서비스 이용 관련 안내(매칭 상태, 이용 방법, 주요
+                                공지사항)
+                              </li>
+                              <li>고객 문의 처리 및 응답 안내</li>
+                              <li>
+                                서비스 운영 및 보안 관련 안내(비정상 접근, 이용
+                                제한, 정책 변경 등)
+                              </li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              2. 발송 채널
+                            </h4>
+                            <p className="text-gray-700 mb-1">
+                              메시지는 서비스 운영 정책에 따라 아래 채널 중
+                              일부를 통해 발송될 수 있습니다.
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
+                              <li>앱 푸시 알림</li>
+                              <li>문자(SMS/LMS) 또는 알림톡 등 메시지</li>
+                              <li>이메일</li>
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              3. 수신 동의 및 필수 안내
+                            </h4>
+                            <p className="text-gray-700">
+                              본 동의는 서비스 이용을 위한 필수 안내
+                              메시지(인증/보안/공지 등)를 포함합니다. 다만,
+                              이벤트·광고성 정보(혜택 안내, 프로모션 등)를
+                              발송하는 경우에는 관련 법령에 따라 별도의 동의를
+                              받거나 수신 거부 방법을 함께 안내합니다.
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">
+                              4. 수신 거부
+                            </h4>
+                            <p className="text-gray-700">
+                              이용자는 설정 화면 또는 고객센터를 통해 일부
+                              메시지(선택적 알림)의 수신을 거부할 수 있습니다.
+                              단, 서비스 제공에 반드시 필요한 안내
+                              메시지(계정/보안/중요 공지 등)는 수신 거부가
+                              제한될 수 있습니다.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -571,14 +880,15 @@ export default function ProfileSetupPage() {
                     <div className="mt-4 pt-4 border-t border-gray-200 space-y-4 text-gray-700">
                       <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                         <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                          3. [선택] 비식별화된 분석 데이터 및 연구 결과 활용 동의
+                          3. [선택] 비식별화된 분석 데이터 및 연구 결과 활용
+                          동의
                         </h3>
                         <p className="text-xs">
                           본 서비스는 서비스 개선, 연구 및 산업 발전을 목적으로
                           이용자의 서비스 이용 과정에서 생성된 정보를 개인을
-                          식별할 수 없도록 완전히 비식별화한 후, 분석 결과물 또는
-                          통계적 지표의 형태로 내부 활용하거나 제3자에게 제공할
-                          수 있습니다.
+                          식별할 수 없도록 완전히 비식별화한 후, 분석 결과물
+                          또는 통계적 지표의 형태로 내부 활용하거나 제3자에게
+                          제공할 수 있습니다.
                         </p>
 
                         {/* 3-1. 활용되는 데이터의 범위 */}
@@ -601,7 +911,8 @@ export default function ProfileSetupPage() {
                           </ul>
                           <p className="text-xs mt-2 text-gray-600 italic">
                             ※ 음성 원본, 이메일, 닉네임 등 개인을 직접 식별할 수
-                            있는 정보는 어떠한 경우에도 외부에 제공되지 않습니다.
+                            있는 정보는 어떠한 경우에도 외부에 제공되지
+                            않습니다.
                           </p>
                         </div>
 
@@ -613,12 +924,8 @@ export default function ProfileSetupPage() {
                           <ul className="list-disc list-inside space-y-1 text-xs">
                             <li>음성 및 대화 분석 기술 연구</li>
                             <li>AI 모델의 성능 향상, 검증 및 고도화</li>
-                            <li>
-                              고령자 커뮤니케이션 및 정서 분석 관련 연구
-                            </li>
-                            <li>
-                              관련 산업 분야의 기술 개발 및 서비스 고도화
-                            </li>
+                            <li>고령자 커뮤니케이션 및 정서 분석 관련 연구</li>
+                            <li>관련 산업 분야의 기술 개발 및 서비스 고도화</li>
                           </ul>
                         </div>
 
@@ -662,7 +969,8 @@ export default function ProfileSetupPage() {
                             </li>
                             <li>
                               이용자는 언제든지 동의를 철회할 수 있으며, 철회
-                              이후 생성되는 데이터는 본 목적에 활용되지 않습니다.
+                              이후 생성되는 데이터는 본 목적에 활용되지
+                              않습니다.
                             </li>
                           </ul>
                         </div>
@@ -676,7 +984,9 @@ export default function ProfileSetupPage() {
             <div className="pt-2">
               <button
                 onClick={handleConsent}
-                disabled={!requiredConsent}
+                disabled={
+                  !requiredConsent1 || !requiredConsent2 || !requiredConsent3
+                }
                 className="w-full h-14 bg-login-button text-white font-crimson text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 동의합니다
