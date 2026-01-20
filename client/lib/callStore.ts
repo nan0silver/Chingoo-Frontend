@@ -190,10 +190,15 @@ export const useCallStore = create<CallStore>((set, get) => ({
   },
 
   endCall: () => {
-    if (import.meta.env.DEV) {
-      console.log("통화 종료");
-    }
     const currentState = get();
+    if (import.meta.env.DEV) {
+      console.log("🏪 [callStore.endCall] 통화 종료 호출됨");
+      console.log("🏪 [callStore.endCall] 호출 전 상태:", {
+        isInCall: currentState.isInCall,
+        callId: currentState.callId,
+        hasPartner: !!currentState.partner,
+      });
+    }
 
     // localStorage에서 통화 정보 삭제
     get().clearCallFromStorage();
@@ -222,6 +227,16 @@ export const useCallStore = create<CallStore>((set, get) => ({
       },
       error: null,
     });
+
+    const newState = get();
+    if (import.meta.env.DEV) {
+      console.log("🏪 [callStore.endCall] 호출 후 상태:", {
+        isInCall: newState.isInCall,
+        callId: newState.callId,
+        hasPartner: !!newState.partner,
+      });
+      console.log("🏪 [callStore.endCall] 통화 종료 완료");
+    }
   },
 
   updateConnectingState: (isConnecting: boolean) => {

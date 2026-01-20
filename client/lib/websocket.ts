@@ -18,6 +18,7 @@ export class WebSocketService {
     reconnectAttempts: 0,
     maxReconnectAttempts: 5,
   };
+  private currentToken: string | null = null; // 현재 인증 토큰 저장
 
   // 여러 콜백을 지원하기 위해 배열로 변경
   private onConnectionStateChangeCallbacks: Array<
@@ -166,6 +167,8 @@ export class WebSocketService {
       this.client!.connectHeaders = {
         Authorization: `Bearer ${token}`,
       };
+      // 메시지 전송 시에도 사용할 수 있도록 토큰 저장
+      this.currentToken = token;
       console.log("🔑 JWT 토큰 설정 완료 (URL + 헤더)");
       if (import.meta.env.DEV) {
         console.log("🔑 토큰 길이:", token.length);
@@ -208,6 +211,8 @@ export class WebSocketService {
       this.unsubscribeFromQueues();
       this.client.deactivate();
     }
+    // 토큰 초기화
+    this.currentToken = null;
   }
 
   /**
@@ -312,10 +317,8 @@ export class WebSocketService {
           const notification = JSON.parse(message.body);
           console.log("✅ [통화종료] 알림 파싱 성공:", notification);
           console.log("📋 [통화종료] 알림 상세:", {
-            type: notification.type,
             callId: notification.callId,
-            partnerId: notification.partnerId,
-            timestamp: notification.timestamp,
+            reason: notification.reason,
           });
           // 모든 통화 종료 알림 콜백 호출
           console.log(
@@ -439,9 +442,22 @@ export class WebSocketService {
       if (import.meta.env.DEV) {
         console.log("📤 WebSocket 메시지 전송:", { destination, message });
       }
+
+      // 인증 헤더 포함 (서버에서 사용자 정보를 확인하기 위해 필요)
+      const headers: Record<string, string> = {};
+      if (this.currentToken) {
+        headers.Authorization = `Bearer ${this.currentToken}`;
+        if (import.meta.env.DEV) {
+          console.log("🔑 WebSocket 메시지에 인증 헤더 포함");
+        }
+      } else {
+        console.warn("⚠️ WebSocket 토큰이 없음 - 인증 헤더 없이 전송");
+      }
+
       this.client.publish({
         destination,
         body: JSON.stringify(message),
+        headers,
       });
       console.log("✅ WebSocket 메시지 전송 성공");
     } catch (error) {
@@ -453,17 +469,26 @@ export class WebSocketService {
   /**
    * 통화 종료 알림 전송
    */
-  sendCallEndNotification(callId: string, partnerId: string): void {
+  sendCallEndNotification(
+    callId: number,
+    partnerId: number,
+    reason: string = "USER_LEFT",
+  ): void {
+    // ✅ 백엔드 CallEndMessage 형식에 맞춤
     const message = {
-      type: "call_end",
       callId: callId,
-      partnerId: partnerId,
-      timestamp: new Date().toISOString(),
+      reason: reason, // "USER_LEFT", "REFRESH", "NETWORK_ERROR" 등
     };
 
-    // 상대방에게 개인 메시지로 전송
     const destination = `/app/call-end/${partnerId}`;
+    if (import.meta.env.DEV) {
+      console.log("📤 WebSocket 메시지 전송:", { destination, message });
+    }
+
     this.sendMessage(destination, message);
+    if (import.meta.env.DEV) {
+      console.log("✅ WebSocket 메시지 전송 성공");
+    }
   }
 
   /**

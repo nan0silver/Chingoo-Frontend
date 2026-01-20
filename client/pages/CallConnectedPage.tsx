@@ -88,17 +88,48 @@ export default function CallConnectedPage({
   // 통화 종료 감지 - isInCall이 false가 되면 평가 화면으로 이동
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log("🔍 CallConnectedPage - isInCall 상태:", isInCall);
+      console.log("🔍 [CallConnectedPage] useEffect 트리거됨");
+      console.log("🔍 [CallConnectedPage] isInCall 상태:", isInCall);
+      console.log("🔍 [CallConnectedPage] partner:", partner);
+      console.log("🔍 [CallConnectedPage] hasPartner:", !!partner);
     }
 
     if (!isInCall && partner) {
       if (import.meta.env.DEV) {
-        console.log("📞 통화가 종료됨 - 평가 화면으로 이동");
+        console.log(
+          "📞 [CallConnectedPage] 통화가 종료됨 - 평가 화면으로 이동 예정",
+        );
+        console.log("📞 [CallConnectedPage] onEndCall 호출 전 (100ms 후)");
       }
       // 통화가 종료되면 평가 화면으로 이동 (partner 정보가 있을 때만)
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
+        if (import.meta.env.DEV) {
+          console.log("📞 [CallConnectedPage] onEndCall() 호출 시작");
+        }
         onEndCall();
+        if (import.meta.env.DEV) {
+          console.log("📞 [CallConnectedPage] onEndCall() 호출 완료");
+        }
       }, 100); // 약간의 지연을 두어 상태 안정화
+
+      return () => {
+        clearTimeout(timeoutId);
+        if (import.meta.env.DEV) {
+          console.log("📞 [CallConnectedPage] timeout 정리");
+        }
+      };
+    } else {
+      if (import.meta.env.DEV) {
+        if (isInCall) {
+          console.log(
+            "🔍 [CallConnectedPage] 아직 통화 중 - 평가 화면으로 이동하지 않음",
+          );
+        } else if (!partner) {
+          console.log(
+            "🔍 [CallConnectedPage] partner 정보 없음 - 평가 화면으로 이동하지 않음",
+          );
+        }
+      }
     }
   }, [isInCall, partner, onEndCall]);
 
@@ -265,13 +296,13 @@ export default function CallConnectedPage({
       // 이 callId에 대해 TTS가 이미 재생되었는지 확인
       const ttsPlayedKey = `tts_played_${callId}`;
       const ttsPlayed = localStorage.getItem(ttsPlayedKey);
-      
+
       if (ttsPlayed === "true") {
         // 이미 재생된 경우 프롬프트만 가져오고 TTS는 재생하지 않음
         if (import.meta.env.DEV) {
           console.log("🔊 이 통화의 TTS는 이미 재생되었습니다 - TTS 건너뜀");
         }
-        
+
         try {
           setIsLoadingPrompt(true);
           const token = getStoredToken();
@@ -346,11 +377,11 @@ export default function CallConnectedPage({
     if (!isInCall && callId) {
       const ttsService = getTTSService();
       ttsService.stop();
-      
+
       // 통화 종료 시 해당 callId의 TTS 재생 플래그 삭제
       const ttsPlayedKey = `tts_played_${callId}`;
       localStorage.removeItem(ttsPlayedKey);
-      
+
       if (import.meta.env.DEV) {
         console.log("🔊 통화 종료 - TTS 재생 플래그 삭제");
       }

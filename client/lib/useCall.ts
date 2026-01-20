@@ -161,11 +161,22 @@ export const useCall = () => {
    * 상대방 퇴장 대기 타이머 정리
    */
   const clearPartnerLeaveTimer = useCallback(() => {
+    const hadTimer = partnerLeaveTimerRef.current !== null;
     if (partnerLeaveTimerRef.current) {
       clearTimeout(partnerLeaveTimerRef.current);
       partnerLeaveTimerRef.current = null;
       if (import.meta.env.DEV) {
-        console.log("⏰ 상대방 퇴장 대기 타이머 정리");
+        console.log(
+          "⏰ [clearPartnerLeaveTimer] 상대방 퇴장 대기 타이머 정리",
+          {
+            hadTimer,
+            timestamp: Date.now(),
+          },
+        );
+      }
+    } else {
+      if (import.meta.env.DEV) {
+        console.log("⏰ [clearPartnerLeaveTimer] 타이머가 없음 (정리 불필요)");
       }
     }
   }, []);
@@ -231,23 +242,42 @@ export const useCall = () => {
           },
           onUserJoined: (userId) => {
             if (import.meta.env.DEV) {
-              console.log("사용자 입장:", userId);
+              console.log("👋 [onUserJoined] 사용자 입장:", userId);
             }
 
             // 현재 상태를 직접 가져와서 클로저 문제 해결
             const currentState = useCallStore.getState();
+
+            if (import.meta.env.DEV) {
+              console.log(
+                "👋 [onUserJoined] 현재 partner 정보:",
+                currentState.partner,
+              );
+              console.log("👋 [onUserJoined] 입장한 userId:", userId);
+            }
 
             // 상대방이 다시 입장한 경우 타이머 취소
             if (
               currentState.partner?.id &&
               String(userId) === String(currentState.partner.id)
             ) {
+              const hasTimer = partnerLeaveTimerRef.current !== null;
               if (import.meta.env.DEV) {
                 console.log(
-                  "✅ 상대방이 다시 입장했습니다 - 퇴장 대기 타이머 취소",
+                  "✅ [onUserJoined] 상대방이 다시 입장했습니다 - 퇴장 대기 타이머 취소",
                 );
+                console.log("✅ [onUserJoined] 타이머 존재 여부:", hasTimer);
               }
               clearPartnerLeaveTimer();
+              if (import.meta.env.DEV) {
+                console.log("✅ [onUserJoined] 타이머 취소 완료");
+              }
+            } else {
+              if (import.meta.env.DEV) {
+                console.log(
+                  "⚠️ [onUserJoined] 다른 사용자 입장 또는 partner 정보 없음",
+                );
+              }
             }
           },
           onTokenPrivilegeWillExpire: () => {
@@ -298,14 +328,22 @@ export const useCall = () => {
           },
           onUserLeft: (userId) => {
             if (import.meta.env.DEV) {
-              console.log("사용자 퇴장:", userId);
+              console.log("🚪 [onUserLeft] 사용자 퇴장:", userId);
             }
 
             // 현재 상태를 직접 가져와서 클로저 문제 해결
             const currentState = useCallStore.getState();
             if (import.meta.env.DEV) {
-              console.log("🔍 현재 partner 정보:", currentState.partner);
-              console.log("🔍 퇴장한 userId:", userId);
+              console.log(
+                "🔍 [onUserLeft] 현재 partner 정보:",
+                currentState.partner,
+              );
+              console.log("🔍 [onUserLeft] 퇴장한 userId:", userId);
+              console.log(
+                "🔍 [onUserLeft] 현재 isInCall:",
+                currentState.isInCall,
+              );
+              console.log("🔍 [onUserLeft] 현재 callId:", currentState.callId);
             }
 
             // 상대방이 퇴장한 경우 30초 대기 후 통화 종료 처리
@@ -314,18 +352,38 @@ export const useCall = () => {
               String(userId) === String(currentState.partner.id)
             ) {
               if (import.meta.env.DEV) {
-                console.log("📞 상대방이 퇴장했습니다 - 30초 대기 시작");
+                console.log(
+                  "📞 [onUserLeft] 상대방이 퇴장했습니다 - 30초 대기 시작",
+                );
               }
 
               // 기존 타이머가 있으면 정리
+              const hasExistingTimer = partnerLeaveTimerRef.current !== null;
+              if (import.meta.env.DEV && hasExistingTimer) {
+                console.log("⏰ [onUserLeft] 기존 타이머 취소");
+              }
               clearPartnerLeaveTimer();
 
               // 30초 후 통화 종료 타이머 시작
+              if (import.meta.env.DEV) {
+                console.log(
+                  "⏰ [onUserLeft] 30초 타이머 시작 - ID:",
+                  Date.now(),
+                );
+              }
               partnerLeaveTimerRef.current = setTimeout(async () => {
                 const stateAtTimeout = useCallStore.getState();
                 if (import.meta.env.DEV) {
                   console.log(
-                    "⏰ 30초 경과 - 상대방이 돌아오지 않아 통화 종료 처리 시작",
+                    "⏰ [onUserLeft 타이머] 30초 경과 - 상대방이 돌아오지 않아 통화 종료 처리 시작",
+                  );
+                  console.log(
+                    "⏰ [onUserLeft 타이머] 타이머 실행 시점의 isInCall:",
+                    stateAtTimeout.isInCall,
+                  );
+                  console.log(
+                    "⏰ [onUserLeft 타이머] 타이머 실행 시점의 callId:",
+                    stateAtTimeout.callId,
                   );
                 }
 
@@ -336,8 +394,9 @@ export const useCall = () => {
                   }
                   try {
                     webSocketService.sendCallEndNotification(
-                      stateAtTimeout.callId,
-                      stateAtTimeout.partner.id,
+                      Number(stateAtTimeout.callId),
+                      Number(stateAtTimeout.partner.id),
+                      "USER_LEFT",
                     );
                     if (import.meta.env.DEV) {
                       console.log("✅ 상대방 퇴장 WebSocket 알림 전송 성공");
@@ -356,9 +415,20 @@ export const useCall = () => {
                 });
 
                 // 통화 상태 초기화
-                endCall();
                 if (import.meta.env.DEV) {
-                  console.log("📞 상대방 퇴장으로 인한 통화 종료 처리 완료");
+                  console.log("📞 [onUserLeft 타이머] endCall() 호출 전");
+                }
+                endCall();
+                const stateAfterEndCall = useCallStore.getState();
+                if (import.meta.env.DEV) {
+                  console.log("📞 [onUserLeft 타이머] endCall() 호출 후");
+                  console.log(
+                    "📞 [onUserLeft 타이머] endCall() 후 isInCall:",
+                    stateAfterEndCall.isInCall,
+                  );
+                  console.log(
+                    "📞 [onUserLeft 타이머] 상대방 퇴장으로 인한 통화 종료 처리 완료",
+                  );
                 }
 
                 partnerLeaveTimerRef.current = null;
@@ -366,12 +436,19 @@ export const useCall = () => {
 
               if (import.meta.env.DEV) {
                 console.log(
-                  "⏰ 30초 대기 타이머 시작 - 상대방 재입장 시 취소됨",
+                  "⏰ [onUserLeft] 30초 대기 타이머 시작 - 상대방 재입장 시 취소됨",
                 );
               }
             } else {
               if (import.meta.env.DEV) {
-                console.log("⚠️ partner 정보가 없거나 다른 사용자 퇴장 - 무시");
+                console.log(
+                  "⚠️ [onUserLeft] partner 정보가 없거나 다른 사용자 퇴장 - 무시",
+                );
+                console.log(
+                  "⚠️ [onUserLeft] partner?.id:",
+                  currentState.partner?.id,
+                );
+                console.log("⚠️ [onUserLeft] 퇴장한 userId:", userId);
               }
             }
           },
@@ -668,7 +745,11 @@ export const useCall = () => {
           console.error("❌ WebSocket이 연결되지 않음 - 알림 전송 불가");
         } else {
           try {
-            webSocketService.sendCallEndNotification(callId, currentPartner.id);
+            webSocketService.sendCallEndNotification(
+              Number(callId),
+              Number(currentPartner.id),
+              "USER_LEFT",
+            );
             if (import.meta.env.DEV) {
               console.log("✅ 통화 종료 WebSocket 알림 전송 성공");
             }
@@ -786,51 +867,135 @@ export const useCall = () => {
   const handleCallEndNotification = useCallback(
     (notification: any) => {
       if (import.meta.env.DEV) {
-        console.log("🔔 useCall - 통화 종료 알림 수신");
-        console.log("🔔 현재 callId:", callId);
-        console.log("🔔 알림 callId:", notification.callId);
+        console.log("🔔 [handleCallEndNotification] 함수 호출됨");
+        console.log(
+          "🔔 [handleCallEndNotification] 알림 데이터:",
+          notification,
+        );
+      }
+
+      // store에서 최신 callId 가져오기 (클로저 문제 해결)
+      const currentState = useCallStore.getState();
+      const currentCallId = currentState.callId;
+
+      if (import.meta.env.DEV) {
+        console.log(
+          "🔔 [handleCallEndNotification] 현재 callId (store):",
+          currentCallId,
+        );
+        console.log(
+          "🔔 [handleCallEndNotification] 알림 callId:",
+          notification.callId,
+        );
+        console.log(
+          "🔔 [handleCallEndNotification] 알림 type:",
+          notification.type,
+        );
+        console.log(
+          "🔔 [handleCallEndNotification] 현재 isInCall:",
+          currentState.isInCall,
+        );
+        console.log(
+          "🔔 [handleCallEndNotification] 현재 partner:",
+          currentState.partner,
+        );
       }
 
       // 상대방이 통화를 종료한 경우 처리
-      if (notification.type === "call_end" && notification.callId === callId) {
+      // 백엔드 메시지 형식: {callId, reason} (type 필드 없음)
+      const hasCurrentCallId =
+        currentCallId !== null && currentCallId !== undefined;
+      const hasNotificationCallId =
+        notification.callId !== null && notification.callId !== undefined;
+      const callIdsMatch =
+        hasCurrentCallId &&
+        hasNotificationCallId &&
+        String(notification.callId) === String(currentCallId);
+
+      if (import.meta.env.DEV) {
+        console.log("🔔 [handleCallEndNotification] 조건 체크:", {
+          hasCurrentCallId,
+          hasNotificationCallId,
+          callIdsMatch,
+          notificationCallId: notification.callId,
+          currentCallId,
+        });
+      }
+
+      if (hasCurrentCallId && hasNotificationCallId && callIdsMatch) {
         if (import.meta.env.DEV) {
-          console.log("📞 상대방이 통화를 종료했습니다 - 처리 시작");
+          console.log(
+            "📞 [handleCallEndNotification] 상대방이 통화를 종료했습니다 - 처리 시작",
+          );
         }
 
         // 상대방 퇴장 대기 타이머가 실행 중이면 즉시 취소 (WebSocket 알림이 우선)
+        if (import.meta.env.DEV) {
+          console.log("📞 [handleCallEndNotification] 타이머 취소 시작");
+        }
         clearPartnerLeaveTimer();
+        if (import.meta.env.DEV) {
+          console.log("📞 [handleCallEndNotification] 타이머 취소 완료");
+        }
 
         // 최대 통화 시간 타이머 정리
         clearMaxCallDurationTimer();
 
         // Agora 채널에서 퇴장 (에러 무시)
+        if (import.meta.env.DEV) {
+          console.log("📞 [handleCallEndNotification] Agora 채널 퇴장 시작");
+        }
         agoraService.leaveChannel().catch((error) => {
           if (import.meta.env.DEV) {
             console.log(
-              "Agora 채널 퇴장 중 에러 (정상적인 상황일 수 있음):",
+              "📞 [handleCallEndNotification] Agora 채널 퇴장 중 에러 (정상적인 상황일 수 있음):",
               error,
             );
           }
         });
 
-        // 통화 상태 초기화
-        endCall();
+        // 통화 상태 초기화 (isInCall을 false로 설정하여 평가 화면으로 이동)
         if (import.meta.env.DEV) {
-          console.log("📞 통화 종료 처리 완료");
+          console.log("📞 [handleCallEndNotification] endCall() 호출 전");
+          const stateBeforeEndCall = useCallStore.getState();
+          console.log(
+            "📞 [handleCallEndNotification] endCall() 호출 전 isInCall:",
+            stateBeforeEndCall.isInCall,
+          );
+        }
+        endCall();
+        const stateAfterEndCall = useCallStore.getState();
+        if (import.meta.env.DEV) {
+          console.log("📞 [handleCallEndNotification] endCall() 호출 후");
+          console.log(
+            "📞 [handleCallEndNotification] endCall() 후 isInCall:",
+            stateAfterEndCall.isInCall,
+          );
+          console.log(
+            "📞 [handleCallEndNotification] endCall() 후 partner:",
+            stateAfterEndCall.partner,
+          );
+          console.log(
+            "📞 [handleCallEndNotification] 통화 종료 처리 완료 - 평가 화면으로 이동 예상",
+          );
         }
       } else {
         if (import.meta.env.DEV) {
-          console.log("📞 통화 종료 알림이지만 현재 통화와 다름 - 무시");
+          console.log(
+            "📞 [handleCallEndNotification] 통화 종료 알림이지만 현재 통화와 다름 - 무시",
+            {
+              notificationCallId: notification.callId,
+              notificationReason: notification.reason,
+              currentCallId,
+              hasCurrentCallId,
+              hasNotificationCallId,
+              callIdsMatch,
+            },
+          );
         }
       }
     },
-    [
-      callId,
-      agoraService,
-      endCall,
-      clearMaxCallDurationTimer,
-      clearPartnerLeaveTimer,
-    ],
+    [agoraService, endCall, clearMaxCallDurationTimer, clearPartnerLeaveTimer],
   );
 
   /**
