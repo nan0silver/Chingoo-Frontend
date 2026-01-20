@@ -514,15 +514,45 @@ export class AgoraService {
           console.error("❌ 로컬 오디오 트랙 발행 해제 실패:", error);
         }
 
-        this.callState.localAudioTrack.stop();
-        this.callState.localAudioTrack.close();
-        this.callState.localAudioTrack = null;
+        // unpublish 후 트랙이 이미 정리되었을 수 있으므로 안전하게 처리
+        const localAudioTrack = this.callState.localAudioTrack;
+        this.callState.localAudioTrack = null; // 먼저 null로 설정하여 중복 정리 방지
+        
+        try {
+          if (localAudioTrack && typeof localAudioTrack.stop === "function") {
+            localAudioTrack.stop();
+          }
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.warn("⚠️ 로컬 오디오 트랙 stop 실패 (정상적인 상황일 수 있음):", error);
+          }
+        }
+        
+        try {
+          if (localAudioTrack && typeof localAudioTrack.close === "function") {
+            localAudioTrack.close();
+          }
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.warn("⚠️ 로컬 오디오 트랙 close 실패 (정상적인 상황일 수 있음):", error);
+          }
+        }
       }
 
       // 리모트 오디오 트랙 해제
       if (this.callState.remoteAudioTrack) {
-        this.callState.remoteAudioTrack.stop();
-        this.callState.remoteAudioTrack = null;
+        const remoteAudioTrack = this.callState.remoteAudioTrack;
+        this.callState.remoteAudioTrack = null; // 먼저 null로 설정하여 중복 정리 방지
+        
+        try {
+          if (remoteAudioTrack && typeof remoteAudioTrack.stop === "function") {
+            remoteAudioTrack.stop();
+          }
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.warn("⚠️ 리모트 오디오 트랙 stop 실패 (정상적인 상황일 수 있음):", error);
+          }
+        }
       }
 
       // 클라이언트에서 퇴장
