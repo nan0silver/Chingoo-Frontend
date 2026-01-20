@@ -4,6 +4,8 @@ import {
   getStoredUserInfo,
   getUserProfile,
   updateUserProfile,
+  getApiUrl,
+  getStoredToken,
 } from "@/lib/auth";
 import { UserInfo, UserProfile } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
@@ -67,6 +69,7 @@ export default function ProfileSetupPage() {
   const [phoneNumber, setPhoneNumber] = useState(""); // 숫자만 저장 (API 요청용)
   const [phoneNumberError, setPhoneNumberError] = useState(""); // 전화번호 에러 메시지
   const [isLoading, setIsLoading] = useState(false);
+  const [isConsentLoading, setIsConsentLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
@@ -275,24 +278,68 @@ export default function ProfileSetupPage() {
     );
   };
 
-  const handleConsent = () => {
+  const handleConsent = async () => {
     // 모든 필수 항목은 반드시 동의해야 함
     if (!requiredConsent1 || !requiredConsent2 || !requiredConsent3) {
       alert("필수 항목에 모두 동의해주세요.");
       return;
     }
-    setHasConsented(true);
-    setShowConsentModal(false);
-    // 모달 닫을 때 상태 초기화
-    setAllConsent(false);
-    setRequiredConsent1(false);
-    setRequiredConsent2(false);
-    setRequiredConsent3(false);
-    setOptionalConsent(false);
-    setShowRequiredDetail1(false);
-    setShowRequiredDetail2(false);
-    setShowRequiredDetail3(false);
-    setShowOptionalDetail(false);
+
+    setIsConsentLoading(true);
+
+    try {
+      const accessToken = getStoredToken("access_token");
+      if (!accessToken) {
+        alert("로그인이 필요합니다. 다시 로그인해주세요.");
+        navigate("/login");
+        return;
+      }
+
+      // 동의 내역 저장 API 호출
+      const response = await fetch(`${getApiUrl()}/v1/users/consents`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          required_privacy: true, // 필수 항목은 항상 true
+          optional_data_usage: optionalConsent, // 선택 항목 동의 여부
+          channel: "WEB",
+        }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          message: "동의 내역 저장에 실패했습니다.",
+        }));
+        throw new Error(errorData.message || "동의 내역 저장에 실패했습니다.");
+      }
+
+      // 성공 시 모달 닫기
+      setHasConsented(true);
+      setShowConsentModal(false);
+      // 모달 닫을 때 상태 초기화
+      setAllConsent(false);
+      setRequiredConsent1(false);
+      setRequiredConsent2(false);
+      setRequiredConsent3(false);
+      setOptionalConsent(false);
+      setShowRequiredDetail1(false);
+      setShowRequiredDetail2(false);
+      setShowRequiredDetail3(false);
+      setShowOptionalDetail(false);
+    } catch (error) {
+      console.error("동의 내역 저장 실패:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "동의 내역 저장에 실패했습니다. 다시 시도해주세요.",
+      );
+    } finally {
+      setIsConsentLoading(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -977,11 +1024,14 @@ export default function ProfileSetupPage() {
               <button
                 onClick={handleConsent}
                 disabled={
-                  !requiredConsent1 || !requiredConsent2 || !requiredConsent3
+                  !requiredConsent1 ||
+                  !requiredConsent2 ||
+                  !requiredConsent3 ||
+                  isConsentLoading
                 }
                 className="w-full h-14 bg-login-button text-white font-crimson text-lg font-bold rounded-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                동의합니다
+                {isConsentLoading ? "저장 중..." : "다음"}
               </button>
             </div>
           </div>
