@@ -59,6 +59,21 @@ const validatePhoneNumber = (phoneNumber: string): string => {
   return ""; // 유효한 경우 에러 없음
 };
 
+// 닉네임 유효성 검사 함수 (한글, 영문, 숫자만 허용)
+const validateNickname = (nickname: string): string => {
+  if (!nickname.trim()) {
+    return ""; // 빈 값은 handleSaveProfile에서 처리
+  }
+
+  // 한글, 영문, 숫자만 허용하는 정규식: ^[가-힣a-zA-Z0-9]+$
+  const nicknamePattern = /^[가-힣a-zA-Z0-9]+$/;
+  if (!nicknamePattern.test(nickname)) {
+    return "닉네임은 한글, 영문, 숫자만 사용 가능합니다.";
+  }
+
+  return ""; // 유효한 경우 에러 없음
+};
+
 export default function ProfileSetupPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [nickname, setNickname] = useState("");
@@ -68,6 +83,7 @@ export default function ProfileSetupPage() {
   const [birthDay, setBirthDay] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // 숫자만 저장 (API 요청용)
   const [phoneNumberError, setPhoneNumberError] = useState(""); // 전화번호 에러 메시지
+  const [nicknameError, setNicknameError] = useState(""); // 닉네임 에러 메시지
   const [isLoading, setIsLoading] = useState(false);
   const [isConsentLoading, setIsConsentLoading] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -345,9 +361,18 @@ export default function ProfileSetupPage() {
   const handleSaveProfile = async () => {
     // 필수 입력 검증
     if (!nickname.trim()) {
+      setNicknameError("닉네임을 입력해주세요.");
       alert("닉네임을 입력해주세요.");
       return;
     }
+
+    // 닉네임 유효성 검증
+    const nicknameErrorMsg = validateNickname(nickname);
+    if (nicknameErrorMsg) {
+      setNicknameError(nicknameErrorMsg);
+      return;
+    }
+    setNicknameError(""); // 유효한 경우 에러 메시지 제거
 
     if (!gender) {
       alert("성별을 선택해주세요.");
@@ -450,6 +475,27 @@ export default function ProfileSetupPage() {
         alert("세션이 만료되었습니다. 다시 로그인해주세요.");
         navigate("/login");
         return;
+      }
+
+      // 닉네임 validation 에러 처리
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        // 백엔드 validation 에러 메시지에서 닉네임 에러 추출
+        if (
+          errorMessage.includes("nickname") ||
+          errorMessage.includes("닉네임은 한글")
+        ) {
+          // 에러 메시지에서 "닉네임은 한글, 영문, 숫자만 사용 가능합니다." 추출 시도
+          const nicknameErrorMatch = errorMessage.match(
+            /닉네임은 한글, 영문, 숫자만 사용 가능합니다/
+          );
+          if (nicknameErrorMatch) {
+            setNicknameError("닉네임은 한글, 영문, 숫자만 사용 가능합니다.");
+          } else {
+            setNicknameError("닉네임은 한글, 영문, 숫자만 사용 가능합니다.");
+          }
+          return; // 닉네임 에러는 alert 없이 에러 메시지만 표시
+        }
       }
 
       alert("프로필 저장에 실패했습니다. 다시 시도해주세요.");
@@ -1138,11 +1184,24 @@ export default function ProfileSetupPage() {
           <input
             type="text"
             value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            onChange={(e) => {
+              const newNickname = e.target.value;
+              setNickname(newNickname);
+              // 실시간 유효성 검사
+              const error = validateNickname(newNickname);
+              setNicknameError(error);
+            }}
             placeholder="닉네임을 입력해주세요"
             disabled={userProfile?.is_new_user && !hasConsented}
-            className="w-full h-12 md:h-14 px-4 border border-border-gray rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:ring-login-button focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className={`w-full h-12 md:h-14 px-4 border rounded-lg font-crimson text-lg md:text-xl placeholder:text-text-placeholder text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed ${
+              nicknameError
+                ? "border-red-500 focus:ring-red-500"
+                : "border-border-gray focus:ring-login-button"
+            }`}
           />
+          {nicknameError && (
+            <p className="mt-2 text-sm text-red-500">{nicknameError}</p>
+          )}
         </div>
 
         {/* Gender Selection */}
