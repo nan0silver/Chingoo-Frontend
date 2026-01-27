@@ -19,6 +19,8 @@ export class WebSocketService {
     maxReconnectAttempts: 5,
   };
   private currentToken: string | null = null; // 현재 인증 토큰 저장
+  private reconnectTimer: NodeJS.Timeout | null = null; // 자동 재연결 타이머
+  private isManualDisconnect: boolean = false; // 수동 연결 해제 여부
 
   // 여러 콜백을 지원하기 위해 배열로 변경
   private onConnectionStateChangeCallbacks: Array<
@@ -77,31 +79,40 @@ export class WebSocketService {
       heartbeatOutgoing: 10000,
     });
 
-    // 연결 성공 시
-    this.client.onConnect = (frame) => {
-      console.log("✅ WebSocket 연결 성공:", frame);
-      console.log("✅ 연결 헤더:", frame.headers);
-      console.log("✅ 연결 바디:", frame.body);
+      // 연결 성공 시
+      this.client.onConnect = (frame) => {
+        console.log("✅ WebSocket 연결 성공:", frame);
+        console.log("✅ 연결 헤더:", frame.headers);
+        console.log("✅ 연결 바디:", frame.body);
 
-      this.connectionState = {
-        ...this.connectionState,
-        isConnected: true,
-        isConnecting: false,
-        reconnectAttempts: 0,
-        lastConnected: new Date().toISOString(),
+        // 재연결 타이머 취소
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer);
+          this.reconnectTimer = null;
+        }
+
+        // 수동 연결 해제 플래그 리셋
+        this.isManualDisconnect = false;
+
+        this.connectionState = {
+          ...this.connectionState,
+          isConnected: true,
+          isConnecting: false,
+          reconnectAttempts: 0,
+          lastConnected: new Date().toISOString(),
+        };
+        // 모든 연결 상태 변경 콜백 호출
+        this.onConnectionStateChangeCallbacks.forEach((callback) =>
+          callback(this.connectionState),
+        );
+        console.log("📡 큐 구독 시작");
+        this.subscribeToQueues();
+
+        // 구독 완료 후 상태 로그
+        setTimeout(() => {
+          this.logSubscriptionStatus();
+        }, 100);
       };
-      // 모든 연결 상태 변경 콜백 호출
-      this.onConnectionStateChangeCallbacks.forEach((callback) =>
-        callback(this.connectionState),
-      );
-      console.log("📡 큐 구독 시작");
-      this.subscribeToQueues();
-
-      // 구독 완료 후 상태 로그
-      setTimeout(() => {
-        this.logSubscriptionStatus();
-      }, 100);
-    };
 
     // 연결 실패 시
     this.client.onStompError = (frame) => {
@@ -120,11 +131,16 @@ export class WebSocketService {
       const errorMessage = `WebSocket 연결 실패: ${frame.headers.message || "알 수 없는 오류"}`;
       // 모든 에러 콜백 호출
       this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
+
+      // 수동 연결 해제가 아닌 경우 자동 재연결 시도
+      if (!this.isManualDisconnect && this.currentToken) {
+        this.scheduleReconnect();
+      }
     };
 
     // 연결 해제 시
     this.client.onDisconnect = () => {
-      console.log("WebSocket 연결 해제");
+      console.log("⚠️ WebSocket 연결 해제 감지");
       this.connectionState = {
         ...this.connectionState,
         isConnected: false,
@@ -134,6 +150,17 @@ export class WebSocketService {
       this.onConnectionStateChangeCallbacks.forEach((callback) =>
         callback(this.connectionState),
       );
+
+      // 수동 연결 해제가 아닌 경우 자동 재연결 시도
+      // 서버에서 DISCONNECT를 보낸 경우에도 재연결 시도
+      if (!this.isManualDisconnect && this.currentToken) {
+        console.log("🔄 자동 재연결 스케줄링...");
+        this.scheduleReconnect();
+      } else {
+        if (import.meta.env.DEV) {
+          console.log("ℹ️ 수동 연결 해제 또는 토큰 없음 - 재연결하지 않음");
+        }
+      }
     };
   }
 
@@ -178,6 +205,9 @@ export class WebSocketService {
       console.log("⚡ STOMP 클라이언트 활성화 시도");
       await this.client!.activate();
       console.log("✅ STOMP 클라이언트 활성화 성공");
+
+      // 수동 연결 해제 플래그 리셋 (연결 성공 시)
+      this.isManualDisconnect = false;
     } catch (error) {
       console.error("❌ WebSocket 연결 실패:", error);
       if (import.meta.env.DEV) {
@@ -207,12 +237,25 @@ export class WebSocketService {
    * WebSocket 연결 해제
    */
   disconnect(): void {
+    // 수동 연결 해제 플래그 설정
+    this.isManualDisconnect = true;
+
+    // 재연결 타이머 취소
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     if (this.client && this.connectionState.isConnected) {
       this.unsubscribeFromQueues();
       this.client.deactivate();
     }
     // 토큰 초기화
     this.currentToken = null;
+
+    if (import.meta.env.DEV) {
+      console.log("🔌 WebSocket 수동 연결 해제 완료");
+    }
   }
 
   /**
@@ -543,16 +586,91 @@ export class WebSocketService {
       `재연결 시도 ${this.connectionState.reconnectAttempts + 1}/${this.connectionState.maxReconnectAttempts}`,
     );
 
-    this.disconnect();
+    // 수동 연결 해제 플래그를 false로 설정하여 재연결 허용
+    this.isManualDisconnect = false;
+
+    // 기존 연결 정리 (수동 해제 플래그는 false로 유지)
+    if (this.client) {
+      try {
+        this.unsubscribeFromQueues();
+        this.client.deactivate();
+      } catch (error) {
+        console.warn("기존 연결 정리 중 오류 (무시):", error);
+      }
+    }
     this.client = null; // 🔑 클라이언트를 null로 설정하여 새 토큰으로 재생성
     await new Promise((resolve) => setTimeout(resolve, 2000)); // 2초 대기
     await this.connect(token);
   }
 
   /**
+   * 자동 재연결 스케줄링 (내부 사용)
+   */
+  private scheduleReconnect(): void {
+    // 이미 재연결 타이머가 있으면 취소
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    // 최대 재연결 시도 횟수 확인
+    if (
+      this.connectionState.reconnectAttempts >=
+      this.connectionState.maxReconnectAttempts
+    ) {
+      console.error(
+        "❌ 최대 재연결 시도 횟수 초과 - 자동 재연결 중단",
+      );
+      return;
+    }
+
+    // 토큰이 없으면 재연결 불가
+    if (!this.currentToken) {
+      console.warn("⚠️ 토큰이 없어 자동 재연결 불가");
+      return;
+    }
+
+    // 재연결 시도 횟수 증가
+    const nextAttempt = this.connectionState.reconnectAttempts + 1;
+    const delay = Math.min(1000 * Math.pow(2, nextAttempt - 1), 10000); // 지수 백오프, 최대 10초
+
+    console.log(
+      `🔄 ${delay / 1000}초 후 자동 재연결 시도 (${nextAttempt}/${this.connectionState.maxReconnectAttempts})`,
+    );
+
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = null;
+      try {
+        // 재연결 시도 횟수 업데이트
+        this.connectionState = {
+          ...this.connectionState,
+          reconnectAttempts: nextAttempt,
+        };
+
+        await this.reconnect(this.currentToken!);
+        if (import.meta.env.DEV) {
+          console.log("✅ 자동 재연결 성공");
+        }
+      } catch (error) {
+        console.error("❌ 자동 재연결 실패:", error);
+        // 재연결 실패 시 다시 스케줄링 (최대 횟수 내에서)
+        if (nextAttempt < this.connectionState.maxReconnectAttempts) {
+          this.scheduleReconnect();
+        }
+      }
+    }, delay);
+  }
+
+  /**
    * 서비스 정리
    */
   destroy(): void {
+    // 재연결 타이머 취소
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     this.disconnect();
     this.subscriptions.clear();
     this.client = null;
