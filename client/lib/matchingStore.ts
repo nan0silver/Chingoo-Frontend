@@ -14,6 +14,20 @@ import { webSocketService, getWebSocketService } from "./websocket";
 import { getStoredToken } from "./auth";
 
 /**
+ * localStorage에 저장할 매칭 정보 (직렬화 가능한 데이터만)
+ * 새로고침 후 복원을 위해 사용 (30초 이내만 유효)
+ */
+interface StoredMatchingInfo {
+  matchingId: string;
+  categoryId: number;
+  status: "waiting" | "matched" | "cancelled" | "timeout";
+  queuePosition?: number;
+  estimatedWaitTime?: number;
+  createdAt: string;
+  timestamp: number; // Date.now() - 밀리초 단위 (30초 체크용)
+}
+
+/**
  * 매칭 상태 타입
  */
 interface MatchingState {
@@ -69,6 +83,12 @@ interface MatchingStore extends MatchingState {
   setCategories: (categories: Category[]) => void;
   handleMatchingNotification: (notification: MatchingNotification) => void;
   handleCallStartNotification: (notification: CallStartNotification) => void;
+
+  // 매칭 상태 저장/복원
+  saveMatchingToStorage: () => void;
+  restoreMatchingFromStorage: () => StoredMatchingInfo | null;
+  clearMatchingFromStorage: () => void;
+  restoreMatchingState: (storedInfo: StoredMatchingInfo) => void;
 }
 
 const initialState: MatchingState = {
@@ -90,6 +110,11 @@ const initialState: MatchingState = {
   createdAt: undefined,
   updatedAt: undefined,
 };
+
+/**
+ * localStorage 키 (30초 이내 복원용)
+ */
+const STORAGE_KEY = "active_matching";
 
 export const useMatchingStore = create<MatchingStore>()(
   devtools(
@@ -143,6 +168,11 @@ export const useMatchingStore = create<MatchingStore>()(
               createdAt: response.created_at,
               updatedAt: new Date().toISOString(),
             });
+
+            // 매칭 대기 중이면 localStorage에 저장 (새로고침 대응)
+            if (response.queue_status === "WAITING") {
+              get().saveMatchingToStorage();
+            }
 
             // WebSocket 연결 시도 (실패해도 매칭은 계속 진행)
             if (import.meta.env.DEV) {
@@ -239,6 +269,9 @@ export const useMatchingStore = create<MatchingStore>()(
               status: "cancelled",
               updatedAt: new Date().toISOString(),
             });
+
+            // 매칭 취소 시 localStorage에서 삭제
+            get().clearMatchingFromStorage();
           } catch (error) {
             const errorMessage =
               error instanceof Error
@@ -428,6 +461,10 @@ export const useMatchingStore = create<MatchingStore>()(
                 estimatedWaitTime: notification.estimatedWaitTime,
                 updatedAt: new Date().toISOString(),
               });
+              // 매칭 대기 중이면 localStorage에 저장 (새로고침 대응)
+              if (currentState.status === "waiting" && currentState.matchingId) {
+                get().saveMatchingToStorage();
+              }
               break;
 
             case "matched":
@@ -436,6 +473,8 @@ export const useMatchingStore = create<MatchingStore>()(
                 matchedUser: notification.matchedUser,
                 updatedAt: new Date().toISOString(),
               });
+              // 매칭 성공 시 localStorage에서 삭제
+              get().clearMatchingFromStorage();
               // 매칭 성공 시 자동으로 통화 화면으로 이동
               // 이 이벤트는 App.tsx에서 감지하여 처리
               break;
@@ -445,6 +484,8 @@ export const useMatchingStore = create<MatchingStore>()(
                 status: "cancelled",
                 updatedAt: new Date().toISOString(),
               });
+              // 매칭 취소 시 localStorage에서 삭제
+              get().clearMatchingFromStorage();
               break;
 
             case "timeout":
@@ -452,6 +493,8 @@ export const useMatchingStore = create<MatchingStore>()(
                 status: "timeout",
                 updatedAt: new Date().toISOString(),
               });
+              // 매칭 타임아웃 시 localStorage에서 삭제
+              get().clearMatchingFromStorage();
               break;
           }
         },
@@ -474,6 +517,108 @@ export const useMatchingStore = create<MatchingStore>()(
             categories: get().categories, // 카테고리는 유지
             connectionState: get().connectionState, // 연결 상태는 유지
           });
+          // localStorage에서도 삭제
+          get().clearMatchingFromStorage();
+        },
+
+        // 매칭 상태 저장 (localStorage)
+        saveMatchingToStorage: () => {
+          try {
+            const state = get();
+            if (
+              state.status !== "waiting" ||
+              !state.matchingId ||
+              !state.categoryId
+            ) {
+              // 저장할 정보가 없으면 삭제
+              get().clearMatchingFromStorage();
+              return;
+            }
+
+            const storedInfo: StoredMatchingInfo = {
+              matchingId: state.matchingId,
+              categoryId: state.categoryId,
+              status: state.status,
+              queuePosition: state.queuePosition,
+              estimatedWaitTime: state.estimatedWaitTime,
+              createdAt: state.createdAt || new Date().toISOString(),
+              timestamp: Date.now(), // 밀리초 단위 (30초 체크용)
+            };
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(storedInfo));
+            if (import.meta.env.DEV) {
+              console.log("💾 매칭 정보 localStorage에 저장 완료", storedInfo);
+            }
+          } catch (error) {
+            console.error("매칭 정보 저장 실패:", error);
+          }
+        },
+
+        // 매칭 상태 복원 (localStorage)
+        restoreMatchingFromStorage: (): StoredMatchingInfo | null => {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) {
+              return null;
+            }
+
+            const storedInfo: StoredMatchingInfo = JSON.parse(stored);
+
+            // 저장된 정보가 유효한지 확인 (30초 이내만 복원)
+            const elapsed = Date.now() - storedInfo.timestamp;
+            const THIRTY_SECONDS = 30 * 1000; // 30초 (밀리초)
+
+            if (elapsed >= THIRTY_SECONDS) {
+              // 30초 초과 - 만료됨, 삭제
+              if (import.meta.env.DEV) {
+                console.log("⏰ 저장된 매칭 정보가 30초 초과 - 만료됨, 삭제");
+              }
+              get().clearMatchingFromStorage();
+              return null;
+            }
+
+            if (import.meta.env.DEV) {
+              console.log(
+                "💾 localStorage에서 매칭 정보 복원:",
+                storedInfo,
+                `(경과 시간: ${Math.round(elapsed / 1000)}초)`,
+              );
+            }
+
+            return storedInfo;
+          } catch (error) {
+            console.error("매칭 정보 복원 실패:", error);
+            get().clearMatchingFromStorage();
+            return null;
+          }
+        },
+
+        // 매칭 상태 삭제 (localStorage)
+        clearMatchingFromStorage: () => {
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            if (import.meta.env.DEV) {
+              console.log("🗑️ localStorage에서 매칭 정보 삭제 완료");
+            }
+          } catch (error) {
+            console.error("매칭 정보 삭제 실패:", error);
+          }
+        },
+
+        // 매칭 상태 복원 (저장된 정보로 상태 설정)
+        restoreMatchingState: (storedInfo: StoredMatchingInfo) => {
+          set({
+            matchingId: storedInfo.matchingId,
+            categoryId: storedInfo.categoryId,
+            status: storedInfo.status,
+            queuePosition: storedInfo.queuePosition,
+            estimatedWaitTime: storedInfo.estimatedWaitTime,
+            createdAt: storedInfo.createdAt,
+            updatedAt: new Date().toISOString(),
+          });
+          if (import.meta.env.DEV) {
+            console.log("✅ 매칭 상태 복원 완료:", storedInfo);
+          }
         },
       }),
       {

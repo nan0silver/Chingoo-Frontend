@@ -36,8 +36,17 @@ const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const navigate = useNavigate();
-  const { categoryId, cancelMatching, resetMatching, status, matchingId } =
-    useMatchingStore();
+  const {
+    categoryId,
+    cancelMatching,
+    resetMatching,
+    status,
+    matchingId,
+    restoreMatchingFromStorage,
+    restoreMatchingState,
+    refreshMatchingStatus,
+    connectWebSocket,
+  } = useMatchingStore();
   const previousStatusRef = useRef<string | null>(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   // 웹 환경에서는 스플래시 스크린을 표시하지 않음
@@ -89,6 +98,57 @@ const AppRoutes = () => {
           if (import.meta.env.DEV) {
             console.log("ℹ️ 복원할 통화 정보 없음 또는 만료됨 (30초 초과)");
           }
+
+          // 통화 상태가 복원되지 않았으면 매칭 상태 복원 시도
+          try {
+            if (import.meta.env.DEV) {
+              console.log("🔄 매칭 상태 복원 시도 중...");
+            }
+            const restoredMatching = restoreMatchingFromStorage();
+
+            // 매칭 상태가 복원되었으면 매칭 대기 페이지로 이동
+            if (restoredMatching !== null && restoredMatching.status === "waiting") {
+              if (import.meta.env.DEV) {
+                console.log("✅ 매칭 상태 복원됨 - 매칭 대기 페이지로 이동", restoredMatching);
+              }
+
+              // 매칭 상태 복원
+              try {
+                // 백엔드에서 최신 매칭 상태 조회
+                await refreshMatchingStatus();
+                if (import.meta.env.DEV) {
+                  console.log("✅ 백엔드에서 매칭 상태 조회 성공");
+                }
+              } catch (error) {
+                console.warn("매칭 상태 조회 실패, 저장된 정보로 복원:", error);
+                // API 호출 실패 시 저장된 정보로만 복원
+                restoreMatchingState(restoredMatching);
+              }
+
+              // WebSocket 연결 시도
+              try {
+                await connectWebSocket();
+                if (import.meta.env.DEV) {
+                  console.log("✅ WebSocket 재연결 성공");
+                }
+              } catch (wsError) {
+                console.warn("⚠️ WebSocket 재연결 실패:", wsError);
+                // WebSocket 재연결 실패해도 매칭 복원은 계속 진행
+              }
+
+              // 약간의 지연 후 페이지 이동 (상태 안정화 대기)
+              setTimeout(() => {
+                navigate("/connecting-call", { replace: true });
+              }, 500);
+            } else {
+              if (import.meta.env.DEV) {
+                console.log("ℹ️ 복원할 매칭 정보 없음 또는 만료됨 (30초 초과)");
+              }
+            }
+          } catch (error) {
+            console.error("매칭 상태 복원 실패:", error);
+            // 복원 실패는 치명적이지 않으므로 계속 진행
+          }
         }
       } catch (error) {
         console.error("통화 상태 복원 실패:", error);
@@ -97,7 +157,14 @@ const AppRoutes = () => {
     };
 
     initialize();
-  }, [restoreCallState]);
+  }, [
+    restoreCallState,
+    restoreMatchingFromStorage,
+    restoreMatchingState,
+    refreshMatchingStatus,
+    connectWebSocket,
+    navigate,
+  ]);
 
   // 스플래시 스크린 완료 핸들러
   const handleSplashComplete = () => {
