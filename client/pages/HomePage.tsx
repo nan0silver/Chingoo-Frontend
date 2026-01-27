@@ -227,7 +227,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       {/* Success Message Modal */}
       {showSuccessModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="category-request-success-title"
@@ -266,7 +266,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       {/* Error Message Modal */}
       {errorMessage && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="matching-error-title"
