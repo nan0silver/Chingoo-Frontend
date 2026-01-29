@@ -469,7 +469,8 @@ export class AgoraService {
   }
 
   /**
-   * 활동 시간 갱신 (오디오 트랙 수신 등)
+   * 활동 시간 갱신 (5분 무응답 타이머 리셋용).
+   * 호출처: 원격 트랙 구독 시, network-quality(2초마다) - 연결 유지 중이면 계속 갱신됨.
    */
   private updateActivity(): void {
     this.lastActivityTime = Date.now();
@@ -1112,6 +1113,9 @@ export class AgoraService {
         uplinkNetworkQuality: stats.uplinkNetworkQuality as NetworkQuality,
         downlinkNetworkQuality: stats.downlinkNetworkQuality as NetworkQuality,
       };
+
+      // 연결 유지 중이면 '활동'으로 간주 (5분 무응답 자동종료 타이머 리셋)
+      this.updateActivity();
 
       // 상태 업데이트
       this.callState.networkQuality = quality;
