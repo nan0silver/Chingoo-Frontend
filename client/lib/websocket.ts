@@ -418,6 +418,14 @@ export class WebSocketService {
     }
   }
 
+  /** 연결 상태 변경 콜백 제거 */
+  removeConnectionStateChangeCallback(
+    callback: (state: WebSocketConnectionState) => void,
+  ): void {
+    this.onConnectionStateChangeCallbacks =
+      this.onConnectionStateChangeCallbacks.filter((cb) => cb !== callback);
+  }
+
   /**
    * 매칭 알림 콜백 설정 (여러 콜백 지원)
    */
@@ -429,6 +437,19 @@ export class WebSocketService {
       this.onMatchingNotificationCallbacks.push(callback);
       console.log(
         `✅ 매칭 알림 콜백 추가 (총 ${this.onMatchingNotificationCallbacks.length}개)`,
+      );
+    }
+  }
+
+  /** 매칭 알림 콜백 제거 (컴포넌트 언마운트 시 cleanup에서 호출) */
+  removeMatchingNotificationCallback(
+    callback: (notification: MatchingNotification) => void,
+  ): void {
+    this.onMatchingNotificationCallbacks =
+      this.onMatchingNotificationCallbacks.filter((cb) => cb !== callback);
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔔 매칭 알림 콜백 제거 (남은 ${this.onMatchingNotificationCallbacks.length}개)`,
       );
     }
   }
@@ -448,6 +469,19 @@ export class WebSocketService {
     }
   }
 
+  /** 통화 시작 알림 콜백 제거 (컴포넌트 언마운트 시 cleanup에서 호출) */
+  removeCallStartNotificationCallback(
+    callback: (notification: CallStartNotification) => void,
+  ): void {
+    this.onCallStartNotificationCallbacks =
+      this.onCallStartNotificationCallbacks.filter((cb) => cb !== callback);
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔔 통화 시작 알림 콜백 제거 (남은 ${this.onCallStartNotificationCallbacks.length}개)`,
+      );
+    }
+  }
+
   /**
    * 통화 종료 알림 콜백 설정 (여러 콜백 지원)
    */
@@ -461,6 +495,17 @@ export class WebSocketService {
     }
   }
 
+  /** 통화 종료 알림 콜백 제거 (컴포넌트 언마운트 시 cleanup에서 호출) */
+  removeCallEndNotificationCallback(callback: (notification: any) => void): void {
+    this.onCallEndNotificationCallbacks =
+      this.onCallEndNotificationCallbacks.filter((cb) => cb !== callback);
+    if (import.meta.env.DEV) {
+      console.log(
+        `🔔 통화 종료 알림 콜백 제거 (남은 ${this.onCallEndNotificationCallbacks.length}개)`,
+      );
+    }
+  }
+
   /**
    * 에러 콜백 설정 (여러 콜백 지원)
    */
@@ -470,6 +515,11 @@ export class WebSocketService {
       this.onErrorCallbacks.push(callback);
       console.log(`✅ 에러 콜백 추가 (총 ${this.onErrorCallbacks.length}개)`);
     }
+  }
+
+  /** 에러 콜백 제거 */
+  removeErrorCallback(callback: (error: string) => void): void {
+    this.onErrorCallbacks = this.onErrorCallbacks.filter((cb) => cb !== callback);
   }
 
   /**

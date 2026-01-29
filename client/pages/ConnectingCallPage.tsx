@@ -98,7 +98,7 @@ export default function ConnectingCallPage({
     }
   }, []);
 
-  // WebSocket 알림 수신 추적
+  // WebSocket 알림 수신 (언마운트 시 콜백 제거로 누적 방지)
   useEffect(() => {
     if (import.meta.env.DEV) {
       console.log("🔧 ConnectingCallPage - WebSocket 콜백 등록");
@@ -109,10 +109,13 @@ export default function ConnectingCallPage({
     webSocketService.onMatchingNotificationCallback(handleMatchingNotification);
 
     return () => {
+      webSocketService.removeCallStartNotificationCallback(
+        handleCallStartNotification,
+      );
+      webSocketService.removeMatchingNotificationCallback(handleMatchingNotification);
       if (import.meta.env.DEV) {
-        console.log("🔧 ConnectingCallPage - 컴포넌트 언마운트");
+        console.log("🔧 ConnectingCallPage - WebSocket 콜백 정리");
       }
-      // 정리 함수는 필요시에만 구현
     };
   }, [
     webSocketService,

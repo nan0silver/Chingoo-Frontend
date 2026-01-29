@@ -1066,14 +1066,13 @@ export const useCall = () => {
     if (import.meta.env.DEV) {
       console.log("🔔 useCall - 통화 종료 알림 콜백 설정");
     }
-    // 통화 종료 알림 콜백 설정
     webSocketService.onCallEndNotificationCallback(handleCallEndNotification);
 
     return () => {
+      webSocketService.removeCallEndNotificationCallback(handleCallEndNotification);
       if (import.meta.env.DEV) {
         console.log("🔔 useCall - 통화 종료 알림 콜백 정리");
       }
-      // 정리 함수는 필요시에만 구현
     };
   }, [webSocketService, handleCallEndNotification]);
 

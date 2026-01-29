@@ -91,6 +91,14 @@ interface MatchingStore extends MatchingState {
   restoreMatchingState: (storedInfo: StoredMatchingInfo) => void;
 }
 
+/** connectWebSocket에서 콜백 등록은 1회만 (재호출 시 콜백 누적 방지) */
+let storeWsCallbacksRegistered = false;
+/** disconnect 시 제거할 스토어 콜백 참조 */
+let storeWsConnectionStateCb: ((state: WebSocketConnectionState) => void) | null = null;
+let storeWsMatchingCb: ((n: MatchingNotification) => void) | null = null;
+let storeWsCallStartCb: ((n: CallStartNotification) => void) | null = null;
+let storeWsErrorCb: ((error: string) => void) | null = null;
+
 const initialState: MatchingState = {
   status: "idle",
   matchingId: undefined,
@@ -348,37 +356,45 @@ export const useMatchingStore = create<MatchingStore>()(
               },
             });
 
-            if (import.meta.env.DEV) {
-              console.log("🔌 WebSocket 콜백 설정 시작");
+            // 콜백은 1회만 등록 (connectWebSocket 재호출 시 누적 방지)
+            if (!storeWsCallbacksRegistered) {
+              if (import.meta.env.DEV) {
+                console.log("🔌 WebSocket 콜백 설정 시작");
+              }
+              storeWsConnectionStateCb = (state) => {
+                if (import.meta.env.DEV) {
+                  console.log("🔌 연결 상태 변경:", state);
+                }
+                get().setConnectionState(state);
+              };
+              webSocketService.onConnectionStateChangeCallback(storeWsConnectionStateCb);
+
+              storeWsMatchingCb = (notification) => {
+                if (import.meta.env.DEV) {
+                  console.log("🔌 매칭 알림 수신:", notification);
+                }
+                get().handleMatchingNotification(notification);
+              };
+              webSocketService.onMatchingNotificationCallback(storeWsMatchingCb);
+
+              storeWsCallStartCb = (notification) => {
+                if (import.meta.env.DEV) {
+                  console.log("🔌 통화 시작 알림 수신:", notification);
+                }
+                get().handleCallStartNotification(notification);
+              };
+              webSocketService.onCallStartNotificationCallback(storeWsCallStartCb);
+
+              storeWsErrorCb = (error) => {
+                if (import.meta.env.DEV) {
+                  console.log("🔌 WebSocket 에러:", error);
+                }
+                get().setError(error);
+              };
+              webSocketService.onErrorCallback(storeWsErrorCb);
+
+              storeWsCallbacksRegistered = true;
             }
-            // WebSocket 서비스 콜백 설정
-            webSocketService.onConnectionStateChangeCallback((state) => {
-              if (import.meta.env.DEV) {
-                console.log("🔌 연결 상태 변경:", state);
-              }
-              get().setConnectionState(state);
-            });
-
-            webSocketService.onMatchingNotificationCallback((notification) => {
-              if (import.meta.env.DEV) {
-                console.log("🔌 매칭 알림 수신:", notification);
-              }
-              get().handleMatchingNotification(notification);
-            });
-
-            webSocketService.onCallStartNotificationCallback((notification) => {
-              if (import.meta.env.DEV) {
-                console.log("🔌 통화 시작 알림 수신:", notification);
-              }
-              get().handleCallStartNotification(notification);
-            });
-
-            webSocketService.onErrorCallback((error) => {
-              if (import.meta.env.DEV) {
-                console.log("🔌 WebSocket 에러:", error);
-              }
-              get().setError(error);
-            });
 
             if (import.meta.env.DEV) {
               console.log("🔌 WebSocket 연결 시도");
@@ -406,6 +422,25 @@ export const useMatchingStore = create<MatchingStore>()(
 
         // WebSocket 연결 해제
         disconnectWebSocket: () => {
+          if (storeWsCallbacksRegistered) {
+            if (storeWsConnectionStateCb) {
+              webSocketService.removeConnectionStateChangeCallback(storeWsConnectionStateCb);
+              storeWsConnectionStateCb = null;
+            }
+            if (storeWsMatchingCb) {
+              webSocketService.removeMatchingNotificationCallback(storeWsMatchingCb);
+              storeWsMatchingCb = null;
+            }
+            if (storeWsCallStartCb) {
+              webSocketService.removeCallStartNotificationCallback(storeWsCallStartCb);
+              storeWsCallStartCb = null;
+            }
+            if (storeWsErrorCb) {
+              webSocketService.removeErrorCallback(storeWsErrorCb);
+              storeWsErrorCb = null;
+            }
+            storeWsCallbacksRegistered = false;
+          }
           webSocketService.disconnect();
           set({
             connectionState: {
