@@ -48,6 +48,8 @@ const AppRoutes = () => {
     connectWebSocket,
   } = useMatchingStore();
   const previousStatusRef = useRef<string | null>(null);
+  /** 앱 마운트 시 통화/매칭 복원은 1회만 실행 (effect 재실행 시 중복 호출 방지) */
+  const hasRestoreInitializedRef = useRef(false);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   // 웹 환경에서는 스플래시 스크린을 표시하지 않음
   const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
@@ -65,8 +67,11 @@ const AppRoutes = () => {
     "/splash-icons/icon5.png",
   ];
 
-  // 앱 초기화: refresh token으로 access token 발급 및 통화 상태 복원
+  // 앱 초기화: refresh token으로 access token 발급 및 통화 상태 복원 (마운트 시 1회만)
   useEffect(() => {
+    if (hasRestoreInitializedRef.current) return;
+    hasRestoreInitializedRef.current = true;
+
     const initialize = async () => {
       if (import.meta.env.DEV) {
         console.log("🚀 앱 시작: 인증 초기화 중...");

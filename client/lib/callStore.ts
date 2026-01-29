@@ -15,12 +15,12 @@ export interface CallState {
     profileImageUrl?: string;
   } | null;
 
-  // Agora 채널 정보
+  // Agora 채널 정보 (uid는 Agora 권장대로 숫자)
   agoraChannelInfo: {
     appId: string;
     channelName: string;
     token: string;
-    uid: string;
+    uid: string | number;
   } | null;
 
   // 통화 상태
@@ -51,7 +51,7 @@ interface StoredCallInfo {
     appId: string;
     channelName: string;
     token: string;
-    uid: string;
+    uid: string | number;
   };
   callStartTime: string; // ISO string
   categoryName: string | null; // 카테고리 이름
@@ -152,7 +152,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       appId: import.meta.env.VITE_AGORA_APP_ID || "your-agora-app-id",
       channelName: notification.channelName,
       token: notification.rtcToken,
-      uid: String(notification.agoraUid),
+      uid: notification.agoraUid,
     };
 
     const callStartTime = new Date();

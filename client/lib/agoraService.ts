@@ -99,7 +99,8 @@ export interface AgoraChannelInfo {
   appId: string;
   channelName: string;
   token: string;
-  uid: string;
+  /** Agora는 숫자 UID 사용을 권장함 (문자열 시 SDK 경고) */
+  uid: string | number;
 }
 
 /**
@@ -275,11 +276,16 @@ export class AgoraService {
       if (import.meta.env.DEV) {
         console.log("🚪 Agora 채널에 입장 중...");
       }
+      // Agora는 숫자 UID 사용을 권장함 (문자열 사용 시 SDK 경고 발생)
+      const uid =
+        typeof channelInfo.uid === "number"
+          ? channelInfo.uid
+          : Number(channelInfo.uid);
       await this.client.join(
         channelInfo.appId,
         channelInfo.channelName,
         channelInfo.token,
-        channelInfo.uid,
+        Number.isNaN(uid) ? channelInfo.uid : uid,
       );
 
       if (import.meta.env.DEV) {
@@ -1224,12 +1230,18 @@ export class AgoraService {
           console.log("🔄 Agora 채널 재입장 시도");
         }
 
-        // 재입장 시도
+        // 재입장 시도 (UID는 숫자로 전달)
+        const reconnectUid =
+          typeof this.currentChannelInfo.uid === "number"
+            ? this.currentChannelInfo.uid
+            : Number(this.currentChannelInfo.uid);
         await this.client.join(
           this.currentChannelInfo.appId,
           this.currentChannelInfo.channelName,
           this.currentChannelInfo.token,
-          this.currentChannelInfo.uid,
+          Number.isNaN(reconnectUid)
+            ? this.currentChannelInfo.uid
+            : reconnectUid,
         );
 
         // 오디오 트랙 다시 발행

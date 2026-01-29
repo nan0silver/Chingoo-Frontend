@@ -42,6 +42,9 @@ export const useCall = () => {
   const PARTNER_LEAVE_WAIT_DURATION = 30 * 1000; // 30초
   const partnerLeaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  /** 통화 종료 처리 중복 실행 방지 (이미 종료된 통화에 leaveChannel/endCall API 반복 호출 방지) */
+  const isEndingCallRef = useRef(false);
+
   // 디버깅: partner 정보 변경 시에만 로그 출력 (개발 환경에서만)
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -498,12 +501,12 @@ export const useCall = () => {
 
         agoraService.setCallbacks(agoraCallbacks);
 
-        // 백엔드 데이터를 Agora 형식으로 변환
+        // 백엔드 데이터를 Agora 형식으로 변환 (Agora는 숫자 UID 권장)
         const agoraChannelInfo = {
           appId: import.meta.env.VITE_AGORA_APP_ID || "your-agora-app-id",
           channelName: notification.channelName,
           token: notification.rtcToken,
-          uid: String(notification.agoraUid),
+          uid: notification.agoraUid,
         };
 
         // callStore에 agoraChannelInfo 저장
@@ -552,12 +555,29 @@ export const useCall = () => {
    * 통화 종료
    */
   const handleEndCall = useCallback(async () => {
+    // 이미 통화 종료 처리 중이거나, 이미 종료된 상태면 API 호출 스킵 (중복 방지)
+    if (isEndingCallRef.current) {
+      if (import.meta.env.DEV) {
+        console.log("📞 통화 종료 이미 진행 중 - 스킵");
+      }
+      return;
+    }
+    const currentState = useCallStore.getState();
+    if (!currentState.isInCall && !currentState.callId) {
+      if (import.meta.env.DEV) {
+        console.log("📞 이미 통화 종료됨 - 스킵");
+      }
+      return;
+    }
+
+    isEndingCallRef.current = true;
     try {
       if (import.meta.env.DEV) {
         console.log("통화 종료 요청");
       }
 
-      if (!callId) {
+      const callIdToEnd = currentState.callId;
+      if (!callIdToEnd) {
         if (import.meta.env.DEV) {
           console.log("❌ callId가 없어 통화 종료 불가");
         }
@@ -565,7 +585,7 @@ export const useCall = () => {
       }
 
       // partner 정보를 미리 저장 (WebSocket 알림 전송용)
-      const currentPartner = partner;
+      const currentPartner = currentState.partner;
 
       // 1. 통화 통계 수집 (Agora 연결 해제 전에 수집해야 함!)
       if (import.meta.env.DEV) {
@@ -635,7 +655,7 @@ export const useCall = () => {
             ((uplinkQuality + downlinkQuality) / 2).toFixed(1),
           );
 
-          await matchingApiService.sendCallStatistics(callId, {
+          await matchingApiService.sendCallStatistics(callIdToEnd, {
             duration: callStatistics.duration || 0,
             sendBytes: callStatistics.sendBytes || 0,
             receiveBytes: callStatistics.receiveBytes || 0,
@@ -679,7 +699,7 @@ export const useCall = () => {
           }
         }
 
-        await matchingApiService.leaveChannel(callId);
+        await matchingApiService.leaveChannel(callIdToEnd);
         if (import.meta.env.DEV) {
           console.log("✅ 4. 채널 나가기 API 호출 성공");
         }
@@ -707,7 +727,7 @@ export const useCall = () => {
           }
         }
 
-        await matchingApiService.endCall(callId);
+        await matchingApiService.endCall(callIdToEnd);
         if (import.meta.env.DEV) {
           console.log("✅ 5. 통화 종료 API 호출 성공");
         }
@@ -772,7 +792,7 @@ export const useCall = () => {
         } else {
           try {
             webSocketService.sendCallEndNotification(
-              Number(callId),
+              Number(callIdToEnd),
               Number(currentPartner.id),
               "USER_LEFT",
             );
@@ -816,6 +836,8 @@ export const useCall = () => {
       setError(
         error instanceof Error ? error.message : "통화 종료에 실패했습니다.",
       );
+    } finally {
+      isEndingCallRef.current = false;
     }
   }, [
     agoraService,
