@@ -761,7 +761,7 @@ export default function CallEvaluationPage({
 
       {/* Report User Button */}
       {partner?.nickname && (
-        <div className="flex justify-center mt-3 px-5 mb-24">
+        <div className="flex justify-center mt-3 px-5">
           <button
             onClick={() => setShowReportModal(true)}
             className="w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-2 border-red-500 text-red-500 hover:bg-red-50"
@@ -782,6 +782,16 @@ export default function CallEvaluationPage({
           </button>
         </div>
       )}
+
+      {/* Go Home Button */}
+      <div className="flex justify-center mt-3 px-5 mb-24">
+        <button
+          onClick={() => navigate("/")}
+          className="w-full max-w-sm h-14 rounded-lg font-crimson text-xl font-bold transition-all flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          홈으로 돌아가기
+        </button>
+      </div>
 
       {/* Report User Modal */}
       <ReportUserModal
