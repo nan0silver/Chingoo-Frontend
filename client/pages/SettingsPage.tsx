@@ -122,7 +122,7 @@ export default function SettingsPage({
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto pb-20">
+    <div className="min-h-screen bg-white flex flex-col safe-area-page font-noto pb-28">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <button onClick={onBack} className="p-1">
@@ -141,7 +141,7 @@ export default function SettingsPage({
       </div>
 
       {/* Settings Options */}
-      <div className="flex-1 px-5 py-5">
+      <div className="flex-1 px-5 py-5 overflow-y-auto min-h-0">
         <div className="flex flex-col gap-4">
           {settingsOptions.map((option) => (
             <button
@@ -168,8 +168,8 @@ export default function SettingsPage({
           ))}
         </div>
 
-        {/* Logout Button */}
-        <div className="mt-8">
+        {/* Logout Button - 하단 네비 높이만큼 여유 두어 스크롤 시 항상 보이도록 */}
+        <div className="mt-8 pb-24">
           <button
             onClick={onLogout}
             className="w-full flex items-center justify-center gap-2 p-4 border border-red-200 rounded-2xl bg-red-50 hover:bg-red-100 transition-colors"
