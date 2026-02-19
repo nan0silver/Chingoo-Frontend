@@ -63,9 +63,9 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center safe-area-page">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center safe-area-page">
       {/* Logo */}
-      <div className="mt-4 md:mt-16 mb-8 md:mb-12">
+      <div className="mb-8 md:mb-12">
         <h1 className="text-3xl md:text-3xl font-bold text-black font-cafe24">
           강낭콩콜
         </h1>
