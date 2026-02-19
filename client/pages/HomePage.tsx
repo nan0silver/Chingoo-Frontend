@@ -474,7 +474,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       </div> */}
 
       {/* 플로팅 통화 시작 버튼 */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-50">
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-app px-8 z-50">
         <button
           onClick={handleStartCall}
           disabled={!selectedCategory || isStartingMatching}

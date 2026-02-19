@@ -25,6 +25,7 @@ export default {
       },
       maxWidth: {
         mobile: "448px", // max-w-md와 동일
+        app: "430px", // 앱 레이아웃/네비/플로팅 버튼 공통 최대 너비
       },
       fontFamily: {
         sans: ["Noto Sans KR", "Inter", "Pretendard", "sans-serif"],

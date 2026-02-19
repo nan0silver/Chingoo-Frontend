@@ -411,7 +411,7 @@ export default function FriendsPage({
       </div>
 
       {/* Floating Add Friend Button */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-30">
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-app px-8 z-30">
         <button
           onClick={() => setIsRequestModalOpen(true)}
           className="w-full h-16 rounded-lg font-crimson text-2xl font-semibold text-white transition-all bg-gradient-to-r from-yellow-300 to-red-gradient shadow-lg"

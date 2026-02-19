@@ -360,15 +360,17 @@ const AppRoutes = () => {
     );
   }
 
-  // 인증 초기화 중에는 로딩 화면 표시
+  // 인증 초기화 중에는 로딩 화면 표시 (Layout 안에서 동일한 앱 영역 유지)
   if (!isAuthInitialized) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">로딩 중...</p>
+      <Layout>
+        <div className="min-h-full bg-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">로딩 중...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
