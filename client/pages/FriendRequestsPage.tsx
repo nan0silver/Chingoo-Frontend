@@ -4,6 +4,7 @@ import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken, getStoredUserInfo } from "@/lib/auth";
 import { FriendRequest } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { logger } from "@/lib/logger";
 
 interface FriendRequestsPageProps {
   onBack: () => void;
@@ -66,16 +67,14 @@ export default function FriendRequestsPage({
 
       setRequests(sortedRequests);
 
-      if (import.meta.env.DEV) {
-        console.log(
-          isSentRequests
-            ? "📤 보낸 친구 요청 목록:"
-            : "📬 받은 친구 요청 목록:",
-          sortedRequests,
-        );
-      }
+      logger.log(
+        isSentRequests
+          ? "📤 보낸 친구 요청 목록:"
+          : "📬 받은 친구 요청 목록:",
+        sortedRequests,
+      );
     } catch (err) {
-      console.error("친구 요청 목록 조회 실패:", err);
+      logger.error("친구 요청 목록 조회 실패:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -113,7 +112,7 @@ export default function FriendRequestsPage({
       // 친구 목록 새로고침 콜백 호출
       onRequestHandled?.();
     } catch (err) {
-      console.error("친구 요청 수락 실패:", err);
+      logger.error("친구 요청 수락 실패:", err);
       alert(
         err instanceof Error ? err.message : "친구 요청을 수락할 수 없습니다.",
       );
@@ -146,7 +145,7 @@ export default function FriendRequestsPage({
       // 요청 목록에서 제거
       setRequests((prev) => prev.filter((req) => req.id !== friendshipId));
     } catch (err) {
-      console.error("친구 요청 거절 실패:", err);
+      logger.error("친구 요청 거절 실패:", err);
       alert(
         err instanceof Error ? err.message : "친구 요청을 거절할 수 없습니다.",
       );
@@ -180,7 +179,7 @@ export default function FriendRequestsPage({
       // 요청 목록에서 제거
       setRequests((prev) => prev.filter((req) => req.id !== friendshipId));
     } catch (err) {
-      console.error("친구 요청 취소 실패:", err);
+      logger.error("친구 요청 취소 실패:", err);
       alert(
         err instanceof Error ? err.message : "친구 요청을 취소할 수 없습니다.",
       );

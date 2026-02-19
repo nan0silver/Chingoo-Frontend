@@ -76,9 +76,10 @@ const maskSensitiveData = (data: any): any => {
 };
 
 /**
- * 안전한 console.log
+ * 안전한 console.log (프로덕션에서는 출력 안 함)
  */
 export const safeLog = (...args: any[]) => {
+  if (IS_PROD) return; // 운영 환경에서는 로그 비활성화
   if (!IS_DEV && !IS_PROD) return; // 테스트 환경에서는 로그 안 함
 
   const maskedArgs = args.map((arg) => {
@@ -124,9 +125,10 @@ export const safeError = (...args: any[]) => {
 };
 
 /**
- * 안전한 console.warn
+ * 안전한 console.warn (프로덕션에서는 출력 안 함)
  */
 export const safeWarn = (...args: any[]) => {
+  if (IS_PROD) return; // 운영 환경에서는 로그 비활성화
   if (!IS_DEV && !IS_PROD) return; // 테스트 환경에서는 로그 안 함
 
   const maskedArgs = args.map((arg) => {

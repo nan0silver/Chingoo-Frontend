@@ -7,6 +7,7 @@ import { formatLastCallTime } from "@/lib/dateUtils";
 import FriendRequestModal from "@/components/FriendRequestModal";
 import { Plus, Trash2, X, Inbox, Send } from "lucide-react";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { logger } from "@/lib/logger";
 
 interface FriendsPageProps {
   onBack: () => void;
@@ -78,16 +79,16 @@ export default function FriendsPage({
             );
             setSentRequestCount(sentRequests.length);
           } catch (reqErr) {
-            console.error("친구 요청 개수 조회 실패:", reqErr);
+            logger.error("친구 요청 개수 조회 실패:", reqErr);
             // 요청 개수 조회 실패해도 친구 목록은 표시
           }
         }
 
         if (import.meta.env.DEV) {
-          console.log("👥 친구 목록:", sortedFriends);
+          logger.log("👥 친구 목록:", sortedFriends);
         }
       } catch (err) {
-        console.error("친구 목록 조회 실패:", err);
+        logger.error("친구 목록 조회 실패:", err);
         setError(
           err instanceof Error
             ? err.message
@@ -129,7 +130,7 @@ export default function FriendsPage({
   // 친구 삭제 확인 다이얼로그 열기
   const handleDeleteClick = (friendId: number, friendNickname: string) => {
     if (!friendId || friendId === undefined) {
-      console.error("친구 ID가 유효하지 않습니다:", friendId);
+      logger.error("친구 ID가 유효하지 않습니다:", friendId);
       alert("친구 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.");
       return;
     }
@@ -143,7 +144,7 @@ export default function FriendsPage({
 
     // friendId 유효성 검사
     if (!friendToDelete.id || friendToDelete.id === undefined) {
-      console.error("삭제할 친구 ID가 유효하지 않습니다:", friendToDelete);
+      logger.error("삭제할 친구 ID가 유효하지 않습니다:", friendToDelete);
       alert("친구 정보를 불러올 수 없습니다. 페이지를 새로고침해주세요.");
       setDeleteDialogOpen(false);
       setFriendToDelete(null);
@@ -162,7 +163,7 @@ export default function FriendsPage({
       matchingApi.setToken(token);
 
       if (import.meta.env.DEV) {
-        console.log("🗑️ 친구 삭제 요청:", {
+        logger.log("🗑️ 친구 삭제 요청:", {
           friendId: friendToDelete.id,
           friend: friendToDelete,
         });
@@ -179,7 +180,7 @@ export default function FriendsPage({
       setDeleteDialogOpen(false);
       setFriendToDelete(null);
     } catch (err) {
-      console.error("친구 삭제 실패:", err);
+      logger.error("친구 삭제 실패:", err);
       alert(
         err instanceof Error
           ? err.message

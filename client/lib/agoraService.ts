@@ -5,6 +5,7 @@ import AgoraRTC, {
   ConnectionState,
   ConnectionDisconnectedReason,
 } from "agora-rtc-sdk-ng";
+import { logger } from "./logger";
 
 /**
  * 네트워크 품질 등급
@@ -152,7 +153,7 @@ export class AgoraService {
     } catch (error) {
       // 에러 무시 (SDK 버전에 따라 지원하지 않을 수 있음)
       if (import.meta.env.DEV) {
-        console.log("⚠️ Agora 로그 업로드 비활성화 실패:", error);
+        logger.log("⚠️ Agora 로그 업로드 비활성화 실패:", error);
       }
     }
 
@@ -188,7 +189,7 @@ export class AgoraService {
     // 중복 입장 방지
     if (this.isJoining) {
       if (import.meta.env.DEV) {
-        console.log("⚠️ 이미 입장 중 - 중복 요청 무시");
+        logger.log("⚠️ 이미 입장 중 - 중복 요청 무시");
       }
       return;
     }
@@ -198,8 +199,8 @@ export class AgoraService {
 
       // 개발 환경에서만 상세 로그 출력 (보안상 프로덕션에서는 민감 정보 숨김)
       if (import.meta.env.DEV) {
-        console.log("🎯 Agora 채널 입장 시도");
-        console.log("📋 채널 정보 상세:", {
+        logger.log("🎯 Agora 채널 입장 시도");
+        logger.log("📋 채널 정보 상세:", {
           appId: channelInfo.appId ? "앱 ID 있음" : "앱 ID 없음",
           channelName: channelInfo.channelName ? "채널명 있음" : "채널명 없음",
           token: channelInfo.token ? "토큰 있음" : "토큰 없음",
@@ -214,7 +215,7 @@ export class AgoraService {
         this.client
       ) {
         if (import.meta.env.DEV) {
-          console.log(
+          logger.log(
             "⚠️ 이미 연결 중이거나 연결된 상태 - 기존 연결 정리 후 재시도",
           );
         }
@@ -231,13 +232,13 @@ export class AgoraService {
       // 클라이언트 생성 (기존 클라이언트가 완전히 정리되었는지 확인)
       if (this.client) {
         if (import.meta.env.DEV) {
-          console.log("⚠️ 기존 클라이언트가 아직 존재 - 강제 정리");
+          logger.log("⚠️ 기존 클라이언트가 아직 존재 - 강제 정리");
         }
         this.client = null;
       }
 
       if (import.meta.env.DEV) {
-        console.log("🔧 Agora 클라이언트 생성 중...");
+        logger.log("🔧 Agora 클라이언트 생성 중...");
       }
       this.client = AgoraRTC.createClient({
         mode: "rtc",
@@ -250,31 +251,31 @@ export class AgoraService {
         if (this.client.enableDualStream) {
           // 일부 SDK 버전에서 지원하는 설정
           if (import.meta.env.DEV) {
-            console.log("🔧 Agora 클라이언트 추가 설정 적용");
+            logger.log("🔧 Agora 클라이언트 추가 설정 적용");
           }
         }
       } catch (error) {
         // 에러 무시 (SDK 버전에 따라 지원하지 않을 수 있음)
         if (import.meta.env.DEV) {
-          console.log("⚠️ Agora 클라이언트 추가 설정 실패:", error);
+          logger.log("⚠️ Agora 클라이언트 추가 설정 실패:", error);
         }
       }
 
       // 이벤트 리스너 설정
       if (import.meta.env.DEV) {
-        console.log("📡 이벤트 리스너 설정 중...");
+        logger.log("📡 이벤트 리스너 설정 중...");
       }
       this.setupEventListeners();
 
       // 마이크 권한 요청 및 오디오 트랙 생성
       if (import.meta.env.DEV) {
-        console.log("🎤 마이크 권한 요청 및 오디오 트랙 생성 중...");
+        logger.log("🎤 마이크 권한 요청 및 오디오 트랙 생성 중...");
       }
       await this.createLocalAudioTrack();
 
       // 채널에 입장
       if (import.meta.env.DEV) {
-        console.log("🚪 Agora 채널에 입장 중...");
+        logger.log("🚪 Agora 채널에 입장 중...");
       }
       // Agora는 숫자 UID 사용을 권장함 (문자열 사용 시 SDK 경고 발생)
       const uid =
@@ -289,20 +290,20 @@ export class AgoraService {
       );
 
       if (import.meta.env.DEV) {
-        console.log("✅ Agora 채널 입장 성공");
+        logger.log("✅ Agora 채널 입장 성공");
       }
 
       // 로컬 오디오 트랙을 채널에 발행 (publish)
       if (import.meta.env.DEV) {
-        console.log("📢 로컬 오디오 트랙을 채널에 발행 중...");
+        logger.log("📢 로컬 오디오 트랙을 채널에 발행 중...");
       }
       if (this.callState.localAudioTrack) {
         await this.client.publish([this.callState.localAudioTrack]);
         if (import.meta.env.DEV) {
-          console.log("✅ 로컬 오디오 트랙 발행 성공");
+          logger.log("✅ 로컬 오디오 트랙 발행 성공");
         }
       } else {
-        console.error("❌ 로컬 오디오 트랙이 없어서 발행할 수 없음");
+        logger.error("❌ 로컬 오디오 트랙이 없어서 발행할 수 없음");
       }
 
       this.callState.isConnected = true;
@@ -313,23 +314,23 @@ export class AgoraService {
       this.callState.volume = 40;
 
       if (import.meta.env.DEV) {
-        console.log("🔔 onCallStarted 콜백 호출 중...");
+        logger.log("🔔 onCallStarted 콜백 호출 중...");
       }
       this.callbacks.onCallStarted?.();
       if (import.meta.env.DEV) {
-        console.log("✅ onCallStarted 콜백 호출 완료");
+        logger.log("✅ onCallStarted 콜백 호출 완료");
       }
 
       // 무응답 감지 타이머 시작
       this.startInactivityTimer();
       if (import.meta.env.DEV) {
-        console.log("⏰ 무응답 감지 타이머 시작 (5분)");
+        logger.log("⏰ 무응답 감지 타이머 시작 (5분)");
       }
 
       // 입장 완료 - 플래그 해제
       this.isJoining = false;
     } catch (error) {
-      console.error("❌ Agora 채널 입장 실패:", error);
+      logger.error("❌ Agora 채널 입장 실패:", error);
       this.callState.isConnecting = false;
       this.isJoining = false; // 에러 시에도 플래그 해제
       this.callbacks.onError?.(error as Error);
@@ -343,7 +344,7 @@ export class AgoraService {
   private async forceLeaveChannel(): Promise<void> {
     try {
       if (import.meta.env.DEV) {
-        console.log("🔄 강제 채널 퇴장 시작");
+        logger.log("🔄 강제 채널 퇴장 시작");
       }
 
       // 1. 로컬 오디오 트랙 정리
@@ -354,7 +355,7 @@ export class AgoraService {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.log("⚠️ unpublish 에러 무시:", error);
+            logger.log("⚠️ unpublish 에러 무시:", error);
           }
         }
 
@@ -363,7 +364,7 @@ export class AgoraService {
           this.callState.localAudioTrack.close();
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.log("⚠️ 오디오 트랙 정리 에러 무시:", error);
+            logger.log("⚠️ 오디오 트랙 정리 에러 무시:", error);
           }
         }
         this.callState.localAudioTrack = null;
@@ -392,11 +393,11 @@ export class AgoraService {
           await Promise.race([leavePromise, timeoutPromise]);
 
           if (import.meta.env.DEV) {
-            console.log("✅ 클라이언트 퇴장 성공");
+            logger.log("✅ 클라이언트 퇴장 성공");
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.log("⚠️ 클라이언트 퇴장 에러 무시:", error);
+            logger.log("⚠️ 클라이언트 퇴장 에러 무시:", error);
           }
         }
 
@@ -419,10 +420,10 @@ export class AgoraService {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (import.meta.env.DEV) {
-        console.log("✅ 강제 채널 퇴장 완료");
+        logger.log("✅ 강제 채널 퇴장 완료");
       }
     } catch (error) {
-      console.error("❌ 강제 채널 퇴장 실패:", error);
+      logger.error("❌ 강제 채널 퇴장 실패:", error);
       // 실패해도 상태는 강제 초기화
       this.stopInactivityTimer();
       this.callState.isConnected = false;
@@ -452,7 +453,7 @@ export class AgoraService {
       const timeSinceLastActivity = now - this.lastActivityTime;
 
       if (timeSinceLastActivity >= this.INACTIVITY_TIMEOUT) {
-        console.warn("⚠️ 5분간 활동이 없어 통화를 자동 종료합니다 (비용 방어)");
+        logger.warn("⚠️ 5분간 활동이 없어 통화를 자동 종료합니다 (비용 방어)");
         this.handleInactivityTimeout();
       }
     }, 30000); // 30초마다 체크
@@ -481,7 +482,7 @@ export class AgoraService {
    */
   private async handleInactivityTimeout(): Promise<void> {
     try {
-      console.warn("🚨 무응답 타임아웃 - 통화 자동 종료");
+      logger.warn("🚨 무응답 타임아웃 - 통화 자동 종료");
 
       // 에러 콜백 호출
       this.callbacks.onError?.(
@@ -491,7 +492,7 @@ export class AgoraService {
       // 채널에서 퇴장
       await this.leaveChannel();
     } catch (error) {
-      console.error("무응답 타임아웃 처리 실패:", error);
+      logger.error("무응답 타임아웃 처리 실패:", error);
     }
   }
 
@@ -501,7 +502,7 @@ export class AgoraService {
   async leaveChannel(): Promise<void> {
     try {
       if (import.meta.env.DEV) {
-        console.log("Agora 채널 퇴장");
+        logger.log("Agora 채널 퇴장");
       }
 
       // 무응답 감지 타이머 정지
@@ -510,15 +511,15 @@ export class AgoraService {
       // 로컬 오디오 트랙 발행 해제 및 해제
       if (this.callState.localAudioTrack && this.client) {
         if (import.meta.env.DEV) {
-          console.log("📢 로컬 오디오 트랙 발행 해제 중...");
+          logger.log("📢 로컬 오디오 트랙 발행 해제 중...");
         }
         try {
           await this.client.unpublish([this.callState.localAudioTrack]);
           if (import.meta.env.DEV) {
-            console.log("✅ 로컬 오디오 트랙 발행 해제 완료");
+            logger.log("✅ 로컬 오디오 트랙 발행 해제 완료");
           }
         } catch (error) {
-          console.error("❌ 로컬 오디오 트랙 발행 해제 실패:", error);
+          logger.error("❌ 로컬 오디오 트랙 발행 해제 실패:", error);
         }
 
         // unpublish 후 트랙이 이미 정리되었을 수 있으므로 안전하게 처리
@@ -531,7 +532,7 @@ export class AgoraService {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.warn("⚠️ 로컬 오디오 트랙 stop 실패 (정상적인 상황일 수 있음):", error);
+            logger.warn("⚠️ 로컬 오디오 트랙 stop 실패 (정상적인 상황일 수 있음):", error);
           }
         }
         
@@ -541,7 +542,7 @@ export class AgoraService {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.warn("⚠️ 로컬 오디오 트랙 close 실패 (정상적인 상황일 수 있음):", error);
+            logger.warn("⚠️ 로컬 오디오 트랙 close 실패 (정상적인 상황일 수 있음):", error);
           }
         }
       }
@@ -557,7 +558,7 @@ export class AgoraService {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.warn("⚠️ 리모트 오디오 트랙 stop 실패 (정상적인 상황일 수 있음):", error);
+            logger.warn("⚠️ 리모트 오디오 트랙 stop 실패 (정상적인 상황일 수 있음):", error);
           }
         }
       }
@@ -578,7 +579,7 @@ export class AgoraService {
 
           await this.client.leave();
         } catch (error) {
-          console.error("❌ 클라이언트 퇴장 실패:", error);
+          logger.error("❌ 클라이언트 퇴장 실패:", error);
         }
         this.client = null;
       }
@@ -604,10 +605,10 @@ export class AgoraService {
       this.callbacks.onCallEnded?.();
 
       if (import.meta.env.DEV) {
-        console.log("Agora 채널 퇴장 완료");
+        logger.log("Agora 채널 퇴장 완료");
       }
     } catch (error) {
-      console.error("Agora 채널 퇴장 실패:", error);
+      logger.error("Agora 채널 퇴장 실패:", error);
       this.callbacks.onError?.(error as Error);
       throw error;
     }
@@ -627,12 +628,12 @@ export class AgoraService {
 
       this.callState.isMuted = newMutedState;
       if (import.meta.env.DEV) {
-        console.log(`마이크 ${newMutedState ? "음소거" : "해제"}`);
+        logger.log(`마이크 ${newMutedState ? "음소거" : "해제"}`);
       }
 
       return newMutedState;
     } catch (error) {
-      console.error("마이크 토글 실패:", error);
+      logger.error("마이크 토글 실패:", error);
       this.callbacks.onError?.(error as Error);
       throw error;
     }
@@ -650,10 +651,10 @@ export class AgoraService {
       await this.callState.localAudioTrack.setMuted(muted);
       this.callState.isMuted = muted;
       if (import.meta.env.DEV) {
-        console.log(`마이크 ${muted ? "음소거" : "해제"}`);
+        logger.log(`마이크 ${muted ? "음소거" : "해제"}`);
       }
     } catch (error) {
-      console.error("마이크 상태 설정 실패:", error);
+      logger.error("마이크 상태 설정 실패:", error);
       this.callbacks.onError?.(error as Error);
       throw error;
     }
@@ -677,7 +678,7 @@ export class AgoraService {
           // 볼륨 설정 (가장 중요 - 먼저 설정)
           await this.callState.remoteAudioTrack.setVolume(speakerVolume);
           if (import.meta.env.DEV) {
-            console.log(`리모트 오디오 트랙 볼륨 설정: ${speakerVolume}%`);
+            logger.log(`리모트 오디오 트랙 볼륨 설정: ${speakerVolume}%`);
           }
 
           // 방법 1: HTMLAudioElement의 setSinkId 사용 (브라우저 지원 필요)
@@ -737,7 +738,7 @@ export class AgoraService {
                 // setSinkId로 오디오 출력 장치 변경
                 await (audioElement as any).setSinkId(targetDeviceId);
                 if (import.meta.env.DEV) {
-                  console.log(
+                  logger.log(
                     `오디오 출력 장치 변경 (setSinkId): ${targetDeviceId}`,
                   );
                 }
@@ -745,25 +746,25 @@ export class AgoraService {
             } catch (sinkError) {
               // setSinkId가 지원되지 않거나 실패한 경우 무시 (볼륨은 이미 설정됨)
               if (import.meta.env.DEV) {
-                console.log("setSinkId 미지원 또는 실패 (무시):", sinkError);
+                logger.log("setSinkId 미지원 또는 실패 (무시):", sinkError);
               }
             }
           }
         } catch (deviceError) {
           // 오디오 장치 API가 지원되지 않는 경우 볼륨만 조절
           if (import.meta.env.DEV) {
-            console.log("오디오 장치 API 미지원, 볼륨만 조절:", deviceError);
+            logger.log("오디오 장치 API 미지원, 볼륨만 조절:", deviceError);
           }
           // 볼륨 설정 재시도
           try {
             await this.callState.remoteAudioTrack.setVolume(speakerVolume);
           } catch (volumeError) {
-            console.error("볼륨 설정 실패:", volumeError);
+            logger.error("볼륨 설정 실패:", volumeError);
           }
         }
       } else {
         if (import.meta.env.DEV) {
-          console.log("리모트 오디오 트랙이 없어 볼륨을 설정할 수 없음");
+          logger.log("리모트 오디오 트랙이 없어 볼륨을 설정할 수 없음");
         }
       }
 
@@ -789,12 +790,12 @@ export class AgoraService {
                 } as any);
 
                 if (import.meta.env.DEV) {
-                  console.log(`마이크 게인 조절: ${volumeConstraint}`);
+                  logger.log(`마이크 게인 조절: ${volumeConstraint}`);
                 }
               } catch (constraintError) {
                 // applyConstraints 실패는 무시 (모든 브라우저에서 지원되지 않을 수 있음)
                 if (import.meta.env.DEV) {
-                  console.log("마이크 게인 조절 실패 (무시):", constraintError);
+                  logger.log("마이크 게인 조절 실패 (무시):", constraintError);
                 }
               }
             } else {
@@ -811,12 +812,12 @@ export class AgoraService {
                 );
 
                 if (import.meta.env.DEV) {
-                  console.log(`마이크 트랙 레벨 조절: ${trackVolume}%`);
+                  logger.log(`마이크 트랙 레벨 조절: ${trackVolume}%`);
                 }
               } catch (volumeError) {
                 // setVolume 실패는 무시
                 if (import.meta.env.DEV) {
-                  console.log(
+                  logger.log(
                     "마이크 트랙 레벨 조절 실패 (무시):",
                     volumeError,
                   );
@@ -827,7 +828,7 @@ export class AgoraService {
         } catch (micError) {
           // 마이크 게인 조절 실패는 무시 (모든 브라우저에서 지원되지 않을 수 있음)
           if (import.meta.env.DEV) {
-            console.log("마이크 게인 조절 실패 (무시):", micError);
+            logger.log("마이크 게인 조절 실패 (무시):", micError);
           }
         }
       }
@@ -836,14 +837,14 @@ export class AgoraService {
       this.callState.volume = speakerVolume;
 
       if (import.meta.env.DEV) {
-        console.log(
+        logger.log(
           `스피커폰 ${newSpeakerState ? "켜짐" : "꺼짐"} - 볼륨: ${speakerVolume}%`,
         );
       }
 
       return newSpeakerState;
     } catch (error) {
-      console.error("스피커폰 토글 실패:", error);
+      logger.error("스피커폰 토글 실패:", error);
       this.callbacks.onError?.(error as Error);
       throw error;
     }
@@ -866,10 +867,10 @@ export class AgoraService {
       }
 
       if (import.meta.env.DEV) {
-        console.log(`음량 설정: ${volume}%`);
+        logger.log(`음량 설정: ${volume}%`);
       }
     } catch (error) {
-      console.error("음량 설정 실패:", error);
+      logger.error("음량 설정 실패:", error);
       this.callbacks.onError?.(error as Error);
       throw error;
     }
@@ -881,7 +882,7 @@ export class AgoraService {
   private async createLocalAudioTrack(): Promise<void> {
     try {
       if (import.meta.env.DEV) {
-        console.log("마이크 권한 요청 중...");
+        logger.log("마이크 권한 요청 중...");
       }
 
       this.callState.localAudioTrack =
@@ -896,10 +897,10 @@ export class AgoraService {
       this.microphoneRetryCount = 0;
 
       if (import.meta.env.DEV) {
-        console.log("로컬 오디오 트랙 생성 성공");
+        logger.log("로컬 오디오 트랙 생성 성공");
       }
     } catch (error) {
-      console.error("로컬 오디오 트랙 생성 실패:", error);
+      logger.error("로컬 오디오 트랙 생성 실패:", error);
 
       // 마이크 권한 거부 에러 체크
       if (
@@ -908,13 +909,13 @@ export class AgoraService {
           error.message.includes("NotAllowedError") ||
           error.message.includes("PERMISSION_DENIED"))
       ) {
-        console.error("❌ 마이크 권한이 거부되었습니다");
+        logger.error("❌ 마이크 권한이 거부되었습니다");
         this.callbacks.onMicrophonePermissionDenied?.();
 
         // 재시도 로직
         if (this.microphoneRetryCount < this.MAX_MICROPHONE_RETRY) {
           this.microphoneRetryCount++;
-          console.warn(
+          logger.warn(
             `⚠️ 마이크 권한 재시도 중... (${this.microphoneRetryCount}/${this.MAX_MICROPHONE_RETRY})`,
           );
 
@@ -937,14 +938,14 @@ export class AgoraService {
     // 연결 상태 변경
     this.client.on("connection-state-change", (curState, revState, reason) => {
       if (import.meta.env.DEV) {
-        console.log("🔗 Agora 연결 상태 변경:", { curState, revState, reason });
+        logger.log("🔗 Agora 연결 상태 변경:", { curState, revState, reason });
       }
       this.callState.connectionState = curState;
       this.callbacks.onConnectionStateChange?.(curState);
 
       if (curState === "CONNECTED") {
         if (import.meta.env.DEV) {
-          console.log("✅ Agora 채널 연결 성공");
+          logger.log("✅ Agora 채널 연결 성공");
         }
       }
 
@@ -953,15 +954,15 @@ export class AgoraService {
         this.callState.isConnected = false;
         if (reason === "LEAVE") {
           if (import.meta.env.DEV) {
-            console.log("🚪 사용자가 채널을 떠남");
+            logger.log("🚪 사용자가 채널을 떠남");
           }
           // 정상 퇴장 시 재연결 카운터 초기화
           this.reconnectAttempts = 0;
           this.isReconnecting = false;
         } else {
-          console.error("❌ 연결이 예상치 못하게 끊어짐:", reason);
+          logger.error("❌ 연결이 예상치 못하게 끊어짐:", reason);
           if (import.meta.env.DEV) {
-            console.error("❌ 연결 끊어짐 상세 정보:", {
+            logger.error("❌ 연결 끊어짐 상세 정보:", {
               curState,
               revState,
               reason,
@@ -977,7 +978,7 @@ export class AgoraService {
     // 사용자 입장
     this.client.on("user-joined", (user) => {
       if (import.meta.env.DEV) {
-        console.log("사용자 입장:", user.uid);
+        logger.log("사용자 입장:", user.uid);
       }
       this.callbacks.onUserJoined?.(user.uid.toString());
     });
@@ -985,7 +986,7 @@ export class AgoraService {
     // 사용자 퇴장
     this.client.on("user-left", (user, reason) => {
       if (import.meta.env.DEV) {
-        console.log("사용자 퇴장:", user.uid, reason);
+        logger.log("사용자 퇴장:", user.uid, reason);
       }
       this.callbacks.onUserLeft?.(user.uid.toString());
     });
@@ -993,7 +994,7 @@ export class AgoraService {
     // 오디오 트랙 구독
     this.client.on("user-published", async (user, mediaType) => {
       if (import.meta.env.DEV) {
-        console.log(
+        logger.log(
           "👤 사용자 오디오 트랙 발행:",
           user.uid,
           "타입:",
@@ -1003,22 +1004,22 @@ export class AgoraService {
 
       if (mediaType === "audio") {
         if (import.meta.env.DEV) {
-          console.log("🔊 오디오 트랙 구독 시작...");
+          logger.log("🔊 오디오 트랙 구독 시작...");
         }
         await this.client!.subscribe(user, mediaType);
         if (import.meta.env.DEV) {
-          console.log("✅ 오디오 트랙 구독 완료");
+          logger.log("✅ 오디오 트랙 구독 완료");
         }
 
         // 구독한 오디오 트랙 자동 재생
         const remoteAudioTrack = user.audioTrack;
         if (remoteAudioTrack) {
           if (import.meta.env.DEV) {
-            console.log("🔊 원격 오디오 트랙 재생 시작...");
+            logger.log("🔊 원격 오디오 트랙 재생 시작...");
           }
           remoteAudioTrack.play();
           if (import.meta.env.DEV) {
-            console.log("✅ 원격 오디오 트랙 재생 성공");
+            logger.log("✅ 원격 오디오 트랙 재생 성공");
           }
 
           // 활동 시간 갱신 (오디오 트랙 수신)
@@ -1030,7 +1031,7 @@ export class AgoraService {
     // 오디오 트랙 구독 성공
     this.client.on("user-unpublished", (user, mediaType) => {
       if (import.meta.env.DEV) {
-        console.log("사용자 오디오 트랙 구독 해제:", user.uid);
+        logger.log("사용자 오디오 트랙 구독 해제:", user.uid);
       }
 
       if (mediaType === "audio") {
@@ -1041,7 +1042,7 @@ export class AgoraService {
     // 구독한 오디오 트랙
     this.client.on("user-audio-track-subscribed", (user, audioTrack) => {
       if (import.meta.env.DEV) {
-        console.log("오디오 트랙 구독 성공:", user.uid);
+        logger.log("오디오 트랙 구독 성공:", user.uid);
       }
       this.callState.remoteAudioTrack = audioTrack;
       this.callbacks.onAudioTrackSubscribed?.(user.uid.toString(), audioTrack);
@@ -1053,7 +1054,7 @@ export class AgoraService {
         audioTrack.setVolume(initialVolume);
         this.callState.volume = initialVolume;
         if (import.meta.env.DEV) {
-          console.log(
+          logger.log(
             `리모트 오디오 트랙 초기 볼륨 설정: ${initialVolume}% (스피커폰: ${this.callState.isSpeakerOn ? "ON" : "OFF"})`,
           );
         }
@@ -1063,13 +1064,13 @@ export class AgoraService {
           try {
             audioTrack.setVolume(initialVolume);
             if (import.meta.env.DEV) {
-              console.log(
+              logger.log(
                 `리모트 오디오 트랙 볼륨 재설정 (확인): ${initialVolume}%`,
               );
             }
           } catch (retryError) {
             if (import.meta.env.DEV) {
-              console.log(
+              logger.log(
                 "리모트 오디오 트랙 볼륨 재설정 실패 (무시):",
                 retryError,
               );
@@ -1078,7 +1079,7 @@ export class AgoraService {
         }, 100);
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.log("리모트 오디오 트랙 초기 볼륨 설정 실패 (무시):", error);
+          logger.log("리모트 오디오 트랙 초기 볼륨 설정 실패 (무시):", error);
         }
       }
 
@@ -1088,11 +1089,11 @@ export class AgoraService {
 
     // 토큰 만료 30초 전 알림 (토큰 갱신 시도)
     this.client.on("token-privilege-will-expire", () => {
-      console.warn("⚠️ Agora RTC 토큰이 30초 후 만료됩니다 - 갱신 필요");
+      logger.warn("⚠️ Agora RTC 토큰이 30초 후 만료됩니다 - 갱신 필요");
 
       if (this.isRenewingToken) {
         if (import.meta.env.DEV) {
-          console.log("이미 토큰 갱신 중 - 중복 요청 무시");
+          logger.log("이미 토큰 갱신 중 - 중복 요청 무시");
         }
         return;
       }
@@ -1103,7 +1104,7 @@ export class AgoraService {
 
     // 토큰 만료됨 (긴급 상황)
     this.client.on("token-privilege-did-expire", () => {
-      console.error("❌ Agora RTC 토큰이 만료되었습니다 - 통화 종료 필요");
+      logger.error("❌ Agora RTC 토큰이 만료되었습니다 - 통화 종료 필요");
       this.callbacks.onTokenPrivilegeDidExpire?.();
     });
 
@@ -1126,7 +1127,7 @@ export class AgoraService {
           stats.uplinkNetworkQuality >= 4 ||
           stats.downlinkNetworkQuality >= 4
         ) {
-          console.warn("⚠️ 네트워크 품질 저하:", {
+          logger.warn("⚠️ 네트워크 품질 저하:", {
             uplink: this.getNetworkQualityLabel(
               stats.uplinkNetworkQuality as NetworkQuality,
             ),
@@ -1143,10 +1144,10 @@ export class AgoraService {
 
     // SDK 내부 예외 감지
     this.client.on("exception", (event: any) => {
-      console.error("⚠️ Agora SDK 예외 발생:", event);
+      logger.error("⚠️ Agora SDK 예외 발생:", event);
 
       if (import.meta.env.DEV) {
-        console.error("예외 상세:", {
+        logger.error("예외 상세:", {
           code: event.code,
           msg: event.msg,
           uid: event.uid,
@@ -1199,14 +1200,14 @@ export class AgoraService {
     // 이미 재연결 중이면 무시
     if (this.isReconnecting) {
       if (import.meta.env.DEV) {
-        console.log("⚠️ 이미 재연결 시도 중");
+        logger.log("⚠️ 이미 재연결 시도 중");
       }
       return;
     }
 
     // 최대 재연결 시도 횟수 초과
     if (this.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-      console.error(
+      logger.error(
         `❌ 최대 재연결 시도 횟수(${this.MAX_RECONNECT_ATTEMPTS})를 초과했습니다`,
       );
       this.callbacks.onError?.(
@@ -1220,7 +1221,7 @@ export class AgoraService {
     this.isReconnecting = true;
     this.reconnectAttempts++;
 
-    console.warn(
+    logger.warn(
       `🔄 재연결 시도 중... (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS})`,
     );
 
@@ -1231,7 +1232,7 @@ export class AgoraService {
       // 현재 채널 정보가 있으면 재연결 시도
       if (this.currentChannelInfo && this.client) {
         if (import.meta.env.DEV) {
-          console.log("🔄 Agora 채널 재입장 시도");
+          logger.log("🔄 Agora 채널 재입장 시도");
         }
 
         // 재입장 시도 (UID는 숫자로 전달)
@@ -1257,15 +1258,15 @@ export class AgoraService {
         this.isReconnecting = false;
 
         // 재연결 성공 - 카운터는 유지 (완전히 안정화될 때까지)
-        console.log("✅ 재연결 성공");
+        logger.log("✅ 재연결 성공");
       }
     } catch (error) {
-      console.error("❌ 재연결 실패:", error);
+      logger.error("❌ 재연결 실패:", error);
       this.isReconnecting = false;
 
       // 재시도 가능하면 다시 시도
       if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
-        console.warn("⏰ 3초 후 재연결 재시도...");
+        logger.warn("⏰ 3초 후 재연결 재시도...");
         setTimeout(() => {
           this.handleUnexpectedDisconnection(reason);
         }, 3000);
@@ -1286,12 +1287,12 @@ export class AgoraService {
   async getCallStatistics(): Promise<CallStatistics | null> {
     try {
       if (!this.client) {
-        console.warn("⚠️ Agora 클라이언트가 없어 통계 수집 불가");
+        logger.warn("⚠️ Agora 클라이언트가 없어 통계 수집 불가");
         return null;
       }
 
       if (import.meta.env.DEV) {
-        console.log("📊 통화 통계 수집 시작");
+        logger.log("📊 통화 통계 수집 시작");
       }
 
       // Agora SDK에서 RTC 통계 가져오기
@@ -1304,7 +1305,7 @@ export class AgoraService {
           localAudioStats = this.callState.localAudioTrack.getStats();
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.log("⚠️ 로컬 오디오 통계 수집 실패:", error);
+            logger.log("⚠️ 로컬 오디오 통계 수집 실패:", error);
           }
         }
       }
@@ -1316,7 +1317,7 @@ export class AgoraService {
           remoteAudioStats = this.callState.remoteAudioTrack.getStats();
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.log("⚠️ 리모트 오디오 통계 수집 실패:", error);
+            logger.log("⚠️ 리모트 오디오 통계 수집 실패:", error);
           }
         }
       }
@@ -1347,7 +1348,7 @@ export class AgoraService {
       };
 
       if (import.meta.env.DEV) {
-        console.log("✅ 통화 통계 수집 완료:", {
+        logger.log("✅ 통화 통계 수집 완료:", {
           duration: `${statistics.duration}초`,
           sendBytes: `${Math.round((statistics.sendBytes || 0) / 1024)}KB`,
           receiveBytes: `${Math.round((statistics.receiveBytes || 0) / 1024)}KB`,
@@ -1364,7 +1365,7 @@ export class AgoraService {
 
       return statistics;
     } catch (error) {
-      console.error("❌ 통화 통계 수집 실패:", error);
+      logger.error("❌ 통화 통계 수집 실패:", error);
       return null;
     }
   }
@@ -1380,7 +1381,7 @@ export class AgoraService {
       }
 
       if (import.meta.env.DEV) {
-        console.log("🔄 Agora RTC 토큰 갱신 시작");
+        logger.log("🔄 Agora RTC 토큰 갱신 시작");
       }
 
       // Agora SDK의 renewToken 메서드 호출
@@ -1394,11 +1395,11 @@ export class AgoraService {
       this.isRenewingToken = false;
 
       if (import.meta.env.DEV) {
-        console.log("✅ Agora RTC 토큰 갱신 완료");
+        logger.log("✅ Agora RTC 토큰 갱신 완료");
       }
     } catch (error) {
       this.isRenewingToken = false;
-      console.error("❌ Agora RTC 토큰 갱신 실패:", error);
+      logger.error("❌ Agora RTC 토큰 갱신 실패:", error);
       throw error;
     }
   }
@@ -1418,7 +1419,7 @@ export class AgoraService {
       await this.leaveChannel();
       this.callbacks = {};
     } catch (error) {
-      console.error("Agora 서비스 정리 실패:", error);
+      logger.error("Agora 서비스 정리 실패:", error);
     }
   }
 }

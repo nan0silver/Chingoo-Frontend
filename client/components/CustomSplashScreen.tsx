@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { SplashScreen } from "@capacitor/splash-screen";
+import { logger } from "@/lib/logger";
 
 interface CustomSplashScreenProps {
   onComplete: () => void;
@@ -56,11 +57,9 @@ export const CustomSplashScreen = ({
         await SplashScreen.hide();
       } catch (error) {
         // 웹 환경에서는 에러가 발생할 수 있으므로 무시
-        if (import.meta.env.DEV) {
-          console.log(
-            "네이티브 스플래시 스크린 숨기기 실패 (웹 환경일 수 있음)",
-          );
-        }
+        logger.log(
+          "네이티브 스플래시 스크린 숨기기 실패 (웹 환경일 수 있음)",
+        );
       }
     };
 
@@ -175,7 +174,7 @@ export const CustomSplashScreen = ({
                 onError={(e) => {
                   // 이미지 로드 실패 시 기본 이미지로 대체
                   if (import.meta.env.DEV) {
-                    console.warn(`스플래시 아이콘 로드 실패: ${icon}`);
+                    logger.warn(`스플래시 아이콘 로드 실패: ${icon}`);
                   }
                 }}
               />

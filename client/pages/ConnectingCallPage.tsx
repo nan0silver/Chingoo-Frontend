@@ -3,6 +3,7 @@ import { useMatchingStore } from "@/lib/matchingStore";
 import { useCall } from "@/lib/useCall";
 import { getWebSocketService } from "@/lib/websocket";
 import { getCategoryDisplayName } from "@shared/api";
+import { logger } from "@/lib/logger";
 
 interface ConnectingCallPageProps {
   selectedCategory: string | null;
@@ -57,7 +58,7 @@ export default function ConnectingCallPage({
         processedNotifications.current.has(notification.callId)
       ) {
         if (import.meta.env.DEV) {
-          console.log(
+          logger.log(
             "⚠️ ConnectingCallPage: 이미 처리된 알림 - 무시",
             notification.callId,
           );
@@ -68,7 +69,7 @@ export default function ConnectingCallPage({
       // 이미 통화 중이거나 연결 중인지 확인
       if (isInCall || isConnecting) {
         if (import.meta.env.DEV) {
-          console.log("⚠️ ConnectingCallPage: 이미 통화 중 - 알림 무시");
+          logger.log("⚠️ ConnectingCallPage: 이미 통화 중 - 알림 무시");
         }
         return;
       }
@@ -79,12 +80,12 @@ export default function ConnectingCallPage({
       }
 
       if (import.meta.env.DEV) {
-        console.log("🔔 ConnectingCallPage에서 통화 시작 알림 수신");
+        logger.log("🔔 ConnectingCallPage에서 통화 시작 알림 수신");
       }
 
       // useCall의 handleCallStart 함수 호출
       if (import.meta.env.DEV) {
-        console.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
+        logger.log("🎯 ConnectingCallPage에서 handleCallStart 호출");
       }
       handleCallStart(notification);
     },
@@ -94,14 +95,14 @@ export default function ConnectingCallPage({
   // 매칭 알림 핸들러 (useCallback으로 메모이제이션)
   const handleMatchingNotification = useCallback((notification: any) => {
     if (import.meta.env.DEV) {
-      console.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
+      logger.log("🔔 ConnectingCallPage에서 매칭 알림 수신:", notification);
     }
   }, []);
 
   // WebSocket 알림 수신 (언마운트 시 콜백 제거로 누적 방지)
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log("🔧 ConnectingCallPage - WebSocket 콜백 등록");
+      logger.log("🔧 ConnectingCallPage - WebSocket 콜백 등록");
     }
     webSocketService.onCallStartNotificationCallback(
       handleCallStartNotification,
@@ -114,7 +115,7 @@ export default function ConnectingCallPage({
       );
       webSocketService.removeMatchingNotificationCallback(handleMatchingNotification);
       if (import.meta.env.DEV) {
-        console.log("🔧 ConnectingCallPage - WebSocket 콜백 정리");
+        logger.log("🔧 ConnectingCallPage - WebSocket 콜백 정리");
       }
     };
   }, [
@@ -128,11 +129,11 @@ export default function ConnectingCallPage({
     if (isConnecting && !isInCall) {
       // 연결 중일 때 타임아웃 타이머 시작
       if (import.meta.env.DEV) {
-        console.log("⏰ 연결 타임아웃 타이머 시작 (30초)");
+        logger.log("⏰ 연결 타임아웃 타이머 시작 (30초)");
       }
 
       connectionTimeoutRef.current = setTimeout(() => {
-        console.warn("⚠️ 연결 타임아웃 (30초) - 자동 취소 (비용 방어)");
+        logger.warn("⚠️ 연결 타임아웃 (30초) - 자동 취소 (비용 방어)");
         alert("통화 연결 시간이 초과되었습니다. 다시 시도해주세요.");
         onCancel();
       }, CONNECTION_TIMEOUT);
@@ -142,7 +143,7 @@ export default function ConnectingCallPage({
         clearTimeout(connectionTimeoutRef.current);
         connectionTimeoutRef.current = null;
         if (import.meta.env.DEV) {
-          console.log("⏰ 연결 타임아웃 타이머 정리");
+          logger.log("⏰ 연결 타임아웃 타이머 정리");
         }
       }
     }
@@ -159,7 +160,7 @@ export default function ConnectingCallPage({
   // 에러 발생 시 처리
   useEffect(() => {
     if (error) {
-      console.error("통화 연결 에러:", error);
+      logger.error("통화 연결 에러:", error);
       // 에러 발생 시 사용자에게 알림 (필요시 토스트 메시지 등으로 처리)
     }
   }, [error]);
@@ -221,10 +222,10 @@ export default function ConnectingCallPage({
       try {
         saveMatchingToStorage();
         if (import.meta.env.DEV) {
-          console.log("💾 beforeunload: 매칭 정보 저장 완료 (API 호출 없음)");
+          logger.log("💾 beforeunload: 매칭 정보 저장 완료 (API 호출 없음)");
         }
       } catch (error) {
-        console.error("beforeunload: 매칭 정보 저장 실패:", error);
+        logger.error("beforeunload: 매칭 정보 저장 실패:", error);
       }
 
       return e.returnValue;
@@ -235,7 +236,7 @@ export default function ConnectingCallPage({
       // 매칭 정보는 beforeunload에서 이미 저장되었으므로
       // 여기서는 아무 작업도 하지 않음 (API 호출 없음)
       if (import.meta.env.DEV) {
-        console.log(
+        logger.log(
           "⚠️ 페이지 언로드 감지 - 매칭 정보는 이미 저장됨 (API 호출 없음)",
         );
       }

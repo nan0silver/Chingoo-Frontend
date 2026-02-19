@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { checkAuthentication, getStoredUserInfo } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
+import { logger } from "@/lib/logger";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -43,7 +44,7 @@ export default function AuthGuard({
 
         setIsLoading(false);
       } catch (error) {
-        console.error("인증 확인 실패:", error);
+        logger.error("인증 확인 실패:", error);
         navigate("/login");
       }
     };

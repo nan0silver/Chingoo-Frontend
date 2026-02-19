@@ -41,7 +41,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
       // 로그인 성공 - 메인 페이지로 이동
       onLogin();
     } catch (error) {
-      console.error("로그인 오류:", error);
+      logger.error("로그인 오류:", error);
       // 에러 메시지를 팝업 알림으로 표시
       const errorMessage =
         error instanceof Error

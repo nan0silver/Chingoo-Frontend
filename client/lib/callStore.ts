@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { CallStartNotification } from "@shared/api";
 import { AgoraCallState } from "./agoraService";
+import { logger } from "./logger";
 
 /**
  * 통화 상태
@@ -139,7 +140,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
   startCall: (notification: CallStartNotification) => {
     if (import.meta.env.DEV) {
-      console.log("🏪 callStore.startCall 호출");
+      logger.log("🏪 callStore.startCall 호출");
     }
 
     // 백엔드 데이터를 프론트엔드 형식으로 변환
@@ -185,15 +186,15 @@ export const useCallStore = create<CallStore>((set, get) => ({
     // localStorage 저장은 Agora 채널 입장 성공 후에 수행 (onCallStarted 콜백에서)
 
     if (import.meta.env.DEV) {
-      console.log("🏪 callStore 상태 업데이트 완료");
+      logger.log("🏪 callStore 상태 업데이트 완료");
     }
   },
 
   endCall: () => {
     const currentState = get();
     if (import.meta.env.DEV) {
-      console.log("🏪 [callStore.endCall] 통화 종료 호출됨");
-      console.log("🏪 [callStore.endCall] 호출 전 상태:", {
+      logger.log("🏪 [callStore.endCall] 통화 종료 호출됨");
+      logger.log("🏪 [callStore.endCall] 호출 전 상태:", {
         isInCall: currentState.isInCall,
         callId: currentState.callId,
         hasPartner: !!currentState.partner,
@@ -230,12 +231,12 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
     const newState = get();
     if (import.meta.env.DEV) {
-      console.log("🏪 [callStore.endCall] 호출 후 상태:", {
+      logger.log("🏪 [callStore.endCall] 호출 후 상태:", {
         isInCall: newState.isInCall,
         callId: newState.callId,
         hasPartner: !!newState.partner,
       });
-      console.log("🏪 [callStore.endCall] 통화 종료 완료");
+      logger.log("🏪 [callStore.endCall] 통화 종료 완료");
     }
   },
 
@@ -257,7 +258,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
   clearPartner: () => {
     if (import.meta.env.DEV) {
-      console.log("partner 정보 및 callId 삭제");
+      logger.log("partner 정보 및 callId 삭제");
     }
     set({ partner: null, callId: null });
     // localStorage에서도 삭제
@@ -298,12 +299,12 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(storedInfo));
       if (import.meta.env.DEV) {
-        console.log("💾 통화 정보 localStorage에 저장 완료", {
+        logger.log("💾 통화 정보 localStorage에 저장 완료", {
           categoryName: categoryToSave,
         });
       }
     } catch (error) {
-      console.error("통화 정보 저장 실패:", error);
+      logger.error("통화 정보 저장 실패:", error);
     }
   },
 
@@ -323,14 +324,14 @@ export const useCallStore = create<CallStore>((set, get) => ({
       if (elapsed >= THIRTY_SECONDS) {
         // 30초 초과 - 만료됨, 삭제
         if (import.meta.env.DEV) {
-          console.log("⏰ 저장된 통화 정보가 30초 초과 - 만료됨, 삭제");
+          logger.log("⏰ 저장된 통화 정보가 30초 초과 - 만료됨, 삭제");
         }
         get().clearCallFromStorage();
         return null;
       }
 
       if (import.meta.env.DEV) {
-        console.log(
+        logger.log(
           "💾 localStorage에서 통화 정보 복원:",
           storedInfo,
           `(경과 시간: ${Math.round(elapsed / 1000)}초)`,
@@ -339,7 +340,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
       return storedInfo;
     } catch (error) {
-      console.error("통화 정보 복원 실패:", error);
+      logger.error("통화 정보 복원 실패:", error);
       get().clearCallFromStorage();
       return null;
     }
@@ -349,10 +350,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
     try {
       localStorage.removeItem(STORAGE_KEY);
       if (import.meta.env.DEV) {
-        console.log("🗑️ localStorage에서 통화 정보 삭제 완료");
+        logger.log("🗑️ localStorage에서 통화 정보 삭제 완료");
       }
     } catch (error) {
-      console.error("통화 정보 삭제 실패:", error);
+      logger.error("통화 정보 삭제 실패:", error);
     }
   },
 }));

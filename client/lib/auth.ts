@@ -35,14 +35,14 @@ declare global {
 export const getApiUrl = (): string => {
   // 네이티브 앱이면 무조건 운영 서버
   if (import.meta.env.DEV) {
-    console.log("🔍 현재 URL:", window.location.href);
-    console.log("🔍 현재 Origin:", window.location.origin);
-    console.log("🔍 Capacitor Native:", Capacitor.isNativePlatform());
+    logger.log("🔍 현재 URL:", window.location.href);
+    logger.log("🔍 현재 Origin:", window.location.origin);
+    logger.log("🔍 Capacitor Native:", Capacitor.isNativePlatform());
   }
 
   if (Capacitor.isNativePlatform()) {
     if (import.meta.env.DEV) {
-      console.log("✅ 네이티브 앱 - 운영 서버 사용");
+      logger.log("✅ 네이티브 앱 - 운영 서버 사용");
     }
     return "https://api.chingoohaja.app/api";
   }
@@ -51,13 +51,13 @@ export const getApiUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
   if (envUrl) {
     if (import.meta.env.DEV) {
-      console.log("✅ 웹 - 환경변수 사용:", envUrl);
+      logger.log("✅ 웹 - 환경변수 사용:", envUrl);
     }
     return String(envUrl).replace(/\/$/, "");
   }
 
   if (import.meta.env.DEV) {
-    console.log("✅ 웹 개발 - 프록시 사용");
+    logger.log("✅ 웹 개발 - 프록시 사용");
   }
   return "/api";
 };
@@ -283,10 +283,10 @@ export const login = async (
 
     // 주의: JavaScript에서는 HttpOnly 쿠키의 Set-Cookie 헤더를 읽을 수 없습니다 (브라우저 보안 정책)
     // Set-Cookie 헤더는 네트워크 탭에서 직접 확인해야 합니다
-    console.log(
+    logger.log(
       "🍪 [로그인] 쿠키 확인: 브라우저 개발자 도구 → 네트워크 탭 → 로그인 API → Response Headers에서 Set-Cookie 확인",
     );
-    console.log("🍪 [로그인] 로그인 API 응답 상태:", response.status);
+    logger.log("🍪 [로그인] 로그인 API 응답 상태:", response.status);
 
     // 응답 본문을 텍스트로 먼저 읽기
     const responseText = await response.text();
@@ -353,7 +353,7 @@ export const login = async (
       JSON.stringify(minimalUserInfo),
     );
 
-    console.log("✅ [로그인] 로그인 성공");
+    logger.log("✅ [로그인] 로그인 성공");
 
     logger.log("✅ 로그인 성공");
     return result;
@@ -977,10 +977,10 @@ export const processSocialLogin = async (
 
     // 주의: JavaScript에서는 HttpOnly 쿠키의 Set-Cookie 헤더를 읽을 수 없습니다 (브라우저 보안 정책)
     // Set-Cookie 헤더는 네트워크 탭에서 직접 확인해야 합니다
-    console.log(
+    logger.log(
       "🍪 [OAuth로그인] 쿠키 확인: 브라우저 개발자 도구 → 네트워크 탭 → OAuth API → Response Headers에서 Set-Cookie 확인",
     );
-    console.log("🍪 [OAuth로그인] 로그인 API 응답 상태:", response.status);
+    logger.log("🍪 [OAuth로그인] 로그인 API 응답 상태:", response.status);
 
     if (!response.ok) {
       logger.error("OAuth 로그인 응답 에러:", {
@@ -1034,12 +1034,12 @@ export const processSocialLogin = async (
     } catch (storageError) {
       // localStorage 접근이 차단된 경우 (예: iframe, 서드파티 쿠키 차단 등)
       if (import.meta.env.DEV) {
-        console.warn("localStorage 저장 실패:", storageError);
+        logger.warn("localStorage 저장 실패:", storageError);
       }
       // 에러를 throw하지 않고 계속 진행 (메모리 기반으로 동작 가능)
     }
 
-    console.log("✅ [OAuth로그인] 로그인 성공");
+    logger.log("✅ [OAuth로그인] 로그인 성공");
 
     // sessionStorage 정리
     try {
@@ -1049,7 +1049,7 @@ export const processSocialLogin = async (
     } catch (storageError) {
       // sessionStorage 접근이 차단된 경우 무시
       if (import.meta.env.DEV) {
-        console.warn("sessionStorage 정리 실패:", storageError);
+        logger.warn("sessionStorage 정리 실패:", storageError);
       }
     }
 
@@ -1097,7 +1097,7 @@ export const getStoredUserInfo = (): UserInfo | null => {
   } catch (storageError) {
     // localStorage 접근이 차단된 경우 (예: iframe, 서드파티 쿠키 차단 등)
     if (import.meta.env.DEV) {
-      console.warn("localStorage 접근 불가:", storageError);
+      logger.warn("localStorage 접근 불가:", storageError);
     }
     return null;
   }
@@ -1220,43 +1220,43 @@ export const isAuthenticated = (): boolean => {
 export const checkAuthentication = async (): Promise<boolean> => {
   // 메모리에 토큰이 있으면 인증됨
   if (getInMemoryToken()) {
-    console.log("✅ [인증] 메모리에 토큰 존재");
+    logger.log("✅ [인증] 메모리에 토큰 존재");
     return true;
   }
 
   // 메모리에 토큰이 없으면 localStorage에 user_info가 있는지 확인
   const userInfo = getStoredUserInfo();
-  console.log(
+  logger.log(
     "🔍 [인증] localStorage user_info 확인:",
     userInfo ? "있음" : "없음",
   );
 
   if (!userInfo) {
-    console.log("❌ [인증] 토큰 및 user_info 없음");
+    logger.log("❌ [인증] 토큰 및 user_info 없음");
     return false;
   }
 
   // localStorage에 user_info가 있으면 refresh token으로 토큰 갱신 시도
-  console.log("🔄 [인증] 메모리 토큰 없음, refresh token으로 갱신 시도...");
+  logger.log("🔄 [인증] 메모리 토큰 없음, refresh token으로 갱신 시도...");
 
   try {
     const token = await refreshToken();
     if (token) {
-      console.log("✅ [인증] 토큰 갱신 성공 - 인증됨");
+      logger.log("✅ [인증] 토큰 갱신 성공 - 인증됨");
       return true;
     } else {
-      console.log("❌ [인증] 토큰 갱신 실패 - refresh token API가 null 반환");
+      logger.log("❌ [인증] 토큰 갱신 실패 - refresh token API가 null 반환");
       // 토큰 갱신 실패 시 localStorage 정리
       try {
         localStorage.removeItem(OAUTH_STORAGE_KEYS.USER_INFO);
-        console.log("🗑️ [인증] localStorage user_info 삭제 완료");
+        logger.log("🗑️ [인증] localStorage user_info 삭제 완료");
       } catch (error) {
-        console.error("⚠️ [인증] localStorage 삭제 실패:", error);
+        logger.error("⚠️ [인증] localStorage 삭제 실패:", error);
       }
       return false;
     }
   } catch (error) {
-    console.error("❌ [인증] 인증 확인 중 오류:", error);
+    logger.error("❌ [인증] 인증 확인 중 오류:", error);
     return false;
   }
 };
@@ -1480,15 +1480,15 @@ export const refreshToken = async (): Promise<string | null> => {
 
   try {
     isRefreshingToken = true;
-    console.log("🔄 [토큰갱신] 시작...");
+    logger.log("🔄 [토큰갱신] 시작...");
 
     // 네트워크 타임아웃 설정 (10초)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const apiUrl = `${getApiUrl()}/v1/auth/refresh`;
-    console.log("📡 [토큰갱신] API URL:", apiUrl);
-    console.log("📡 [토큰갱신] credentials: include (쿠키 포함)");
+    logger.log("📡 [토큰갱신] API URL:", apiUrl);
+    logger.log("📡 [토큰갱신] credentials: include (쿠키 포함)");
 
     let response: Response;
     try {
@@ -1502,11 +1502,11 @@ export const refreshToken = async (): Promise<string | null> => {
         credentials: "include", // 쿠키를 포함하여 요청
         signal: controller.signal,
       });
-      console.log(
+      logger.log(
         `📡 [토큰갱신] 응답 상태: ${response.status} ${response.statusText}`,
       );
     } catch (fetchError) {
-      console.error("❌ [토큰갱신] fetch 오류:", fetchError);
+      logger.error("❌ [토큰갱신] fetch 오류:", fetchError);
       throw fetchError;
     } finally {
       clearTimeout(timeoutId);
@@ -1514,7 +1514,7 @@ export const refreshToken = async (): Promise<string | null> => {
 
     if (!response.ok) {
       if (response.status === 401) {
-        console.warn(
+        logger.warn(
           "❌ [토큰갱신] 리프레시 토큰이 만료되었거나 유효하지 않음 (401)",
         );
         clearInMemoryToken(); // 메모리 토큰 삭제
@@ -1523,7 +1523,7 @@ export const refreshToken = async (): Promise<string | null> => {
         return null;
       }
       const errorText = await response.text().catch(() => "");
-      console.error(
+      logger.error(
         `❌ [토큰갱신] 실패: ${response.status} ${response.statusText}`,
         errorText ? `응답: ${errorText.substring(0, 200)}` : "",
       );
@@ -1531,15 +1531,15 @@ export const refreshToken = async (): Promise<string | null> => {
     }
 
     const result = await response.json();
-    console.log(
+    logger.log(
       "📦 [토큰갱신] 응답 데이터 수신:",
       result.data ? "성공" : "데이터 없음",
     );
 
     // 새로운 access_token을 메모리에 저장
     setInMemoryToken(result.data.access_token, result.data.expires_in);
-    console.log("💾 [토큰갱신] 새로운 access_token 메모리 저장 완료");
-    console.log("✅ [토큰갱신] 성공");
+    logger.log("💾 [토큰갱신] 새로운 access_token 메모리 저장 완료");
+    logger.log("✅ [토큰갱신] 성공");
 
     // 대기 중인 다른 요청들에게 새 토큰 전달
     isRefreshingToken = false;
@@ -1551,12 +1551,12 @@ export const refreshToken = async (): Promise<string | null> => {
     onTokenRefreshed(""); // 실패를 알림
 
     if (error instanceof Error && error.name === "AbortError") {
-      console.error("⏰ [토큰갱신] 타임아웃 (10초 초과):", error);
+      logger.error("⏰ [토큰갱신] 타임아웃 (10초 초과):", error);
     } else {
-      console.error("❌ [토큰갱신] 실패:", error);
+      logger.error("❌ [토큰갱신] 실패:", error);
       if (error instanceof Error) {
-        console.error("   에러 메시지:", error.message);
-        console.error("   에러 스택:", error.stack);
+        logger.error("   에러 메시지:", error.message);
+        logger.error("   에러 스택:", error.stack);
       }
     }
 

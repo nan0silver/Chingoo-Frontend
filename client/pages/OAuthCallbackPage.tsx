@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { processOAuthCallback, getStoredUserInfo } from "@/lib/auth";
 import { UserInfo } from "@shared/api";
+import { logger } from "@/lib/logger";
 
 export default function OAuthCallbackPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -15,30 +16,24 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     // 이미 처리 중이면 중복 실행 방지
     if (hasProcessedRef.current) {
-      if (import.meta.env.DEV) {
-        console.log("⚠️ OAuth 콜백이 이미 처리 중입니다. 중복 실행 방지.");
-      }
+      logger.log("⚠️ OAuth 콜백이 이미 처리 중입니다. 중복 실행 방지.");
       return;
     }
 
     hasProcessedRef.current = true;
-    if (import.meta.env.DEV) {
-      console.log("🚀 OAuth 콜백 처리 시작");
-    }
+    logger.log("🚀 OAuth 콜백 처리 시작");
 
     const handleOAuthCallback = async () => {
       try {
         const result = await processOAuthCallback();
 
         if (result) {
-          if (import.meta.env.DEV) {
-            console.log("✅ OAuth 콜백 처리 성공");
-            console.log("📋 사용자 정보:", {
-              is_new_user: result.data.user_info.is_new_user,
-              is_profile_complete: result.data.user_info.is_profile_complete,
-              id: result.data.user_info.id,
-            });
-          }
+          logger.log("✅ OAuth 콜백 처리 성공");
+          logger.log("📋 사용자 정보:", {
+            is_new_user: result.data.user_info.is_new_user,
+            is_profile_complete: result.data.user_info.is_profile_complete,
+            id: result.data.user_info.id,
+          });
           setStatus("success");
           setUserInfo(result.data.user_info);
 
@@ -48,38 +43,30 @@ export default function OAuthCallbackPage() {
           // is_new_user가 false인 경우 (기존 유저)는 프로필 완성 여부와 관계없이 메인 페이지로 이동
           const shouldGoToProfileSetup = result.data.user_info.is_new_user;
 
-          if (import.meta.env.DEV) {
-            console.log("🔍 페이지 이동 결정:", {
-              shouldGoToProfileSetup,
-              is_new_user: result.data.user_info.is_new_user,
-              is_profile_complete: result.data.user_info.is_profile_complete,
-            });
-          }
+          logger.log("🔍 페이지 이동 결정:", {
+            shouldGoToProfileSetup,
+            is_new_user: result.data.user_info.is_new_user,
+            is_profile_complete: result.data.user_info.is_profile_complete,
+          });
 
           if (shouldGoToProfileSetup) {
             // 프로필 설정 페이지로 이동
-            if (import.meta.env.DEV) {
-              console.log("➡️ 프로필 설정 페이지로 이동");
-            }
+            logger.log("➡️ 프로필 설정 페이지로 이동");
             setTimeout(() => {
               navigate("/profile-setup");
             }, 2000);
           } else {
             // 메인 페이지로 이동 - OAuth 콜백에서 온 것을 표시
             // localStorage에 저장된 정보와 일치하는지 확인
-            if (import.meta.env.DEV) {
-              console.log("➡️ 홈 페이지로 이동 (기존 유저)");
-            }
+            logger.log("➡️ 홈 페이지로 이동 (기존 유저)");
 
             // localStorage에 저장된 사용자 정보 확인 및 동기화
             // processSocialLogin에서 이미 저장했지만, 확실하게 동기화
             const storedUserInfo = getStoredUserInfo();
-            if (import.meta.env.DEV) {
-              console.log(
-                "📦 localStorage에 저장된 사용자 정보:",
-                storedUserInfo,
-              );
-            }
+            logger.log(
+              "📦 localStorage에 저장된 사용자 정보:",
+              storedUserInfo,
+            );
 
             // 저장된 정보가 서버 응답과 일치하는지 확인하고 필요시 업데이트
             if (
@@ -89,11 +76,9 @@ export default function OAuthCallbackPage() {
               storedUserInfo.is_profile_complete !==
                 result.data.user_info.is_profile_complete
             ) {
-              if (import.meta.env.DEV) {
-                console.warn(
-                  "⚠️ localStorage 정보가 서버 응답과 불일치 - 업데이트",
-                );
-              }
+              logger.warn(
+                "⚠️ localStorage 정보가 서버 응답과 불일치 - 업데이트",
+              );
               // localStorage 정보 업데이트
               try {
                 localStorage.setItem(
@@ -105,14 +90,10 @@ export default function OAuthCallbackPage() {
                       result.data.user_info.is_profile_complete,
                   }),
                 );
-                if (import.meta.env.DEV) {
-                  console.log("✅ localStorage 사용자 정보 업데이트 완료");
-                }
+                logger.log("✅ localStorage 사용자 정보 업데이트 완료");
               } catch (storageError) {
                 // localStorage 접근 실패 시 에러 처리
-                if (import.meta.env.DEV) {
-                  console.error("❌ localStorage 접근 실패:", storageError);
-                }
+                logger.error("❌ localStorage 접근 실패:", storageError);
               }
             }
 
@@ -120,16 +101,12 @@ export default function OAuthCallbackPage() {
             // setTimeout 전에 설정하여 Index.tsx가 실행될 때 플래그가 이미 존재하도록 함
             try {
               sessionStorage.setItem("oauth_callback_processed", "true");
-              if (import.meta.env.DEV) {
-                console.log(
-                  "✅ oauth_callback_processed 플래그 설정 완료 (즉시 설정)",
-                );
-              }
+              logger.log(
+                "✅ oauth_callback_processed 플래그 설정 완료 (즉시 설정)",
+              );
             } catch (storageError) {
               // sessionStorage 접근 실패 시 에러 처리
-              if (import.meta.env.DEV) {
-                console.error("❌ sessionStorage 접근 실패:", storageError);
-              }
+              logger.error("❌ sessionStorage 접근 실패:", storageError);
             }
 
             setTimeout(() => {
@@ -138,13 +115,11 @@ export default function OAuthCallbackPage() {
           }
         } else {
           // OAuth 콜백이 아닌 경우 메인 페이지로 리다이렉트
-          if (import.meta.env.DEV) {
-            console.log("ℹ️ OAuth 콜백 파라미터 없음, 홈으로 이동");
-          }
+          logger.log("ℹ️ OAuth 콜백 파라미터 없음, 홈으로 이동");
           navigate("/");
         }
       } catch (error) {
-        console.error("❌ OAuth 콜백 처리 실패:", error);
+        logger.error("❌ OAuth 콜백 처리 실패:", error);
         setStatus("error");
         setErrorMessage(
           error instanceof Error
@@ -163,9 +138,7 @@ export default function OAuthCallbackPage() {
 
     // Cleanup 함수: 컴포넌트 언마운트 시 실행
     return () => {
-      if (import.meta.env.DEV) {
-        console.log("🧹 OAuth 콜백 페이지 cleanup");
-      }
+      logger.log("🧹 OAuth 콜백 페이지 cleanup");
       // 여기서는 특별히 할 일이 없지만, 필요시 타이머 정리 등 가능
     };
   }, []); // navigate를 의존성에서 제거 (한 번만 실행)

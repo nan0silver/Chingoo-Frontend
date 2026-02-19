@@ -6,6 +6,7 @@ import { CATEGORIES, CategoryRequest } from "@shared/api";
 import CategoryRequestModal from "@/components/CategoryRequestModal";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 
 interface HomePageProps {
   onStartCall: (category: string) => void;
@@ -37,14 +38,14 @@ export default function HomePage({ onStartCall }: HomePageProps) {
         const profile = await getUserProfile();
         if (mounted) setUserNickname(profile.data.nickname);
       } catch (error) {
-        console.error("사용자 프로필 가져오기 실패:", error);
+        logger.error("사용자 프로필 가져오기 실패:", error);
 
         // 인증 만료 오류인 경우 기본값 유지 (로그인 페이지로 이동하지 않음)
         if (
           error instanceof Error &&
           error.message.includes("인증이 만료되었습니다")
         ) {
-          console.warn("세션이 만료되었지만 기본 닉네임 유지");
+          logger.warn("세션이 만료되었지만 기본 닉네임 유지");
         }
         // 에러가 발생해도 기본 닉네임 유지
       } finally {
@@ -105,7 +106,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
       await startMatching({ category_id: parseInt(selectedCategory) });
       navigate("/connecting-call");
     } catch (error) {
-      console.error("🏠 매칭 시작 실패:", error);
+      logger.error("🏠 매칭 시작 실패:", error);
       // 에러 메시지를 모달에 표시
       const errorMsg =
         error instanceof Error
@@ -181,7 +182,7 @@ export default function HomePage({ onStartCall }: HomePageProps) {
         setShowSuccessModal(false);
       }, 2000);
     } catch (error) {
-      console.error("카테고리 요청 실패:", error);
+      logger.error("카테고리 요청 실패:", error);
       alert(
         error instanceof Error
           ? error.message

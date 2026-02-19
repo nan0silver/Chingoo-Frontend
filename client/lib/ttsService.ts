@@ -3,6 +3,7 @@
  * 웹: 브라우저의 Web Speech API 사용
  * 모바일: Capacitor TTS 플러그인 사용 (추후 설치 가능)
  */
+import { logger } from "./logger";
 
 /**
  * 음성 정보 타입
@@ -40,7 +41,7 @@ export class TTSService {
     }
 
     if (import.meta.env.DEV) {
-      console.log("🔊 TTS 지원 여부:", this.isSupported);
+      logger.log("🔊 TTS 지원 여부:", this.isSupported);
     }
   }
 
@@ -51,12 +52,12 @@ export class TTSService {
     if (this.isSupported) {
       this.voices = window.speechSynthesis.getVoices();
       if (import.meta.env.DEV) {
-        console.log("🔊 사용 가능한 음성 목록:", this.voices.length);
+        logger.log("🔊 사용 가능한 음성 목록:", this.voices.length);
         // 무한 재귀 방지: 직접 필터링하여 로그 출력
         const koreanVoices = this.voices.filter(
           (voice) => voice.lang.startsWith("ko") || voice.lang === "ko-KR",
         );
-        console.log("🔊 한국어 음성:", koreanVoices.map((v) => v.name));
+        logger.log("🔊 한국어 음성:", koreanVoices.map((v) => v.name));
       }
     }
   }
@@ -79,7 +80,7 @@ export class TTSService {
     },
   ): Promise<void> {
     if (!this.isSupported) {
-      console.warn("⚠️ TTS가 지원되지 않는 환경입니다.");
+      logger.warn("⚠️ TTS가 지원되지 않는 환경입니다.");
       if (options?.onError) {
         options.onError(new Error("TTS가 지원되지 않습니다."));
       }
@@ -108,19 +109,20 @@ export class TTSService {
         if (options?.voice) {
           if (typeof options.voice === "string") {
             // 음성 이름으로 찾기
+            const voiceStr = options.voice;
             const selectedVoice = this.voices.find(
               (v) =>
-                v.name === options.voice ||
-                v.voiceURI === options.voice ||
-                v.name.toLowerCase().includes(options.voice.toLowerCase()),
+                v.name === voiceStr ||
+                v.voiceURI === voiceStr ||
+                v.name.toLowerCase().includes(voiceStr.toLowerCase()),
             );
             if (selectedVoice) {
               utterance.voice = selectedVoice;
               if (import.meta.env.DEV) {
-                console.log("🔊 선택된 음성:", selectedVoice.name);
+                logger.log("🔊 선택된 음성:", selectedVoice.name);
               }
             } else {
-              console.warn(
+              logger.warn(
                 `⚠️ 음성을 찾을 수 없습니다: ${options.voice}. 기본 음성 사용.`,
               );
             }
@@ -134,7 +136,7 @@ export class TTSService {
           if (koreanVoice) {
             utterance.voice = koreanVoice;
             if (import.meta.env.DEV) {
-              console.log("🔊 기본 한국어 음성 사용:", koreanVoice.name);
+              logger.log("🔊 기본 한국어 음성 사용:", koreanVoice.name);
             }
           }
         }
@@ -156,7 +158,7 @@ export class TTSService {
           const error = new Error(
             `TTS 오류: ${event.error || "알 수 없는 오류"}`,
           );
-          console.error("TTS 오류:", error);
+          logger.error("TTS 오류:", error);
           if (options?.onError) {
             options.onError(error);
           }
@@ -170,14 +172,14 @@ export class TTSService {
         window.speechSynthesis.speak(utterance);
 
         if (import.meta.env.DEV) {
-          console.log("🔊 TTS 시작:", text);
+          logger.log("🔊 TTS 시작:", text);
         }
       } catch (error) {
         this.isSpeaking = false;
         this.currentUtterance = null;
         const err =
           error instanceof Error ? error : new Error("TTS 실행 실패");
-        console.error("TTS 실행 오류:", err);
+        logger.error("TTS 실행 오류:", err);
         if (options?.onError) {
           options.onError(err);
         }
@@ -196,7 +198,7 @@ export class TTSService {
       this.currentUtterance = null;
 
       if (import.meta.env.DEV) {
-        console.log("🔇 TTS 중지");
+        logger.log("🔇 TTS 중지");
       }
     }
   }

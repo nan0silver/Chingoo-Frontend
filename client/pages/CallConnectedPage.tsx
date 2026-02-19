@@ -8,6 +8,7 @@ import { getStoredToken } from "@/lib/auth";
 import ReportUserModal from "@/components/ReportUserModal";
 import { getTTSService } from "@/lib/ttsService";
 import { useCallStore } from "@/lib/callStore";
+import { logger } from "@/lib/logger";
 
 interface CallConnectedPageProps {
   selectedCategory: string | null;
@@ -47,11 +48,11 @@ export default function CallConnectedPage({
   // 디버깅: partner 정보 확인 (개발 환경만)
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log("🔍 CallConnectedPage - partner 정보:", partner);
+      logger.log("🔍 CallConnectedPage - partner 정보:", partner);
 
       // WebSocket 구독 상태 확인
       const webSocketService = getWebSocketService();
-      console.log(
+      logger.log(
         "🔍 CallConnectedPage - WebSocket 구독 상태:",
         webSocketService.getSubscriptionStatus(),
       );
@@ -66,7 +67,7 @@ export default function CallConnectedPage({
         if (storedInfo?.categoryName) {
           setSelectedCategory(storedInfo.categoryName);
           if (import.meta.env.DEV) {
-            console.log("💾 카테고리 정보 복원:", storedInfo.categoryName);
+            logger.log("💾 카테고리 정보 복원:", storedInfo.categoryName);
           }
         }
       });
@@ -79,7 +80,7 @@ export default function CallConnectedPage({
       import("@/lib/callStore").then(({ useCallStore }) => {
         useCallStore.getState().saveCallToStorage(selectedCategory);
         if (import.meta.env.DEV) {
-          console.log("💾 카테고리 정보 저장:", selectedCategory);
+          logger.log("💾 카테고리 정보 저장:", selectedCategory);
         }
       });
     }
@@ -88,44 +89,44 @@ export default function CallConnectedPage({
   // 통화 종료 감지 - isInCall이 false가 되면 평가 화면으로 이동
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log("🔍 [CallConnectedPage] useEffect 트리거됨");
-      console.log("🔍 [CallConnectedPage] isInCall 상태:", isInCall);
-      console.log("🔍 [CallConnectedPage] partner:", partner);
-      console.log("🔍 [CallConnectedPage] hasPartner:", !!partner);
+      logger.log("🔍 [CallConnectedPage] useEffect 트리거됨");
+      logger.log("🔍 [CallConnectedPage] isInCall 상태:", isInCall);
+      logger.log("🔍 [CallConnectedPage] partner:", partner);
+      logger.log("🔍 [CallConnectedPage] hasPartner:", !!partner);
     }
 
     if (!isInCall && partner) {
       if (import.meta.env.DEV) {
-        console.log(
+        logger.log(
           "📞 [CallConnectedPage] 통화가 종료됨 - 평가 화면으로 이동 예정",
         );
-        console.log("📞 [CallConnectedPage] onEndCall 호출 전 (100ms 후)");
+        logger.log("📞 [CallConnectedPage] onEndCall 호출 전 (100ms 후)");
       }
       // 통화가 종료되면 평가 화면으로 이동 (partner 정보가 있을 때만)
       const timeoutId = setTimeout(() => {
         if (import.meta.env.DEV) {
-          console.log("📞 [CallConnectedPage] onEndCall() 호출 시작");
+          logger.log("📞 [CallConnectedPage] onEndCall() 호출 시작");
         }
         onEndCall();
         if (import.meta.env.DEV) {
-          console.log("📞 [CallConnectedPage] onEndCall() 호출 완료");
+          logger.log("📞 [CallConnectedPage] onEndCall() 호출 완료");
         }
       }, 100); // 약간의 지연을 두어 상태 안정화
 
       return () => {
         clearTimeout(timeoutId);
         if (import.meta.env.DEV) {
-          console.log("📞 [CallConnectedPage] timeout 정리");
+          logger.log("📞 [CallConnectedPage] timeout 정리");
         }
       };
     } else {
       if (import.meta.env.DEV) {
         if (isInCall) {
-          console.log(
+          logger.log(
             "🔍 [CallConnectedPage] 아직 통화 중 - 평가 화면으로 이동하지 않음",
           );
         } else if (!partner) {
-          console.log(
+          logger.log(
             "🔍 [CallConnectedPage] partner 정보 없음 - 평가 화면으로 이동하지 않음",
           );
         }
@@ -189,10 +190,10 @@ export default function CallConnectedPage({
       try {
         useCallStore.getState().saveCallToStorage(selectedCategory);
         if (import.meta.env.DEV) {
-          console.log("💾 beforeunload: 통화 정보 저장 완료 (API 호출 없음)");
+          logger.log("💾 beforeunload: 통화 정보 저장 완료 (API 호출 없음)");
         }
       } catch (error) {
-        console.error("beforeunload: 통화 정보 저장 실패:", error);
+        logger.error("beforeunload: 통화 정보 저장 실패:", error);
       }
 
       return e.returnValue;
@@ -203,7 +204,7 @@ export default function CallConnectedPage({
       // 통화 정보는 beforeunload에서 이미 저장되었으므로
       // 여기서는 아무 작업도 하지 않음 (API 호출 없음)
       if (import.meta.env.DEV) {
-        console.log(
+        logger.log(
           "⚠️ 페이지 언로드 감지 - 통화 정보는 이미 저장됨 (API 호출 없음)",
         );
       }
@@ -249,26 +250,26 @@ export default function CallConnectedPage({
   // 통화 종료 핸들러
   const handleEndCallClick = async () => {
     if (import.meta.env.DEV) {
-      console.log("🔴 통화 종료 버튼 클릭됨 - handleEndCallClick 시작");
+      logger.log("🔴 통화 종료 버튼 클릭됨 - handleEndCallClick 시작");
     }
     try {
       if (import.meta.env.DEV) {
-        console.log("🔴 handleEndCall 호출 전");
+        logger.log("🔴 handleEndCall 호출 전");
       }
       await handleEndCall();
       if (import.meta.env.DEV) {
-        console.log("🔴 handleEndCall 호출 후");
+        logger.log("🔴 handleEndCall 호출 후");
       }
       onEndCall();
     } catch (error) {
-      console.error("통화 종료 실패:", error);
+      logger.error("통화 종료 실패:", error);
       // 이미 종료된 통화에 대한 에러는 무시하고 평가 화면으로 이동
       if (
         error instanceof Error &&
         error.message.includes("이미 종료된 통화")
       ) {
         if (import.meta.env.DEV) {
-          console.log("통화가 이미 종료됨 - 평가 화면으로 이동");
+          logger.log("통화가 이미 종료됨 - 평가 화면으로 이동");
         }
         onEndCall();
       } else {
@@ -300,14 +301,14 @@ export default function CallConnectedPage({
       if (ttsPlayed === "true") {
         // 이미 재생된 경우 프롬프트만 가져오고 TTS는 재생하지 않음
         if (import.meta.env.DEV) {
-          console.log("🔊 이 통화의 TTS는 이미 재생되었습니다 - TTS 건너뜀");
+          logger.log("🔊 이 통화의 TTS는 이미 재생되었습니다 - TTS 건너뜀");
         }
 
         try {
           setIsLoadingPrompt(true);
           const token = getStoredToken();
           if (!token) {
-            console.warn("인증 토큰이 없어 프롬프트를 가져올 수 없습니다.");
+            logger.warn("인증 토큰이 없어 프롬프트를 가져올 수 없습니다.");
             return;
           }
 
@@ -316,7 +317,7 @@ export default function CallConnectedPage({
           const questionText = promptData.question;
           setPrompt(questionText);
         } catch (error) {
-          console.error("프롬프트 가져오기 실패:", error);
+          logger.error("프롬프트 가져오기 실패:", error);
         } finally {
           setIsLoadingPrompt(false);
         }
@@ -327,7 +328,7 @@ export default function CallConnectedPage({
         setIsLoadingPrompt(true);
         const token = getStoredToken();
         if (!token) {
-          console.warn("인증 토큰이 없어 프롬프트를 가져올 수 없습니다.");
+          logger.warn("인증 토큰이 없어 프롬프트를 가져올 수 없습니다.");
           return;
         }
 
@@ -349,20 +350,20 @@ export default function CallConnectedPage({
               volume: 1.0,
               onEnd: () => {
                 if (import.meta.env.DEV) {
-                  console.log("🔊 프롬프트 TTS 읽기 완료");
+                  logger.log("🔊 프롬프트 TTS 읽기 완료");
                 }
                 // TTS 재생 완료 후 localStorage에 저장
                 localStorage.setItem(ttsPlayedKey, "true");
               },
               onError: (error) => {
-                console.error("TTS 읽기 오류:", error);
+                logger.error("TTS 읽기 오류:", error);
                 // TTS 실패는 치명적이지 않으므로 에러를 표시하지 않음
               },
             });
           }, 1000); // 1초 후 TTS 시작
         }
       } catch (error) {
-        console.error("프롬프트 가져오기 실패:", error);
+        logger.error("프롬프트 가져오기 실패:", error);
         // 프롬프트 가져오기 실패는 치명적이지 않으므로 에러를 표시하지 않음
       } finally {
         setIsLoadingPrompt(false);
@@ -383,7 +384,7 @@ export default function CallConnectedPage({
       localStorage.removeItem(ttsPlayedKey);
 
       if (import.meta.env.DEV) {
-        console.log("🔊 통화 종료 - TTS 재생 플래그 삭제");
+        logger.log("🔊 통화 종료 - TTS 재생 플래그 삭제");
       }
     }
   }, [isInCall, callId]);
@@ -444,12 +445,12 @@ export default function CallConnectedPage({
           JSON.stringify(Array.from(currentIds)),
         );
       } catch (error) {
-        console.error("신고한 사용자 목록 저장 실패:", error);
+        logger.error("신고한 사용자 목록 저장 실패:", error);
       }
 
       setShowReportSuccessModal(true);
     } catch (error: any) {
-      console.error("사용자 신고 실패:", error);
+      logger.error("사용자 신고 실패:", error);
 
       let errorMessage = "신고에 실패했습니다. 다시 시도해주세요.";
 

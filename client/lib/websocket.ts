@@ -48,7 +48,7 @@ export class WebSocketService {
     if (Capacitor.isNativePlatform()) {
       // 네이티브 앱: HTTPS이므로 wss:// 사용
       wsUrl = "https://api.chingoohaja.app/ws";
-      console.log("✅ 네이티브 앱 - WebSocket 운영 서버 사용");
+      logger.log("✅ 네이티브 앱 - WebSocket 운영 서버 사용");
     } else {
       // 웹: 환경변수 또는 프록시 사용
       wsUrl = import.meta.env.VITE_WS_BASE_URL
@@ -58,7 +58,7 @@ export class WebSocketService {
 
     // ⚠️ 쿼리 파라미터로 토큰을 전달하지 않음 (SockJS /info 엔드포인트는 인증 불필요)
     // 대신 STOMP CONNECT 헤더로 토큰을 전달합니다
-    console.log("🔗 WebSocket URL:", wsUrl);
+    logger.log("🔗 WebSocket URL:", wsUrl);
 
     const sockJSOptions = {
       transports: ["websocket", "xhr-streaming", "xhr-polling"],
@@ -72,7 +72,7 @@ export class WebSocketService {
     this.client = new Client({
       webSocketFactory: () => socket,
       debug: (str) => {
-        console.log("STOMP Debug:", str);
+        logger.log("STOMP Debug:", str);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
@@ -81,9 +81,9 @@ export class WebSocketService {
 
       // 연결 성공 시
       this.client.onConnect = (frame) => {
-        console.log("✅ WebSocket 연결 성공:", frame);
-        console.log("✅ 연결 헤더:", frame.headers);
-        console.log("✅ 연결 바디:", frame.body);
+        logger.log("✅ WebSocket 연결 성공:", frame);
+        logger.log("✅ 연결 헤더:", frame.headers);
+        logger.log("✅ 연결 바디:", frame.body);
 
         // 재연결 타이머 취소
         if (this.reconnectTimer) {
@@ -105,7 +105,7 @@ export class WebSocketService {
         this.onConnectionStateChangeCallbacks.forEach((callback) =>
           callback(this.connectionState),
         );
-        console.log("📡 큐 구독 시작");
+        logger.log("📡 큐 구독 시작");
         this.subscribeToQueues();
 
         // 구독 완료 후 상태 로그
@@ -116,9 +116,9 @@ export class WebSocketService {
 
     // 연결 실패 시
     this.client.onStompError = (frame) => {
-      console.error("❌ STOMP 에러:", frame);
-      console.error("❌ 에러 헤더:", frame.headers);
-      console.error("❌ 에러 바디:", frame.body);
+      logger.error("❌ STOMP 에러:", frame);
+      logger.error("❌ 에러 헤더:", frame.headers);
+      logger.error("❌ 에러 바디:", frame.body);
       this.connectionState = {
         ...this.connectionState,
         isConnected: false,
@@ -140,7 +140,7 @@ export class WebSocketService {
 
     // 연결 해제 시
     this.client.onDisconnect = () => {
-      console.log("⚠️ WebSocket 연결 해제 감지");
+      logger.log("⚠️ WebSocket 연결 해제 감지");
       this.connectionState = {
         ...this.connectionState,
         isConnected: false,
@@ -154,11 +154,11 @@ export class WebSocketService {
       // 수동 연결 해제가 아닌 경우 자동 재연결 시도
       // 서버에서 DISCONNECT를 보낸 경우에도 재연결 시도
       if (!this.isManualDisconnect && this.currentToken) {
-        console.log("🔄 자동 재연결 스케줄링...");
+        logger.log("🔄 자동 재연결 스케줄링...");
         this.scheduleReconnect();
       } else {
         if (import.meta.env.DEV) {
-          console.log("ℹ️ 수동 연결 해제 또는 토큰 없음 - 재연결하지 않음");
+          logger.log("ℹ️ 수동 연결 해제 또는 토큰 없음 - 재연결하지 않음");
         }
       }
     };
@@ -169,12 +169,12 @@ export class WebSocketService {
    */
   async connect(token: string): Promise<void> {
     if (this.connectionState.isConnected || this.connectionState.isConnecting) {
-      console.log("이미 연결 중이거나 연결되어 있습니다.");
+      logger.log("이미 연결 중이거나 연결되어 있습니다.");
       return;
     }
 
     try {
-      console.log("🚀 WebSocket 연결 시도 시작");
+      logger.log("🚀 WebSocket 연결 시도 시작");
       this.connectionState = {
         ...this.connectionState,
         isConnecting: true,
@@ -186,7 +186,7 @@ export class WebSocketService {
 
       // 클라이언트가 없으면 새로 생성 (토큰 포함)
       if (!this.client) {
-        console.log("📱 WebSocket 클라이언트 생성");
+        logger.log("📱 WebSocket 클라이언트 생성");
         this.setupClient(token); // 🔑 토큰을 전달
       }
 
@@ -196,23 +196,23 @@ export class WebSocketService {
       };
       // 메시지 전송 시에도 사용할 수 있도록 토큰 저장
       this.currentToken = token;
-      console.log("🔑 JWT 토큰 설정 완료 (URL + 헤더)");
+      logger.log("🔑 JWT 토큰 설정 완료 (URL + 헤더)");
       if (import.meta.env.DEV) {
-        console.log("🔑 토큰 길이:", token.length);
-        console.log("🔑 토큰 앞 10자리:", token.substring(0, 10) + "...");
+        logger.log("🔑 토큰 길이:", token.length);
+        logger.log("🔑 토큰 앞 10자리:", token.substring(0, 10) + "...");
       }
 
-      console.log("⚡ STOMP 클라이언트 활성화 시도");
+      logger.log("⚡ STOMP 클라이언트 활성화 시도");
       await this.client!.activate();
-      console.log("✅ STOMP 클라이언트 활성화 성공");
+      logger.log("✅ STOMP 클라이언트 활성화 성공");
 
       // 수동 연결 해제 플래그 리셋 (연결 성공 시)
       this.isManualDisconnect = false;
     } catch (error) {
-      console.error("❌ WebSocket 연결 실패:", error);
+      logger.error("❌ WebSocket 연결 실패:", error);
       if (import.meta.env.DEV) {
-        console.error("❌ 에러 타입:", typeof error);
-        console.error(
+        logger.error("❌ 에러 타입:", typeof error);
+        logger.error(
           "❌ 에러 스택:",
           error instanceof Error ? error.stack : "No stack",
         );
@@ -254,7 +254,7 @@ export class WebSocketService {
     this.currentToken = null;
 
     if (import.meta.env.DEV) {
-      console.log("🔌 WebSocket 수동 연결 해제 완료");
+      logger.log("🔌 WebSocket 수동 연결 해제 완료");
     }
   }
 
@@ -263,28 +263,28 @@ export class WebSocketService {
    */
   private subscribeToQueues(): void {
     if (!this.client || !this.connectionState.isConnected) {
-      console.warn("⚠️ WebSocket 클라이언트가 없거나 연결되지 않음");
+      logger.warn("⚠️ WebSocket 클라이언트가 없거나 연결되지 않음");
       return;
     }
 
-    console.log("📡 큐 구독 시작 - 클라이언트 상태:", {
+    logger.log("📡 큐 구독 시작 - 클라이언트 상태:", {
       isConnected: this.connectionState.isConnected,
       clientExists: !!this.client,
     });
 
     // 매칭 알림 구독
-    console.log("📡 /user/queue/matching 구독 시작");
+    logger.log("📡 /user/queue/matching 구독 시작");
     const matchingSubscription = this.client.subscribe(
       "/user/queue/matching",
       (message: IMessage) => {
         try {
-          console.log(
+          logger.log(
             "📨 [매칭] WebSocket 메시지 수신 (/user/queue/matching):",
             message.body,
           );
           const notification: MatchingNotification = JSON.parse(message.body);
-          console.log("✅ [매칭] 알림 파싱 성공:", notification);
-          console.log("📋 [매칭] 알림 상세:", {
+          logger.log("✅ [매칭] 알림 파싱 성공:", notification);
+          logger.log("📋 [매칭] 알림 상세:", {
             type: notification.type,
             matchingId: notification.matchingId,
             matchedUser: notification.matchedUser,
@@ -292,15 +292,15 @@ export class WebSocketService {
             timestamp: notification.timestamp,
           });
           // 모든 매칭 알림 콜백 호출
-          console.log(
+          logger.log(
             `🔔 [매칭] ${this.onMatchingNotificationCallbacks.length}개의 콜백 호출`,
           );
           this.onMatchingNotificationCallbacks.forEach((callback) =>
             callback(notification),
           );
         } catch (error) {
-          console.error("❌ [매칭] 알림 파싱 오류:", error);
-          console.error("❌ [매칭] 원본 메시지:", message.body);
+          logger.error("❌ [매칭] 알림 파싱 오류:", error);
+          logger.error("❌ [매칭] 원본 메시지:", message.body);
           const errorMessage = "매칭 알림 처리 중 오류가 발생했습니다.";
           // 모든 에러 콜백 호출
           this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
@@ -309,18 +309,18 @@ export class WebSocketService {
     );
 
     // 통화 시작 알림 구독
-    console.log("📡 /user/queue/call-start 구독 시작");
+    logger.log("📡 /user/queue/call-start 구독 시작");
     const callStartSubscription = this.client.subscribe(
       "/user/queue/call-start",
       (message: IMessage) => {
         try {
-          console.log(
+          logger.log(
             "📨 [통화] WebSocket 메시지 수신 (/user/queue/call-start):",
             message.body,
           );
           const notification: CallStartNotification = JSON.parse(message.body);
-          console.log("✅ [통화] 알림 파싱 성공:", notification);
-          console.log("📋 [통화] 알림 상세:", {
+          logger.log("✅ [통화] 알림 파싱 성공:", notification);
+          logger.log("📋 [통화] 알림 상세:", {
             type: notification.type,
             callId: notification.callId,
             matchingId: notification.matchingId,
@@ -331,15 +331,15 @@ export class WebSocketService {
             timestamp: notification.timestamp,
           });
           // 모든 통화 시작 알림 콜백 호출
-          console.log(
+          logger.log(
             `🔔 [통화] ${this.onCallStartNotificationCallbacks.length}개의 콜백 호출`,
           );
           this.onCallStartNotificationCallbacks.forEach((callback) =>
             callback(notification),
           );
         } catch (error) {
-          console.error("❌ [통화] 알림 파싱 오류:", error);
-          console.error("❌ [통화] 원본 메시지:", message.body);
+          logger.error("❌ [통화] 알림 파싱 오류:", error);
+          logger.error("❌ [통화] 원본 메시지:", message.body);
           const errorMessage = "통화 시작 알림 처리 중 오류가 발생했습니다.";
           // 모든 에러 콜백 호출
           this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
@@ -348,31 +348,31 @@ export class WebSocketService {
     );
 
     // 통화 종료 알림 구독
-    console.log("📡 /user/queue/call-end 구독 시작");
+    logger.log("📡 /user/queue/call-end 구독 시작");
     const callEndSubscription = this.client.subscribe(
       "/user/queue/call-end",
       (message: IMessage) => {
         try {
-          console.log(
+          logger.log(
             "📨 [통화종료] WebSocket 메시지 수신 (/user/queue/call-end):",
             message.body,
           );
           const notification = JSON.parse(message.body);
-          console.log("✅ [통화종료] 알림 파싱 성공:", notification);
-          console.log("📋 [통화종료] 알림 상세:", {
+          logger.log("✅ [통화종료] 알림 파싱 성공:", notification);
+          logger.log("📋 [통화종료] 알림 상세:", {
             callId: notification.callId,
             reason: notification.reason,
           });
           // 모든 통화 종료 알림 콜백 호출
-          console.log(
+          logger.log(
             `🔔 [통화종료] ${this.onCallEndNotificationCallbacks.length}개의 콜백 호출`,
           );
           this.onCallEndNotificationCallbacks.forEach((callback) =>
             callback(notification),
           );
         } catch (error) {
-          console.error("❌ [통화종료] 알림 파싱 오류:", error);
-          console.error("❌ [통화종료] 원본 메시지:", message.body);
+          logger.error("❌ [통화종료] 알림 파싱 오류:", error);
+          logger.error("❌ [통화종료] 원본 메시지:", message.body);
           const errorMessage = "통화 종료 알림 처리 중 오류가 발생했습니다.";
           // 모든 에러 콜백 호출
           this.onErrorCallbacks.forEach((callback) => callback(errorMessage));
@@ -384,7 +384,7 @@ export class WebSocketService {
     this.subscriptions.set("call-start", callStartSubscription);
     this.subscriptions.set("call-end", callEndSubscription);
 
-    console.log("✅ 큐 구독 완료:", {
+    logger.log("✅ 큐 구독 완료:", {
       matchingSubscribed: this.subscriptions.has("matching"),
       callStartSubscribed: this.subscriptions.has("call-start"),
       callEndSubscribed: this.subscriptions.has("call-end"),
@@ -398,7 +398,7 @@ export class WebSocketService {
   private unsubscribeFromQueues(): void {
     this.subscriptions.forEach((subscription, key) => {
       subscription.unsubscribe();
-      console.log(`구독 해제: ${key}`);
+      logger.log(`구독 해제: ${key}`);
     });
     this.subscriptions.clear();
   }
@@ -412,7 +412,7 @@ export class WebSocketService {
     // 중복 방지: 이미 등록된 콜백이 아니면 추가
     if (!this.onConnectionStateChangeCallbacks.includes(callback)) {
       this.onConnectionStateChangeCallbacks.push(callback);
-      console.log(
+      logger.log(
         `✅ 연결 상태 변경 콜백 추가 (총 ${this.onConnectionStateChangeCallbacks.length}개)`,
       );
     }
@@ -435,7 +435,7 @@ export class WebSocketService {
     // 중복 방지: 이미 등록된 콜백이 아니면 추가
     if (!this.onMatchingNotificationCallbacks.includes(callback)) {
       this.onMatchingNotificationCallbacks.push(callback);
-      console.log(
+      logger.log(
         `✅ 매칭 알림 콜백 추가 (총 ${this.onMatchingNotificationCallbacks.length}개)`,
       );
     }
@@ -448,7 +448,7 @@ export class WebSocketService {
     this.onMatchingNotificationCallbacks =
       this.onMatchingNotificationCallbacks.filter((cb) => cb !== callback);
     if (import.meta.env.DEV) {
-      console.log(
+      logger.log(
         `🔔 매칭 알림 콜백 제거 (남은 ${this.onMatchingNotificationCallbacks.length}개)`,
       );
     }
@@ -463,7 +463,7 @@ export class WebSocketService {
     // 중복 방지: 이미 등록된 콜백이 아니면 추가
     if (!this.onCallStartNotificationCallbacks.includes(callback)) {
       this.onCallStartNotificationCallbacks.push(callback);
-      console.log(
+      logger.log(
         `✅ 통화 시작 알림 콜백 추가 (총 ${this.onCallStartNotificationCallbacks.length}개)`,
       );
     }
@@ -476,7 +476,7 @@ export class WebSocketService {
     this.onCallStartNotificationCallbacks =
       this.onCallStartNotificationCallbacks.filter((cb) => cb !== callback);
     if (import.meta.env.DEV) {
-      console.log(
+      logger.log(
         `🔔 통화 시작 알림 콜백 제거 (남은 ${this.onCallStartNotificationCallbacks.length}개)`,
       );
     }
@@ -489,7 +489,7 @@ export class WebSocketService {
     // 중복 방지: 이미 등록된 콜백이 아니면 추가
     if (!this.onCallEndNotificationCallbacks.includes(callback)) {
       this.onCallEndNotificationCallbacks.push(callback);
-      console.log(
+      logger.log(
         `✅ 통화 종료 알림 콜백 추가 (총 ${this.onCallEndNotificationCallbacks.length}개)`,
       );
     }
@@ -499,11 +499,9 @@ export class WebSocketService {
   removeCallEndNotificationCallback(callback: (notification: any) => void): void {
     this.onCallEndNotificationCallbacks =
       this.onCallEndNotificationCallbacks.filter((cb) => cb !== callback);
-    if (import.meta.env.DEV) {
-      console.log(
-        `🔔 통화 종료 알림 콜백 제거 (남은 ${this.onCallEndNotificationCallbacks.length}개)`,
-      );
-    }
+    logger.log(
+      `🔔 통화 종료 알림 콜백 제거 (남은 ${this.onCallEndNotificationCallbacks.length}개)`,
+    );
   }
 
   /**
@@ -513,7 +511,7 @@ export class WebSocketService {
     // 중복 방지: 이미 등록된 콜백이 아니면 추가
     if (!this.onErrorCallbacks.includes(callback)) {
       this.onErrorCallbacks.push(callback);
-      console.log(`✅ 에러 콜백 추가 (총 ${this.onErrorCallbacks.length}개)`);
+      logger.log(`✅ 에러 콜백 추가 (총 ${this.onErrorCallbacks.length}개)`);
     }
   }
 
@@ -527,13 +525,13 @@ export class WebSocketService {
    */
   sendMessage(destination: string, message: any): void {
     if (!this.client || !this.connectionState.isConnected) {
-      console.error("❌ WebSocket이 연결되지 않음 - 메시지 전송 실패");
+      logger.error("❌ WebSocket이 연결되지 않음 - 메시지 전송 실패");
       throw new Error("WebSocket이 연결되지 않았습니다.");
     }
 
     try {
       if (import.meta.env.DEV) {
-        console.log("📤 WebSocket 메시지 전송:", { destination, message });
+        logger.log("📤 WebSocket 메시지 전송:", { destination, message });
       }
 
       // 인증 헤더 포함 (서버에서 사용자 정보를 확인하기 위해 필요)
@@ -541,10 +539,10 @@ export class WebSocketService {
       if (this.currentToken) {
         headers.Authorization = `Bearer ${this.currentToken}`;
         if (import.meta.env.DEV) {
-          console.log("🔑 WebSocket 메시지에 인증 헤더 포함");
+          logger.log("🔑 WebSocket 메시지에 인증 헤더 포함");
         }
       } else {
-        console.warn("⚠️ WebSocket 토큰이 없음 - 인증 헤더 없이 전송");
+        logger.warn("⚠️ WebSocket 토큰이 없음 - 인증 헤더 없이 전송");
       }
 
       this.client.publish({
@@ -552,9 +550,9 @@ export class WebSocketService {
         body: JSON.stringify(message),
         headers,
       });
-      console.log("✅ WebSocket 메시지 전송 성공");
+      logger.log("✅ WebSocket 메시지 전송 성공");
     } catch (error) {
-      console.error("❌ WebSocket 메시지 전송 실패:", error);
+      logger.error("❌ WebSocket 메시지 전송 실패:", error);
       throw error;
     }
   }
@@ -575,12 +573,12 @@ export class WebSocketService {
 
     const destination = `/app/call-end/${partnerId}`;
     if (import.meta.env.DEV) {
-      console.log("📤 WebSocket 메시지 전송:", { destination, message });
+      logger.log("📤 WebSocket 메시지 전송:", { destination, message });
     }
 
     this.sendMessage(destination, message);
     if (import.meta.env.DEV) {
-      console.log("✅ WebSocket 메시지 전송 성공");
+      logger.log("✅ WebSocket 메시지 전송 성공");
     }
   }
 
@@ -613,7 +611,7 @@ export class WebSocketService {
    * 구독 상태 로그 출력
    */
   logSubscriptionStatus(): void {
-    console.log("📊 WebSocket 구독 상태:", {
+    logger.log("📊 WebSocket 구독 상태:", {
       isConnected: this.connectionState.isConnected,
       subscriptions: this.getSubscriptionStatus(),
       totalSubscriptions: this.subscriptions.size,
@@ -632,7 +630,7 @@ export class WebSocketService {
       throw new Error("최대 재연결 시도 횟수를 초과했습니다.");
     }
 
-    console.log(
+    logger.log(
       `재연결 시도 ${this.connectionState.reconnectAttempts + 1}/${this.connectionState.maxReconnectAttempts}`,
     );
 
@@ -645,7 +643,7 @@ export class WebSocketService {
         this.unsubscribeFromQueues();
         this.client.deactivate();
       } catch (error) {
-        console.warn("기존 연결 정리 중 오류 (무시):", error);
+        logger.warn("기존 연결 정리 중 오류 (무시):", error);
       }
     }
     this.client = null; // 🔑 클라이언트를 null로 설정하여 새 토큰으로 재생성
@@ -668,7 +666,7 @@ export class WebSocketService {
       this.connectionState.reconnectAttempts >=
       this.connectionState.maxReconnectAttempts
     ) {
-      console.error(
+      logger.error(
         "❌ 최대 재연결 시도 횟수 초과 - 자동 재연결 중단",
       );
       return;
@@ -676,7 +674,7 @@ export class WebSocketService {
 
     // 토큰이 없으면 재연결 불가
     if (!this.currentToken) {
-      console.warn("⚠️ 토큰이 없어 자동 재연결 불가");
+      logger.warn("⚠️ 토큰이 없어 자동 재연결 불가");
       return;
     }
 
@@ -684,7 +682,7 @@ export class WebSocketService {
     const nextAttempt = this.connectionState.reconnectAttempts + 1;
     const delay = Math.min(1000 * Math.pow(2, nextAttempt - 1), 10000); // 지수 백오프, 최대 10초
 
-    console.log(
+    logger.log(
       `🔄 ${delay / 1000}초 후 자동 재연결 시도 (${nextAttempt}/${this.connectionState.maxReconnectAttempts})`,
     );
 
@@ -699,10 +697,10 @@ export class WebSocketService {
 
         await this.reconnect(this.currentToken!);
         if (import.meta.env.DEV) {
-          console.log("✅ 자동 재연결 성공");
+          logger.log("✅ 자동 재연결 성공");
         }
       } catch (error) {
-        console.error("❌ 자동 재연결 실패:", error);
+        logger.error("❌ 자동 재연결 실패:", error);
         // 재연결 실패 시 다시 스케줄링 (최대 횟수 내에서)
         if (nextAttempt < this.connectionState.maxReconnectAttempts) {
           this.scheduleReconnect();
@@ -730,7 +728,7 @@ export class WebSocketService {
     this.onCallStartNotificationCallbacks = [];
     this.onCallEndNotificationCallbacks = [];
     this.onErrorCallbacks = [];
-    console.log("🧹 WebSocket 서비스 정리 완료");
+    logger.log("🧹 WebSocket 서비스 정리 완료");
   }
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { CallHistoryItem } from "@shared/api";
+import { logger } from "@/lib/logger";
 
 interface CallHistoryPageProps {
   onBack: () => void;
@@ -40,7 +41,7 @@ export default function CallHistoryPage({ onBack }: CallHistoryPageProps) {
       setTotalPages(data.pagination.totalPages);
       setHasNext(data.pagination.hasNext);
     } catch (err) {
-      console.error("통화 이력 조회 실패:", err);
+      logger.error("통화 이력 조회 실패:", err);
       setError(
         err instanceof Error ? err.message : "통화 이력을 불러올 수 없습니다.",
       );

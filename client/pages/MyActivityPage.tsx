@@ -4,6 +4,7 @@ import { getMatchingApiService } from "@/lib/matchingApi";
 import { getStoredToken } from "@/lib/auth";
 import { ActivityStats } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { logger } from "@/lib/logger";
 
 export default function MyActivityPage() {
   const navigate = useNavigate();
@@ -29,15 +30,13 @@ export default function MyActivityPage() {
         const data = await matchingApi.getActivityStats();
 
         // 디버깅: 받은 데이터 확인 (개발 환경에서만)
-        if (import.meta.env.DEV) {
-          console.log("📊 MyActivityPage - 받은 데이터:", data);
-          console.log("📊 주간:", data.weeklyStats);
-          console.log("📊 분기:", data.quarterlyStats);
-        }
+        logger.log("📊 MyActivityPage - 받은 데이터:", data);
+        logger.log("📊 주간:", data.weeklyStats);
+        logger.log("📊 분기:", data.quarterlyStats);
 
         setStats(data);
       } catch (err) {
-        console.error("활동 통계 조회 실패:", err);
+        logger.error("활동 통계 조회 실패:", err);
         setError(
           err instanceof Error
             ? err.message

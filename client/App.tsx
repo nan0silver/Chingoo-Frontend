@@ -28,6 +28,7 @@ import FriendRequestsPage from "./pages/FriendRequestsPage";
 import AuthGuard from "./components/AuthGuard";
 import { Layout } from "./components/Layout";
 import { CustomSplashScreen } from "./components/CustomSplashScreen";
+import { logger } from "@/lib/logger";
 import { useMatchingStore } from "./lib/matchingStore";
 import { CATEGORIES } from "@shared/api";
 import { initializeAuth } from "./lib/auth";
@@ -75,26 +76,26 @@ const AppRoutes = () => {
 
     const initialize = async () => {
       if (import.meta.env.DEV) {
-        console.log("🚀 앱 시작: 인증 초기화 중...");
+        logger.log("🚀 앱 시작: 인증 초기화 중...");
       }
       await initializeAuth();
       setIsAuthInitialized(true);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 인증 초기화 완료");
+        logger.log("✅ 인증 초기화 완료");
       }
 
       // 인증 완료 후 통화 상태 복원 시도 (페이지 새로고침 대응, 30초 이내만)
       try {
         if (import.meta.env.DEV) {
-          console.log("🔄 통화 상태 복원 시도 중...");
+          logger.log("🔄 통화 상태 복원 시도 중...");
         }
         const restoredCategory = await restoreCallState();
 
         // 통화 상태가 복원되었으면 통화 중 페이지로 이동
         if (restoredCategory !== null) {
           if (import.meta.env.DEV) {
-            console.log("✅ 통화 상태 복원됨 - 통화 중 페이지로 이동", { category: restoredCategory });
+            logger.log("✅ 통화 상태 복원됨 - 통화 중 페이지로 이동", { category: restoredCategory });
           }
           // 약간의 지연 후 페이지 이동 (상태 안정화 대기)
           setTimeout(() => {
@@ -102,20 +103,20 @@ const AppRoutes = () => {
           }, 500);
         } else {
           if (import.meta.env.DEV) {
-            console.log("ℹ️ 복원할 통화 정보 없음 또는 만료됨 (30초 초과)");
+            logger.log("ℹ️ 복원할 통화 정보 없음 또는 만료됨 (30초 초과)");
           }
 
           // 통화 상태가 복원되지 않았으면 매칭 상태 복원 시도
           try {
             if (import.meta.env.DEV) {
-              console.log("🔄 매칭 상태 복원 시도 중...");
+              logger.log("🔄 매칭 상태 복원 시도 중...");
             }
             const restoredMatching = restoreMatchingFromStorage();
 
             // 매칭 상태가 복원되었으면 매칭 대기 페이지로 이동
             if (restoredMatching !== null && restoredMatching.status === "waiting") {
               if (import.meta.env.DEV) {
-                console.log("✅ 매칭 상태 복원됨 - 매칭 대기 페이지로 이동", restoredMatching);
+                logger.log("✅ 매칭 상태 복원됨 - 매칭 대기 페이지로 이동", restoredMatching);
               }
 
               // 매칭 상태 복원
@@ -123,10 +124,10 @@ const AppRoutes = () => {
                 // 백엔드에서 최신 매칭 상태 조회
                 await refreshMatchingStatus();
                 if (import.meta.env.DEV) {
-                  console.log("✅ 백엔드에서 매칭 상태 조회 성공");
+                  logger.log("✅ 백엔드에서 매칭 상태 조회 성공");
                 }
               } catch (error) {
-                console.warn("매칭 상태 조회 실패, 저장된 정보로 복원:", error);
+                logger.warn("매칭 상태 조회 실패, 저장된 정보로 복원:", error);
                 // API 호출 실패 시 저장된 정보로만 복원
                 restoreMatchingState(restoredMatching);
               }
@@ -135,10 +136,10 @@ const AppRoutes = () => {
               try {
                 await connectWebSocket();
                 if (import.meta.env.DEV) {
-                  console.log("✅ WebSocket 재연결 성공");
+                  logger.log("✅ WebSocket 재연결 성공");
                 }
               } catch (wsError) {
-                console.warn("⚠️ WebSocket 재연결 실패:", wsError);
+                logger.warn("⚠️ WebSocket 재연결 실패:", wsError);
                 // WebSocket 재연결 실패해도 매칭 복원은 계속 진행
               }
 
@@ -148,16 +149,16 @@ const AppRoutes = () => {
               }, 500);
             } else {
               if (import.meta.env.DEV) {
-                console.log("ℹ️ 복원할 매칭 정보 없음 또는 만료됨 (30초 초과)");
+                logger.log("ℹ️ 복원할 매칭 정보 없음 또는 만료됨 (30초 초과)");
               }
             }
           } catch (error) {
-            console.error("매칭 상태 복원 실패:", error);
+            logger.error("매칭 상태 복원 실패:", error);
             // 복원 실패는 치명적이지 않으므로 계속 진행
           }
         }
       } catch (error) {
-        console.error("통화 상태 복원 실패:", error);
+        logger.error("통화 상태 복원 실패:", error);
         // 복원 실패는 치명적이지 않으므로 계속 진행
       }
     };
@@ -182,7 +183,7 @@ const AppRoutes = () => {
     const handleOAuthLoginSuccess = (event: CustomEvent<{ userInfo: any }>) => {
       const { userInfo } = event.detail;
       if (import.meta.env.DEV) {
-        console.log("✅ 모바일 OAuth 로그인 성공 이벤트 수신:", userInfo);
+        logger.log("✅ 모바일 OAuth 로그인 성공 이벤트 수신:", userInfo);
       }
 
       // 사용자 정보에 따른 페이지 이동
@@ -197,7 +198,7 @@ const AppRoutes = () => {
     const handleOAuthLoginError = (event: CustomEvent<{ error: string }>) => {
       const { error } = event.detail;
       if (import.meta.env.DEV) {
-        console.error("❌ 모바일 OAuth 로그인 에러 이벤트 수신:", error);
+        logger.error("❌ 모바일 OAuth 로그인 에러 이벤트 수신:", error);
       }
       navigate("/login", { replace: true });
     };
@@ -232,13 +233,13 @@ const AppRoutes = () => {
       if (status === "matched" && matchingId) {
         // 매칭 성공 시 자동으로 통화 화면으로 이동 (matchingId가 있어야 함)
         if (import.meta.env.DEV) {
-          console.log("매칭 성공, 통화 화면으로 이동:", { status, matchingId });
+          logger.log("매칭 성공, 통화 화면으로 이동:", { status, matchingId });
         }
         navigate("/call-connected");
       } else if (status === "cancelled" || status === "timeout") {
         // 매칭 취소 또는 타임아웃 시 홈으로 이동
         if (import.meta.env.DEV) {
-          console.log("매칭 취소/타임아웃, 홈으로 이동:", { status });
+          logger.log("매칭 취소/타임아웃, 홈으로 이동:", { status });
         }
         navigate("/");
       }
@@ -261,7 +262,7 @@ const AppRoutes = () => {
     try {
       await cancelMatching();
     } catch (error) {
-      console.error("매칭 취소 실패:", error);
+      logger.error("매칭 취소 실패:", error);
     } finally {
       // 성공/실패 관계없이 HomePage로 이동
       navigate("/");

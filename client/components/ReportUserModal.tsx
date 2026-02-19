@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ReportReason, ReportUserRequest } from "@shared/api";
+import { logger } from "@/lib/logger";
 
 interface ReportUserModalProps {
   isOpen: boolean;
@@ -86,7 +87,7 @@ export default function ReportUserModal({
       setDetails("");
       onClose();
     } catch (error) {
-      console.error("사용자 신고 실패:", error);
+      logger.error("사용자 신고 실패:", error);
       // 에러는 상위 컴포넌트에서 처리
       throw error;
     } finally {

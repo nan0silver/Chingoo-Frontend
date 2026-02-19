@@ -7,6 +7,7 @@ import { UserPlus } from "lucide-react";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
 import { ReportUserRequest } from "@shared/api";
 import ReportUserModal from "@/components/ReportUserModal";
+import { logger } from "@/lib/logger";
 
 interface CallEvaluationPageProps {
   selectedCategory: string | null;
@@ -54,7 +55,7 @@ export default function CallEvaluationPage({
         return new Set(ids);
       }
     } catch (error) {
-      console.error("신고한 사용자 목록 불러오기 실패:", error);
+      logger.error("신고한 사용자 목록 불러오기 실패:", error);
     }
     return new Set<string>();
   };
@@ -69,7 +70,7 @@ export default function CallEvaluationPage({
         JSON.stringify(Array.from(currentIds)),
       );
     } catch (error) {
-      console.error("신고한 사용자 목록 저장 실패:", error);
+      logger.error("신고한 사용자 목록 저장 실패:", error);
     }
   };
 
@@ -82,8 +83,8 @@ export default function CallEvaluationPage({
   // 디버깅: partner 정보 및 callId 확인 (개발 환경만)
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.log("🔍 CallEvaluationPage - partner 정보:", partner);
-      console.log("🔍 CallEvaluationPage - callId:", callId);
+      logger.log("🔍 CallEvaluationPage - partner 정보:", partner);
+      logger.log("🔍 CallEvaluationPage - callId:", callId);
     }
   }, [partner, callId]);
 
@@ -111,14 +112,14 @@ export default function CallEvaluationPage({
       });
 
       if (import.meta.env.DEV) {
-        console.log("✅ 친구 요청 전송 성공");
+        logger.log("✅ 친구 요청 전송 성공");
       }
 
       setFriendRequestStatus("success");
       setFriendRequestMessage("친구 요청을 보냈습니다!");
       setShowFriendRequestModal(true);
     } catch (error: any) {
-      console.error("❌ 친구 요청 전송 실패:", error);
+      logger.error("❌ 친구 요청 전송 실패:", error);
 
       // 에러 메시지 처리
       let errorMessage = "친구 요청을 보낼 수 없습니다.";
@@ -224,7 +225,7 @@ export default function CallEvaluationPage({
   // 평가 제출 함수
   const handleSubmitEvaluation = async () => {
     if (!selectedRating || !callId) {
-      console.error("평가 정보 또는 callId가 없습니다.");
+      logger.error("평가 정보 또는 callId가 없습니다.");
       return;
     }
 
@@ -242,7 +243,7 @@ export default function CallEvaluationPage({
       };
 
       if (import.meta.env.DEV) {
-        console.log("📤 평가 제출 시작:", evaluationData);
+        logger.log("📤 평가 제출 시작:", evaluationData);
       }
 
       // 토큰 설정 (갱신된 토큰 포함)
@@ -250,7 +251,7 @@ export default function CallEvaluationPage({
       if (token) {
         matchingApiService.setToken(token);
         if (import.meta.env.DEV) {
-          console.log("🔑 matchingApiService에 토큰 설정 완료");
+          logger.log("🔑 matchingApiService에 토큰 설정 완료");
         }
       } else {
         throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
@@ -258,13 +259,13 @@ export default function CallEvaluationPage({
 
       await matchingApiService.submitEvaluation(evaluationData);
       if (import.meta.env.DEV) {
-        console.log("✅ 평가 제출 성공");
+        logger.log("✅ 평가 제출 성공");
       }
 
       // 성공 모달 표시
       setShowSuccessModal(true);
     } catch (error: any) {
-      console.error("❌ 평가 제출 실패:", error);
+      logger.error("❌ 평가 제출 실패:", error);
 
       // 에러 메시지 처리
       let errorMessage = "평가 제출에 실패했습니다. 다시 시도해주세요.";
@@ -320,7 +321,7 @@ export default function CallEvaluationPage({
 
       setShowReportSuccessModal(true);
     } catch (error: any) {
-      console.error("사용자 신고 실패:", error);
+      logger.error("사용자 신고 실패:", error);
 
       let errorMessage = "신고에 실패했습니다. 다시 시도해주세요.";
 

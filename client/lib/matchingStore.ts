@@ -12,6 +12,7 @@ import {
 import { matchingApiService } from "./matchingApi";
 import { webSocketService, getWebSocketService } from "./websocket";
 import { getStoredToken } from "./auth";
+import { logger } from "./logger";
 
 /**
  * localStorage에 저장할 매칭 정보 (직렬화 가능한 데이터만)
@@ -134,7 +135,7 @@ export const useMatchingStore = create<MatchingStore>()(
         startMatching: async (request: MatchingRequest) => {
           try {
             if (import.meta.env.DEV) {
-              console.log("🎯 startMatching 함수 호출됨:", request);
+              logger.log("🎯 startMatching 함수 호출됨:", request);
             }
             set({
               error: null,
@@ -143,7 +144,7 @@ export const useMatchingStore = create<MatchingStore>()(
 
             const token = getStoredToken();
             if (import.meta.env.DEV) {
-              console.log("🔑 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
+              logger.log("🔑 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
             }
             if (!token) {
               throw new Error("인증 토큰이 필요합니다.");
@@ -154,11 +155,11 @@ export const useMatchingStore = create<MatchingStore>()(
 
             // 매칭 참가 요청
             if (import.meta.env.DEV) {
-              console.log("📡 매칭 API 호출 시작");
+              logger.log("📡 매칭 API 호출 시작");
             }
             const response = await matchingApiService.joinMatching(request);
             if (import.meta.env.DEV) {
-              console.log("✅ 매칭 API 응답:", response);
+              logger.log("✅ 매칭 API 응답:", response);
             }
 
             set({
@@ -184,7 +185,7 @@ export const useMatchingStore = create<MatchingStore>()(
 
             // WebSocket 연결 시도 (실패해도 매칭은 계속 진행)
             if (import.meta.env.DEV) {
-              console.log(
+              logger.log(
                 "🔍 WebSocket 연결 상태 확인:",
                 get().connectionState,
               );
@@ -194,7 +195,7 @@ export const useMatchingStore = create<MatchingStore>()(
             const wsService = getWebSocketService();
             const actualWsState = wsService.getConnectionState();
             if (import.meta.env.DEV) {
-              console.log("🔍 실제 WebSocket 상태:", actualWsState);
+              logger.log("🔍 실제 WebSocket 상태:", actualWsState);
             }
 
             if (
@@ -202,42 +203,42 @@ export const useMatchingStore = create<MatchingStore>()(
               !actualWsState.isConnected
             ) {
               if (import.meta.env.DEV) {
-                console.log("🚀 WebSocket 연결 시도 시작");
+                logger.log("🚀 WebSocket 연결 시도 시작");
               }
               try {
                 await get().connectWebSocket();
                 if (import.meta.env.DEV) {
-                  console.log("✅ WebSocket 연결 성공");
+                  logger.log("✅ WebSocket 연결 성공");
                 }
               } catch (wsError) {
                 if (import.meta.env.DEV) {
-                  console.warn(
+                  logger.warn(
                     "❌ WebSocket 연결 실패, 폴링으로 대체:",
                     wsError,
                   );
-                  console.log("🔄 폴링 모드 시작 (3초마다 상태 확인)");
+                  logger.log("🔄 폴링 모드 시작 (3초마다 상태 확인)");
                 }
                 // ⚠️ WebSocket 연결 실패 시 폴링으로 대체
                 // WebSocket 연결 실패해도 매칭은 계속 진행
               }
             } else {
               if (import.meta.env.DEV) {
-                console.log("ℹ️ WebSocket 이미 연결됨");
+                logger.log("ℹ️ WebSocket 이미 연결됨");
               }
               // 연결되어 있지만 구독이 안되어 있을 수 있으므로 구독 상태 확인
               const subscriptionStatus = wsService.getSubscriptionStatus();
               if (import.meta.env.DEV) {
-                console.log("🔍 구독 상태 확인:", subscriptionStatus);
+                logger.log("🔍 구독 상태 확인:", subscriptionStatus);
               }
               if (Object.keys(subscriptionStatus).length === 0) {
                 if (import.meta.env.DEV) {
-                  console.log("⚠️ 구독이 없음 - WebSocket 재연결 시도");
+                  logger.log("⚠️ 구독이 없음 - WebSocket 재연결 시도");
                 }
                 try {
                   await get().connectWebSocket();
                 } catch (wsError) {
                   if (import.meta.env.DEV) {
-                    console.warn("❌ 재연결 실패, 폴링으로 대체:", wsError);
+                    logger.warn("❌ 재연결 실패, 폴링으로 대체:", wsError);
                   }
                 }
               }
@@ -338,11 +339,11 @@ export const useMatchingStore = create<MatchingStore>()(
         connectWebSocket: async () => {
           try {
             if (import.meta.env.DEV) {
-              console.log("🔌 connectWebSocket 함수 호출됨");
+              logger.log("🔌 connectWebSocket 함수 호출됨");
             }
             const token = getStoredToken();
             if (import.meta.env.DEV) {
-              console.log("🔌 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
+              logger.log("🔌 토큰 확인:", token ? "토큰 있음" : "토큰 없음");
             }
             if (!token) {
               throw new Error("인증 토큰이 필요합니다.");
@@ -359,11 +360,11 @@ export const useMatchingStore = create<MatchingStore>()(
             // 콜백은 1회만 등록 (connectWebSocket 재호출 시 누적 방지)
             if (!storeWsCallbacksRegistered) {
               if (import.meta.env.DEV) {
-                console.log("🔌 WebSocket 콜백 설정 시작");
+                logger.log("🔌 WebSocket 콜백 설정 시작");
               }
               storeWsConnectionStateCb = (state) => {
                 if (import.meta.env.DEV) {
-                  console.log("🔌 연결 상태 변경:", state);
+                  logger.log("🔌 연결 상태 변경:", state);
                 }
                 get().setConnectionState(state);
               };
@@ -371,7 +372,7 @@ export const useMatchingStore = create<MatchingStore>()(
 
               storeWsMatchingCb = (notification) => {
                 if (import.meta.env.DEV) {
-                  console.log("🔌 매칭 알림 수신:", notification);
+                  logger.log("🔌 매칭 알림 수신:", notification);
                 }
                 get().handleMatchingNotification(notification);
               };
@@ -379,7 +380,7 @@ export const useMatchingStore = create<MatchingStore>()(
 
               storeWsCallStartCb = (notification) => {
                 if (import.meta.env.DEV) {
-                  console.log("🔌 통화 시작 알림 수신:", notification);
+                  logger.log("🔌 통화 시작 알림 수신:", notification);
                 }
                 get().handleCallStartNotification(notification);
               };
@@ -387,7 +388,7 @@ export const useMatchingStore = create<MatchingStore>()(
 
               storeWsErrorCb = (error) => {
                 if (import.meta.env.DEV) {
-                  console.log("🔌 WebSocket 에러:", error);
+                  logger.log("🔌 WebSocket 에러:", error);
                 }
                 get().setError(error);
               };
@@ -397,14 +398,14 @@ export const useMatchingStore = create<MatchingStore>()(
             }
 
             if (import.meta.env.DEV) {
-              console.log("🔌 WebSocket 연결 시도");
+              logger.log("🔌 WebSocket 연결 시도");
             }
             await webSocketService.connect(token);
             if (import.meta.env.DEV) {
-              console.log("🔌 WebSocket 연결 완료");
+              logger.log("🔌 WebSocket 연결 완료");
             }
           } catch (error) {
-            console.error("🔌 connectWebSocket 에러:", error);
+            logger.error("🔌 connectWebSocket 에러:", error);
             const errorMessage =
               error instanceof Error
                 ? error.message
@@ -582,10 +583,10 @@ export const useMatchingStore = create<MatchingStore>()(
 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storedInfo));
             if (import.meta.env.DEV) {
-              console.log("💾 매칭 정보 localStorage에 저장 완료", storedInfo);
+              logger.log("💾 매칭 정보 localStorage에 저장 완료", storedInfo);
             }
           } catch (error) {
-            console.error("매칭 정보 저장 실패:", error);
+            logger.error("매칭 정보 저장 실패:", error);
           }
         },
 
@@ -606,14 +607,14 @@ export const useMatchingStore = create<MatchingStore>()(
             if (elapsed >= THIRTY_SECONDS) {
               // 30초 초과 - 만료됨, 삭제
               if (import.meta.env.DEV) {
-                console.log("⏰ 저장된 매칭 정보가 30초 초과 - 만료됨, 삭제");
+                logger.log("⏰ 저장된 매칭 정보가 30초 초과 - 만료됨, 삭제");
               }
               get().clearMatchingFromStorage();
               return null;
             }
 
             if (import.meta.env.DEV) {
-              console.log(
+              logger.log(
                 "💾 localStorage에서 매칭 정보 복원:",
                 storedInfo,
                 `(경과 시간: ${Math.round(elapsed / 1000)}초)`,
@@ -622,7 +623,7 @@ export const useMatchingStore = create<MatchingStore>()(
 
             return storedInfo;
           } catch (error) {
-            console.error("매칭 정보 복원 실패:", error);
+            logger.error("매칭 정보 복원 실패:", error);
             get().clearMatchingFromStorage();
             return null;
           }
@@ -633,10 +634,10 @@ export const useMatchingStore = create<MatchingStore>()(
           try {
             localStorage.removeItem(STORAGE_KEY);
             if (import.meta.env.DEV) {
-              console.log("🗑️ localStorage에서 매칭 정보 삭제 완료");
+              logger.log("🗑️ localStorage에서 매칭 정보 삭제 완료");
             }
           } catch (error) {
-            console.error("매칭 정보 삭제 실패:", error);
+            logger.error("매칭 정보 삭제 실패:", error);
           }
         },
 
@@ -652,7 +653,7 @@ export const useMatchingStore = create<MatchingStore>()(
             updatedAt: new Date().toISOString(),
           });
           if (import.meta.env.DEV) {
-            console.log("✅ 매칭 상태 복원 완료:", storedInfo);
+            logger.log("✅ 매칭 상태 복원 완료:", storedInfo);
           }
         },
       }),

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { signup } from "@/lib/auth";
 import { SignUpRequest } from "@shared/api";
 import { Eye, EyeOff } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface SignUpPageProps {
   onBack: () => void;
@@ -103,7 +104,7 @@ export default function SignUpPage({ onBack }: SignUpPageProps) {
       // 회원가입 성공 - 프로필 설정 페이지로 이동 (소셜 로그인과 동일)
       navigate("/profile-setup", { replace: true });
     } catch (error) {
-      console.error("회원가입 오류:", error);
+      logger.error("회원가입 오류:", error);
       // 에러 메시지를 화면에 표시
       const errorMessage =
         error instanceof Error

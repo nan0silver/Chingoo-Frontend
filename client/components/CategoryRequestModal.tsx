@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { logger } from "@/lib/logger";
 
 interface CategoryRequestModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export default function CategoryRequestModal({
       setCategoryName("");
       onClose();
     } catch (error) {
-      console.error("카테고리 요청 실패:", error);
+      logger.error("카테고리 요청 실패:", error);
     } finally {
       setIsSubmitting(false);
     }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth";
 import { UserInfo, UserProfile } from "@shared/api";
 import BottomNavigation, { BottomNavItem } from "@/components/BottomNavigation";
+import { logger } from "@/lib/logger";
 import { Checkbox } from "@/components/ui/checkbox";
 
 // 전화번호 포맷팅 함수 (숫자만 받아서 하이픈 추가)
@@ -194,7 +195,7 @@ export default function ProfileSetupPage() {
           setShowConsentModal(true);
         }
       } catch (error) {
-        console.error("사용자 프로필 가져오기 실패:", error);
+        logger.error("사용자 프로필 가져오기 실패:", error);
 
         // 인증 만료 오류인 경우 로그인 페이지로 이동
         if (
@@ -347,7 +348,7 @@ export default function ProfileSetupPage() {
       setShowRequiredDetail3(false);
       setShowOptionalDetail(false);
     } catch (error) {
-      console.error("동의 내역 저장 실패:", error);
+      logger.error("동의 내역 저장 실패:", error);
       alert(
         error instanceof Error
           ? error.message
@@ -465,7 +466,7 @@ export default function ProfileSetupPage() {
       updateUserInfo();
       scheduleSuccessNavigate();
     } catch (error) {
-      console.error("프로필 저장 실패:", error);
+      logger.error("프로필 저장 실패:", error);
 
       // 인증 만료 오류인 경우 로그인 페이지로 이동
       if (

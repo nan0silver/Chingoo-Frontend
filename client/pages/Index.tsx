@@ -10,6 +10,7 @@ import MyActivityPage from "./MyActivityPage";
 import CallHistoryPage from "./CallHistoryPage";
 import ComingSoonPage from "./ComingSoonPage";
 import SupportPage from "./SupportPage";
+import { logger } from "@/lib/logger";
 
 type CallState = "home" | "connecting" | "inCall" | "evaluation";
 
@@ -35,7 +36,7 @@ export default function Index() {
         const userInfo = getStoredUserInfo();
 
         if (import.meta.env.DEV) {
-          console.log("🔍 Index.tsx - 인증 상태 확인:", {
+          logger.log("🔍 Index.tsx - 인증 상태 확인:", {
             authenticated,
             hasUserInfo: !!userInfo,
             userInfo: userInfo
@@ -57,12 +58,12 @@ export default function Index() {
             "oauth_callback_processed",
           );
           if (import.meta.env.DEV) {
-            console.log("🔍 OAuth 콜백 플래그 확인:", oauthCallbackProcessed);
+            logger.log("🔍 OAuth 콜백 플래그 확인:", oauthCallbackProcessed);
           }
         } catch (storageError) {
           // sessionStorage 접근이 차단된 경우
           if (import.meta.env.DEV) {
-            console.warn("sessionStorage 접근 불가:", storageError);
+            logger.warn("sessionStorage 접근 불가:", storageError);
           }
         }
 
@@ -72,11 +73,11 @@ export default function Index() {
           } catch (storageError) {
             // sessionStorage 접근이 차단된 경우 무시
             if (import.meta.env.DEV) {
-              console.warn("sessionStorage 삭제 실패:", storageError);
+              logger.warn("sessionStorage 삭제 실패:", storageError);
             }
           }
           if (import.meta.env.DEV) {
-            console.log("✅ OAuth 콜백에서 이미 처리됨 - 프로필 체크 스킵");
+            logger.log("✅ OAuth 콜백에서 이미 처리됨 - 프로필 체크 스킵");
           }
           setIsLoading(false);
           return;
@@ -85,7 +86,7 @@ export default function Index() {
         // OAuth 인증된 사용자의 경우 프로필 완성도에 따라 리다이렉트
         if (authenticated && userInfo) {
           if (import.meta.env.DEV) {
-            console.log("📋 인증된 사용자 정보:", {
+            logger.log("📋 인증된 사용자 정보:", {
               is_new_user: userInfo.is_new_user,
               is_profile_complete: userInfo.is_profile_complete,
               id: userInfo.id,
@@ -96,7 +97,7 @@ export default function Index() {
           const shouldRedirectToProfile = userInfo.is_new_user;
 
           if (import.meta.env.DEV) {
-            console.log("🔍 프로필 리다이렉트 결정:", {
+            logger.log("🔍 프로필 리다이렉트 결정:", {
               shouldRedirectToProfile,
               is_new_user: userInfo.is_new_user,
               is_profile_complete: userInfo.is_profile_complete,
@@ -105,20 +106,20 @@ export default function Index() {
 
           if (shouldRedirectToProfile) {
             if (import.meta.env.DEV) {
-              console.log("➡️ 프로필 설정 페이지로 리다이렉트");
+              logger.log("➡️ 프로필 설정 페이지로 리다이렉트");
             }
             navigate("/profile-setup", { replace: true });
             return;
           } else {
             if (import.meta.env.DEV) {
-              console.log("✅ 프로필 완성된 사용자 - 메인 페이지에 머물기");
+              logger.log("✅ 프로필 완성된 사용자 - 메인 페이지에 머물기");
             }
             // 프로필이 완성된 사용자는 메인 페이지에 머물도록 함
             return;
           }
         }
       } catch (error) {
-        console.error("❌ Error checking auth status:", error);
+        logger.error("❌ Error checking auth status:", error);
         setIsLoggedIn(false);
       } finally {
         setIsLoading(false);
@@ -150,7 +151,7 @@ export default function Index() {
       // 로그인 페이지로 리다이렉트
       navigate("/login", { replace: true });
     } catch (error) {
-      console.error("로그아웃 중 오류 발생:", error);
+      logger.error("로그아웃 중 오류 발생:", error);
       // 에러가 발생해도 로컬 상태는 초기화하고 로그인 페이지로 이동
       setIsLoggedIn(false);
       setCallState("home");

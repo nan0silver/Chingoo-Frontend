@@ -145,7 +145,7 @@ export class MatchingApiService {
 
       return result.data;
     } catch (error) {
-      console.error("매칭 참가 오류:", error);
+      logger.error("매칭 참가 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("매칭 참가 중 오류가 발생했습니다.");
@@ -192,7 +192,7 @@ export class MatchingApiService {
 
       return result.data;
     } catch (error) {
-      console.error("매칭 상태 조회 오류:", error);
+      logger.error("매칭 상태 조회 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("매칭 상태 조회 중 오류가 발생했습니다.");
@@ -235,7 +235,7 @@ export class MatchingApiService {
       // HTTP 상태 코드가 200-299 범위면 성공으로 간주
       // handleApiResponse에서 이미 에러 처리를 했으므로 여기서는 추가 체크 불필요
     } catch (error) {
-      console.error("매칭 취소 오류:", error);
+      logger.error("매칭 취소 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("매칭 취소 중 오류가 발생했습니다.");
@@ -278,7 +278,7 @@ export class MatchingApiService {
 
       return result.data.categories;
     } catch (error) {
-      console.error("카테고리 목록 조회 오류:", error);
+      logger.error("카테고리 목록 조회 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("카테고리 목록 조회 중 오류가 발생했습니다.");
@@ -326,7 +326,7 @@ export class MatchingApiService {
 
       return result.data;
     } catch (error) {
-      console.error("카테고리 정보 조회 오류:", error);
+      logger.error("카테고리 정보 조회 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("카테고리 정보 조회 중 오류가 발생했습니다.");
@@ -384,7 +384,7 @@ export class MatchingApiService {
 
       return result.data;
     } catch (error) {
-      console.error("대기열 위치 조회 오류:", error);
+      logger.error("대기열 위치 조회 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("대기열 위치 조회 중 오류가 발생했습니다.");
@@ -604,9 +604,9 @@ export class MatchingApiService {
 
       if (import.meta.env.DEV) {
         logger.log("✅ 활동 통계 조회 성공");
-        console.log("📊 백엔드 응답 데이터:", JSON.stringify(result, null, 2));
-        console.log("📊 주간 통계:", result.data.weekly_stats);
-        console.log("📊 분기 통계:", result.data.quarterly_stats);
+        logger.log("📊 백엔드 응답 데이터:", JSON.stringify(result, null, 2));
+        logger.log("📊 주간 통계:", result.data.weekly_stats);
+        logger.log("📊 분기 통계:", result.data.quarterly_stats);
       }
 
       // snake_case를 camelCase로 변환
@@ -803,7 +803,7 @@ export class MatchingApiService {
 
       return result.data;
     } catch (error) {
-      console.error("매칭 통계 조회 오류:", error);
+      logger.error("매칭 통계 조회 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("매칭 통계 조회 중 오류가 발생했습니다.");
@@ -846,9 +846,9 @@ export class MatchingApiService {
 
       // HTTP 상태 코드가 200-299 범위면 성공으로 간주
       await handleApiResponse(response);
-      console.log("✅ 채널 나가기 API 호출 성공");
+      logger.log("✅ 채널 나가기 API 호출 성공");
     } catch (error) {
-      console.error("채널 나가기 오류:", error);
+      logger.error("채널 나가기 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("채널 나가기 중 오류가 발생했습니다.");
@@ -891,9 +891,9 @@ export class MatchingApiService {
 
       // HTTP 상태 코드가 200-299 범위면 성공으로 간주
       await handleApiResponse(response);
-      console.log("✅ 통화 종료 API 호출 성공");
+      logger.log("✅ 통화 종료 API 호출 성공");
     } catch (error) {
-      console.error("통화 종료 오류:", error);
+      logger.error("통화 종료 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("통화 종료 중 오류가 발생했습니다.");
@@ -924,14 +924,14 @@ export class MatchingApiService {
         body: JSON.stringify(request),
       });
 
-      console.log(`📡 통화 평가 API 첫 번째 요청 응답: ${response.status}`);
+      logger.log(`📡 통화 평가 API 첫 번째 요청 응답: ${response.status}`);
 
       // 401 에러 시 토큰 갱신 후 재시도
       if (response.status === 401) {
-        console.log("🔑 통화 평가에서 401 에러 발생, 토큰 갱신 시도 중...");
+        logger.log("🔑 통화 평가에서 401 에러 발생, 토큰 갱신 시도 중...");
         const newToken = await refreshToken();
         if (newToken) {
-          console.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
+          logger.log("✅ 토큰 갱신 성공, 새 토큰으로 재시도 중...");
           // 토큰 갱신 성공 시 새 토큰으로 재시도
           this.token = newToken; // 클래스의 토큰도 업데이트
           response = await fetch(url, {
@@ -939,9 +939,9 @@ export class MatchingApiService {
             headers: createHeaders(newToken),
             body: JSON.stringify(request),
           });
-          console.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
+          logger.log(`🔄 토큰 갱신 후 재시도 결과: ${response.status}`);
         } else {
-          console.error("❌ 토큰 갱신 실패");
+          logger.error("❌ 토큰 갱신 실패");
           // 토큰 갱신 실패 시 인증 오류로 처리
           throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
         }
@@ -949,9 +949,9 @@ export class MatchingApiService {
 
       // HTTP 상태 코드가 200-299 범위면 성공으로 간주
       await handleApiResponse(response);
-      console.log("✅ 통화 평가 API 호출 성공");
+      logger.log("✅ 통화 평가 API 호출 성공");
     } catch (error) {
-      console.error("통화 평가 오류:", error);
+      logger.error("통화 평가 오류:", error);
       throw error instanceof Error
         ? error
         : new Error("통화 평가 중 오류가 발생했습니다.");
@@ -971,8 +971,8 @@ export class MatchingApiService {
       const url = `${this.baseUrl}/v1/friendships`;
       logger.apiRequest("GET", "/v1/friendships", {});
       if (import.meta.env.DEV) {
-        console.log("🔍 친구 목록 요청 URL:", url);
-        console.log("🔍 baseUrl:", this.baseUrl);
+        logger.log("🔍 친구 목록 요청 URL:", url);
+        logger.log("🔍 baseUrl:", this.baseUrl);
       }
 
       let response = await fetch(url, {
@@ -1010,7 +1010,7 @@ export class MatchingApiService {
           friend.user_id;
 
         if (import.meta.env.DEV && !friendId) {
-          console.warn("⚠️ 친구 ID가 없습니다:", friend);
+          logger.warn("⚠️ 친구 ID가 없습니다:", friend);
         }
 
         return {
@@ -1026,7 +1026,7 @@ export class MatchingApiService {
       });
 
       if (import.meta.env.DEV) {
-        console.log("👥 친구 목록:", friends);
+        logger.log("👥 친구 목록:", friends);
       }
 
       return friends;
@@ -1080,7 +1080,7 @@ export class MatchingApiService {
         await handleApiResponse<SendFriendRequestResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 친구 요청 전송 성공:", result);
+        logger.log("✅ 친구 요청 전송 성공:", result);
       }
 
       return result;
@@ -1146,7 +1146,7 @@ export class MatchingApiService {
       );
 
       if (import.meta.env.DEV) {
-        console.log("📬 친구 요청 목록:", requests);
+        logger.log("📬 친구 요청 목록:", requests);
       }
 
       return requests;
@@ -1182,7 +1182,7 @@ export class MatchingApiService {
       // 404 에러면 보낸 요청 엔드포인트가 없다는 의미
       if (response.status === 404) {
         if (import.meta.env.DEV) {
-          console.log("⚠️ 보낸 요청 전용 엔드포인트 없음");
+          logger.log("⚠️ 보낸 요청 전용 엔드포인트 없음");
         }
         // 빈 배열 반환 (보낸 요청을 가져올 수 없음)
         return [];
@@ -1232,7 +1232,7 @@ export class MatchingApiService {
       );
 
       if (import.meta.env.DEV) {
-        console.log("📤 보낸 친구 요청 목록:", requests);
+        logger.log("📤 보낸 친구 요청 목록:", requests);
       }
 
       return requests;
@@ -1284,7 +1284,7 @@ export class MatchingApiService {
         await handleApiResponse<FriendRequestActionResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 친구 요청 수락 성공:", result);
+        logger.log("✅ 친구 요청 수락 성공:", result);
       }
 
       return result;
@@ -1340,7 +1340,7 @@ export class MatchingApiService {
         await handleApiResponse<FriendRequestActionResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 보낸 친구 요청 취소 성공:", result);
+        logger.log("✅ 보낸 친구 요청 취소 성공:", result);
       }
 
       return result;
@@ -1392,7 +1392,7 @@ export class MatchingApiService {
         await handleApiResponse<FriendRequestActionResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 친구 요청 거절 성공:", result);
+        logger.log("✅ 친구 요청 거절 성공:", result);
       }
 
       return result;
@@ -1424,7 +1424,7 @@ export class MatchingApiService {
       const friendIdStr = String(friendId);
 
       if (import.meta.env.DEV) {
-        console.log("🗑️ 친구 삭제 API 호출:", {
+        logger.log("🗑️ 친구 삭제 API 호출:", {
           friendId,
           friendIdStr,
           url: `${this.baseUrl}/v1/friendships/${friendIdStr}`,
@@ -1459,7 +1459,7 @@ export class MatchingApiService {
         await handleApiResponse<DeleteFriendResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 친구 삭제 성공:", result);
+        logger.log("✅ 친구 삭제 성공:", result);
       }
 
       return result;
@@ -1519,7 +1519,7 @@ export class MatchingApiService {
         await handleApiResponse<ReportUserResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 사용자 신고 성공:", result);
+        logger.log("✅ 사용자 신고 성공:", result);
       }
 
       return result;
@@ -1570,7 +1570,7 @@ export class MatchingApiService {
         await handleApiResponse<CallPromptResponse>(response);
 
       if (import.meta.env.DEV) {
-        console.log("✅ 통화 프롬프트 조회 성공:", result);
+        logger.log("✅ 통화 프롬프트 조회 성공:", result);
       }
 
       if (!result.data) {
