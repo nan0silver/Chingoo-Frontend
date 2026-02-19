@@ -24,7 +24,7 @@ export default function BottomNavigation({
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-grey-100 z-40 safe-area-bottom"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-grey-100 z-40 safe-area-bottom"
       style={{
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}

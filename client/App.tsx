@@ -26,6 +26,7 @@ import SupportPage from "./pages/SupportPage";
 import FriendsPage from "./pages/FriendsPage";
 import FriendRequestsPage from "./pages/FriendRequestsPage";
 import AuthGuard from "./components/AuthGuard";
+import { Layout } from "./components/Layout";
 import { CustomSplashScreen } from "./components/CustomSplashScreen";
 import { useMatchingStore } from "./lib/matchingStore";
 import { CATEGORIES } from "@shared/api";
@@ -372,43 +373,31 @@ const AppRoutes = () => {
   }
 
   return (
-    <div className="w-full min-h-screen max-w-md mx-auto bg-white relative overflow-x-hidden">
+    <Layout>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route
           path="/login"
           element={
-            <div className="max-w-md mx-auto">
-              <LoginPage
-                onLogin={handleGoHome}
-                onSignUp={handleNavigateToSignUp}
-              />
-            </div>
+            <LoginPage
+              onLogin={handleGoHome}
+              onSignUp={handleNavigateToSignUp}
+            />
           }
         />
         <Route
           path="/signup"
-          element={
-            <div className="max-w-md mx-auto">
-              <SignUpPage onBack={handleBackToLogin} />
-            </div>
-          }
+          element={<SignUpPage onBack={handleBackToLogin} />}
         />
         <Route
           path="/oauth/callback"
-          element={
-            <div className="max-w-md mx-auto">
-              <OAuthCallbackPage />
-            </div>
-          }
+          element={<OAuthCallbackPage />}
         />
         <Route
           path="/profile-setup"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <ProfileSetupPage />
-              </div>
+              <ProfileSetupPage />
             </AuthGuard>
           }
         />
@@ -416,13 +405,11 @@ const AppRoutes = () => {
           path="/connecting-call"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <ConnectingCallPage
-                  selectedCategory={getCategoryName(categoryId)}
-                  onCancel={handleCancelMatching}
-                  onConnected={handleConnected}
-                />
-              </div>
+              <ConnectingCallPage
+                selectedCategory={getCategoryName(categoryId)}
+                onCancel={handleCancelMatching}
+                onConnected={handleConnected}
+              />
             </AuthGuard>
           }
         />
@@ -430,12 +417,10 @@ const AppRoutes = () => {
           path="/call-connected"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <CallConnectedPage
-                  selectedCategory={getCategoryName(categoryId)}
-                  onEndCall={handleEndCall}
-                />
-              </div>
+              <CallConnectedPage
+                selectedCategory={getCategoryName(categoryId)}
+                onEndCall={handleEndCall}
+              />
             </AuthGuard>
           }
         />
@@ -443,14 +428,12 @@ const AppRoutes = () => {
           path="/call-evaluation"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <CallEvaluationPage
-                  selectedCategory={getCategoryName(categoryId)}
-                  onCallAgain={handleCallAgain}
-                  onSelectInterests={handleSelectInterests}
-                  onGoHome={handleGoHome}
-                />
-              </div>
+              <CallEvaluationPage
+                selectedCategory={getCategoryName(categoryId)}
+                onCallAgain={handleCallAgain}
+                onSelectInterests={handleSelectInterests}
+                onGoHome={handleGoHome}
+              />
             </AuthGuard>
           }
         />
@@ -458,9 +441,7 @@ const AppRoutes = () => {
           path="/my-activity"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <MyActivityPage />
-              </div>
+              <MyActivityPage />
             </AuthGuard>
           }
         />
@@ -468,9 +449,7 @@ const AppRoutes = () => {
           path="/call-history"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <CallHistoryPage onBack={handleBack} />
-              </div>
+              <CallHistoryPage onBack={handleBack} />
             </AuthGuard>
           }
         />
@@ -478,16 +457,14 @@ const AppRoutes = () => {
           path="/settings"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <SettingsPage
-                  onBack={handleBack}
-                  onNavigateToActivity={handleNavigateToActivity}
-                  onNavigateToProfileEdit={handleNavigateToProfileEdit}
-                  onNavigateToComingSoon={handleNavigateToComingSoon}
-                  onNavigateToSupport={handleNavigateToSupport}
-                  onLogout={handleLogout}
-                />
-              </div>
+              <SettingsPage
+                onBack={handleBack}
+                onNavigateToActivity={handleNavigateToActivity}
+                onNavigateToProfileEdit={handleNavigateToProfileEdit}
+                onNavigateToComingSoon={handleNavigateToComingSoon}
+                onNavigateToSupport={handleNavigateToSupport}
+                onLogout={handleLogout}
+              />
             </AuthGuard>
           }
         />
@@ -495,9 +472,7 @@ const AppRoutes = () => {
           path="/coming-soon"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <ComingSoonPage />
-              </div>
+              <ComingSoonPage />
             </AuthGuard>
           }
         />
@@ -505,9 +480,7 @@ const AppRoutes = () => {
           path="/support"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <SupportPage onBack={handleBack} />
-              </div>
+              <SupportPage onBack={handleBack} />
             </AuthGuard>
           }
         />
@@ -515,12 +488,10 @@ const AppRoutes = () => {
           path="/friends"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <FriendsPage
-                  onBack={handleBackFromFriends}
-                  onNavigateToRequests={handleNavigateToFriendRequests}
-                />
-              </div>
+              <FriendsPage
+                onBack={handleBackFromFriends}
+                onNavigateToRequests={handleNavigateToFriendRequests}
+              />
             </AuthGuard>
           }
         />
@@ -528,12 +499,10 @@ const AppRoutes = () => {
           path="/friends/requests/received"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <FriendRequestsPage
-                  onBack={handleBackFromFriendRequests}
-                  onRequestHandled={handleFriendRequestHandled}
-                />
-              </div>
+              <FriendRequestsPage
+                onBack={handleBackFromFriendRequests}
+                onRequestHandled={handleFriendRequestHandled}
+              />
             </AuthGuard>
           }
         />
@@ -541,12 +510,10 @@ const AppRoutes = () => {
           path="/friends/requests/sent"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <FriendRequestsPage
-                  onBack={handleBackFromFriendRequests}
-                  onRequestHandled={handleFriendRequestHandled}
-                />
-              </div>
+              <FriendRequestsPage
+                onBack={handleBackFromFriendRequests}
+                onRequestHandled={handleFriendRequestHandled}
+              />
             </AuthGuard>
           }
         />
@@ -555,19 +522,17 @@ const AppRoutes = () => {
           path="/friends/requests"
           element={
             <AuthGuard>
-              <div className="max-w-md mx-auto">
-                <FriendRequestsPage
-                  onBack={handleBackFromFriendRequests}
-                  onRequestHandled={handleFriendRequestHandled}
-                />
-              </div>
+              <FriendRequestsPage
+                onBack={handleBackFromFriendRequests}
+                onRequestHandled={handleFriendRequestHandled}
+              />
             </AuthGuard>
           }
         />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </div>
+    </Layout>
   );
 };
 
