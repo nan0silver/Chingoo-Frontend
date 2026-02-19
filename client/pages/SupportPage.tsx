@@ -62,7 +62,7 @@ export default function SupportPage({ onBack }: SupportPageProps) {
 
       {/* Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8">
-        <div className="text-center w-full max-w-md">
+        <div className="text-center w-full max-w-app">
           {/* Icon */}
           <div className="mb-8">
             <div className="w-32 h-32 mx-auto bg-orange-100 rounded-full flex items-center justify-center">

@@ -61,7 +61,7 @@ export default function FriendRequestModal({
       aria-labelledby="friend-request-modal-title"
     >
       <div
-        className="bg-white rounded-2xl p-6 mx-4 w-full max-w-md"
+        className="bg-white rounded-2xl p-6 mx-4 w-full max-w-app"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

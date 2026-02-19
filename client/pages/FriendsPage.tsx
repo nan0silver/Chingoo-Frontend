@@ -211,7 +211,7 @@ export default function FriendsPage({
           }}
         >
           <div
-            className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full"
+            className="bg-white rounded-2xl p-6 md:p-8 max-w-app w-full"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

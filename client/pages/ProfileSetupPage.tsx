@@ -525,7 +525,7 @@ export default function ProfileSetupPage() {
           aria-modal="true"
           aria-labelledby="consent-title"
         >
-          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-app w-full max-h-[80vh] overflow-y-auto">
             <h2
               id="consent-title"
               className="text-xl md:text-2xl font-crimson font-bold text-gray-900 mb-6"
@@ -1124,7 +1124,7 @@ export default function ProfileSetupPage() {
       )}
 
       {/* Header */}
-      <div className="w-full max-w-sm md:max-w-md px-5 pt-4 pb-6">
+      <div className="w-full max-w-app px-5 pt-4 pb-6">
         <div className="flex items-center justify-between">
           <button
             onClick={() => {
@@ -1155,7 +1155,7 @@ export default function ProfileSetupPage() {
       </div>
 
       {/* Form Container */}
-      <div className="w-full max-w-sm md:max-w-md px-5 space-y-6">
+      <div className="w-full max-w-app px-5 space-y-6">
         {/* Welcome Message */}
         <div className="text-center py-4">
           <h2 className="text-xl font-crimson text-gray-900 mb-2">

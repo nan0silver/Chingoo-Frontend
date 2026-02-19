@@ -110,7 +110,7 @@ export default function ReportUserModal({
       onClick={handleClose}
     >
       <div
-        className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl p-6 md:p-8 max-w-app w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl md:text-2xl font-crimson font-bold text-gray-900 mb-2">

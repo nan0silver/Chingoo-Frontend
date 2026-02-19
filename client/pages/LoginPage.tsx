@@ -72,7 +72,7 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
       </div>
 
       {/* Form Container */}
-      <div className="w-full max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl px-5 space-y-4 md:space-y-6">
+      <div className="w-full max-w-app px-5 space-y-4 md:space-y-6">
         {/* Email Input */}
         <div className="relative">
           <input

@@ -534,7 +534,7 @@ export default function CallConnectedPage({
       {/* Prompt Display */}
       {prompt && (
         <div className="flex justify-center mt-6 px-8">
-          <div className="bg-white bg-opacity-90 px-6 py-4 rounded-2xl max-w-md shadow-lg">
+          <div className="bg-white bg-opacity-90 px-6 py-4 rounded-2xl max-w-app shadow-lg">
             <p className="text-gray-800 font-pretendard text-lg text-center leading-relaxed">
               {prompt}
             </p>
@@ -543,7 +543,7 @@ export default function CallConnectedPage({
       )}
       {isLoadingPrompt && (
         <div className="flex justify-center mt-6 px-8">
-          <div className="bg-white bg-opacity-90 px-6 py-4 rounded-2xl max-w-md shadow-lg">
+          <div className="bg-white bg-opacity-90 px-6 py-4 rounded-2xl max-w-app shadow-lg">
             <p className="text-gray-500 font-pretendard text-lg text-center">
               프롬프트를 불러오는 중...
             </p>
@@ -591,7 +591,7 @@ export default function CallConnectedPage({
       {/* Error Message Display */}
       {error && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg max-w-md">
+          <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg max-w-app">
             <p className="text-center font-pretendard">{error}</p>
           </div>
         </div>
